@@ -48,8 +48,35 @@ This is a Tauri application that combines a Vue 3 + TypeScript frontend with a R
 2. **Rust commands**: Add functions with `#[tauri::command]` in `src-tauri/src/lib.rs` and register them in the `invoke_handler`
 3. **Frontend-backend communication**: Use `invoke("command_name", { params })` from the frontend to call Rust commands
 
+## Implemented Features
+
+### System Tray
+- System tray icon with menu functionality
+- App minimizes to tray instead of closing when X is pressed
+- Uses programmatic tray creation (not config-based) to avoid duplication issues
+
+### Global Hotkey (Ctrl+Space)
+- Captures selected text from anywhere on the system
+- Automatically simulates Ctrl+C to copy selected text
+- Shows popup window at mouse cursor position
+- Uses debouncing to prevent multiple triggers on Windows
+
+### Popup Windows
+- **IMPORTANT**: When passing data to popup windows, use `initialization_script()` instead of clipboard API
+- Popup windows don't have proper access to Tauri plugins like clipboard-manager
+- Solution: Inject data via initialization script when creating the window:
+  ```rust
+  .initialization_script(&format!("window.clipboardText = '{}';", escaped_text))
+  ```
+- This avoids all permission and plugin access issues in popup contexts
+
+### Configuration Notes
+- `withGlobalTauri: true` is set in tauri.conf.json to enable global Tauri object access
+- Tray icon configured programmatically in lib.rs, not in tauri.conf.json
+
 ## Project Structure Notes
 
 - The application uses a lib/main split in Rust (`lib.rs` contains core logic, `main.rs` is minimal entry point)
 - Vite is configured to ignore `src-tauri` directory during watch mode
-- The app uses Tauri's plugin system (currently includes `tauri-plugin-opener`)
+- The app uses Tauri's plugin system (includes `tauri-plugin-clipboard-manager`, `tauri-plugin-global-shortcut`)
+- Uses `enigo` crate for keyboard/mouse simulation

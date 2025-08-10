@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captured Text</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+            background-color: #f6f6f6;
+            color: #0f0f0f;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .popup-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 32px);
+        }
+
+        .popup-header {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .popup-text {
+            flex: 1;
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .popup-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+
+        .close-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .close-btn:hover {
+            background-color: #da190b;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #2f2f2f;
+                color: #f6f6f6;
+            }
+            
+            .popup-header {
+                color: #f6f6f6;
+                border-bottom-color: #555;
+            }
+            
+            .popup-text {
+                background-color: #3a3a3a;
+                color: #f6f6f6;
+                border-color: #555;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="popup-container">
+        <div class="popup-header">📋 Captured Text</div>
+        <div class="popup-text" id="text-content">Loading...</div>
+        <div class="popup-actions">
+            <button class="popup-btn copy-btn" id="copy-btn">Copy</button>
+            <button class="popup-btn close-btn" id="close-btn">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const { invoke } = window.__TAURI__.core;
+        const { getCurrent } = window.__TAURI__.window;
+        const { writeText } = window.__TAURI__.clipboardManager;
+
+        let clipboardText = window.clipboardText || '';
+
+        // Set text content immediately when DOM loads
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Setting clipboard text:', clipboardText);
+            document.getElementById('text-content').textContent = clipboardText || 'No text captured';
+        });
+
+        // Also listen for clipboard text from Rust backend (fallback)
+        window.__TAURI__.event.listen('set-clipboard-text', (event) => {
+            console.log('Received clipboard text from backend:', event.payload);
+            clipboardText = event.payload;
+            document.getElementById('text-content').textContent = clipboardText || 'No text captured';
+        });
+
+        // Copy button functionality
+        document.getElementById('copy-btn').addEventListener('click', async () => {
+            try {
+                if (window.__TAURI__ && window.__TAURI__.clipboardManager) {
+                    await window.__TAURI__.clipboardManager.writeText(clipboardText);
+                } else {
+                    await writeText(clipboardText);
+                }
+                const btn = document.getElementById('copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 1000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+        });
+
+        // Clear all data before closing
+        function clearAndClose() {
+            // Clear any stored data
+            localStorage.clear();
+            sessionStorage.clear();
+            window.clipboardText = '';
+            
+            // Destroy window
+            getCurrent().destroy();
+        }
+
+        // Close button functionality
+        document.getElementById('close-btn').addEventListener('click', clearAndClose);
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                clearAndClose();
+            }
+        });
+
+        // Auto-close after 15 seconds (longer timeout)
+        setTimeout(clearAndClose, 15000);
+    </script>
+</body>
+</html>
