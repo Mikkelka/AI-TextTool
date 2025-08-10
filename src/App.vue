@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 const greetMsg = ref("");
 const name = ref("");
+const clipboardText = ref("");
 
 async function greet() {
   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
   greetMsg.value = await invoke("greet", { name: name.value });
 }
+
+onMounted(() => {
+  // Listen for clipboard text from backend
+  listen("clipboard-text", (event) => {
+    clipboardText.value = event.payload as string;
+  });
+});
 </script>
 
 <template>
@@ -28,6 +37,12 @@ async function greet() {
     </div>
     <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
 
+    <div v-if="clipboardText" class="clipboard-section">
+      <h2>Captured Text (Ctrl+Space):</h2>
+      <div class="clipboard-text">{{ clipboardText }}</div>
+      <button @click="clipboardText = ''" class="clear-btn">Clear</button>
+    </div>
+
     <form class="row" @submit.prevent="greet">
       <input id="greet-input" v-model="name" placeholder="Enter a name..." />
       <button type="submit">Greet</button>
@@ -45,6 +60,50 @@ async function greet() {
   filter: drop-shadow(0 0 2em #249b73);
 }
 
+.clipboard-section {
+  margin: 2em 0;
+  padding: 1em;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.clipboard-text {
+  background-color: white;
+  padding: 1em;
+  border-radius: 4px;
+  margin: 1em 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: monospace;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.clear-btn {
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  margin-top: 0.5em;
+}
+
+.clear-btn:hover {
+  background-color: #ff6666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .clipboard-section {
+    background-color: #3a3a3a;
+    border-color: #555;
+  }
+  
+  .clipboard-text {
+    background-color: #2a2a2a;
+    color: #f6f6f6;
+    border-color: #555;
+  }
+}
 </style>
 <style>
 :root {
