@@ -8,11 +8,146 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 use enigo::{Enigo, Key, Keyboard, Settings, Mouse};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use serde::{Serialize, Deserialize};
+use std::path::PathBuf;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+fn process_text(text: String, option: String, app: tauri::AppHandle) -> Result<String, String> {
+    println!("Processing text: '{}' with option: '{}'", text, option);
+    
+    let processed_text = match option.as_str() {
+        "add_word" => format!("{} [PROCESSED]", text),
+        "fix_grammar" => format!("{} [GRAMMAR FIXED]", text), // Placeholder
+        "translate" => format!("{} [TRANSLATED]", text), // Placeholder
+        _ => text, // Return original if unknown option
+    };
+    
+    println!("Processed result: '{}'", processed_text);
+    
+    // Put processed text in clipboard
+    if let Err(e) = app.clipboard().write_text(processed_text.clone()) {
+        return Err(format!("Failed to write to clipboard: {:?}", e));
+    }
+    
+    println!("Text put in clipboard, will auto-paste after popup closes");
+    
+    Ok(processed_text)
+}
+
+#[tauri::command]
+fn simulate_paste() -> Result<String, String> {
+    println!("Simulating Ctrl+V after popup closed...");
+    
+    // Small delay to ensure focus has returned to original application
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    
+    // Use enigo to simulate Ctrl+V
+    match Enigo::new(&Settings::default()) {
+        Ok(mut enigo) => {
+            if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
+                return Err(format!("Failed to press Ctrl: {:?}", e));
+            }
+            if let Err(e) = enigo.key(Key::Unicode('v'), enigo::Direction::Click) {
+                return Err(format!("Failed to click V: {:?}", e));
+            }
+            if let Err(e) = enigo.key(Key::Control, enigo::Direction::Release) {
+                return Err(format!("Failed to release Ctrl: {:?}", e));
+            }
+            println!("Ctrl+V simulation completed");
+            Ok("Paste completed".to_string())
+        },
+        Err(e) => {
+            Err(format!("Failed to create enigo instance: {:?}", e))
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct ChatEntry {
+    timestamp: String,
+    original_text: String,
+    ai_option: String,
+    processed_text: String,
+}
+
+#[tauri::command]
+async fn save_chat_entry(app: tauri::AppHandle, original_text: String, ai_option: String, processed_text: String) -> Result<String, String> {
+    println!("Saving chat entry: {} -> {}", original_text, processed_text);
+    
+    // Create chat entry
+    let entry = ChatEntry {
+        timestamp: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+        original_text,
+        ai_option,
+        processed_text,
+    };
+    
+    // Get app data directory
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
+    
+    // Ensure chats directory exists
+    let chats_dir = app_data_dir.join("chats");
+    std::fs::create_dir_all(&chats_dir)
+        .map_err(|e| format!("Failed to create chats directory: {:?}", e))?;
+    
+    // Load existing chat history
+    let history_file = chats_dir.join("chat_history.json");
+    let mut chat_history: Vec<ChatEntry> = if history_file.exists() {
+        let content = std::fs::read_to_string(&history_file)
+            .map_err(|e| format!("Failed to read chat history: {:?}", e))?;
+        serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse chat history: {:?}", e))?
+    } else {
+        Vec::new()
+    };
+    
+    // Add new entry
+    chat_history.push(entry);
+    
+    // Keep only last 100 entries
+    if chat_history.len() > 100 {
+        chat_history.drain(0..chat_history.len()-100);
+    }
+    
+    // Save back to file
+    let json_content = serde_json::to_string_pretty(&chat_history)
+        .map_err(|e| format!("Failed to serialize chat history: {:?}", e))?;
+    
+    std::fs::write(&history_file, json_content)
+        .map_err(|e| format!("Failed to write chat history: {:?}", e))?;
+    
+    println!("Chat entry saved successfully to: {:?}", history_file);
+    Ok("Chat saved successfully".to_string())
+}
+
+#[tauri::command]
+async fn load_chat_history(app: tauri::AppHandle) -> Result<Vec<ChatEntry>, String> {
+    println!("Loading chat history...");
+    
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
+    
+    let history_file = app_data_dir.join("chats").join("chat_history.json");
+    
+    if !history_file.exists() {
+        return Ok(Vec::new());
+    }
+    
+    let content = std::fs::read_to_string(&history_file)
+        .map_err(|e| format!("Failed to read chat history: {:?}", e))?;
+    
+    let chat_history: Vec<ChatEntry> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse chat history: {:?}", e))?;
+    
+    println!("Loaded {} chat entries", chat_history.len());
+    Ok(chat_history)
 }
 
 fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
@@ -95,7 +230,7 @@ pub fn run() {
                                 println!("Clipboard content: '{}'", clipboard_text);
                                 if !clipboard_text.trim().is_empty() {
                                     // Get mouse position
-                                    let mut enigo_mouse = Enigo::new(&Settings::default()).unwrap();
+                                    let enigo_mouse = Enigo::new(&Settings::default()).unwrap();
                                     let (mouse_x, mouse_y) = enigo_mouse.location().unwrap_or((100, 100));
                                     
                                     // Close existing popup windows
@@ -117,8 +252,8 @@ pub fn run() {
                                         &window_label,
                                         tauri::WebviewUrl::App(format!("popup.html?t={}", timestamp).into())
                                     )
-                                    .title("Captured Text")
-                                    .inner_size(400.0, 200.0)
+                                    .title("AI Text Tools")
+                                    .inner_size(400.0, 280.0)
                                     .position(mouse_x as f64, mouse_y as f64)
                                     .resizable(false)
                                     .decorations(true)
@@ -145,6 +280,7 @@ pub fn run() {
                 .build()
         })
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             create_tray(app.handle())?;
             
@@ -164,7 +300,7 @@ pub fn run() {
                 api.prevent_close();
             }
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, process_text, simulate_paste, save_chat_entry, load_chat_history])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

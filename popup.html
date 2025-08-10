@@ -44,7 +44,8 @@
 
         .popup-actions {
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 6px;
             margin-top: 12px;
         }
 
@@ -57,13 +58,28 @@
             font-weight: 500;
         }
 
-        .copy-btn {
-            background-color: #4CAF50;
+        .ai-btn {
+            background-color: #2196F3;
             color: white;
+            margin-bottom: 4px;
         }
 
-        .copy-btn:hover {
-            background-color: #45a049;
+        .ai-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .ai-btn:active {
+            background-color: #0D47A1;
+        }
+
+        .save-btn {
+            background-color: #FF9800;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .save-btn:hover {
+            background-color: #F57C00;
         }
 
         .close-btn {
@@ -96,11 +112,13 @@
 </head>
 <body>
     <div class="popup-container">
-        <div class="popup-header">📋 Captured Text</div>
+        <div class="popup-header">🤖 AI Text Tools</div>
         <div class="popup-text" id="text-content">Loading...</div>
         <div class="popup-actions">
-            <button class="popup-btn copy-btn" id="copy-btn">Copy</button>
-            <button class="popup-btn close-btn" id="close-btn">Close</button>
+            <button class="popup-btn ai-btn" id="add-word-btn" data-option="add_word">✨ Add Word</button>
+            <button class="popup-btn ai-btn" id="fix-grammar-btn" data-option="fix_grammar">📝 Fix Grammar</button>
+            <button class="popup-btn ai-btn" id="translate-btn" data-option="translate">🌍 Translate</button>
+            <button class="popup-btn close-btn" id="close-btn">❌ Close</button>
         </div>
     </div>
 
@@ -124,22 +142,79 @@
             document.getElementById('text-content').textContent = clipboardText || 'No text captured';
         });
 
-        // Copy button functionality
-        document.getElementById('copy-btn').addEventListener('click', async () => {
-            try {
-                if (window.__TAURI__ && window.__TAURI__.clipboardManager) {
-                    await window.__TAURI__.clipboardManager.writeText(clipboardText);
-                } else {
-                    await writeText(clipboardText);
+        // AI option button functionality
+        document.querySelectorAll('.ai-btn').forEach(button => {
+            button.addEventListener('click', async () => {
+                const option = button.getAttribute('data-option');
+                console.log('Processing text with option:', option);
+                
+                // Disable all buttons during processing
+                document.querySelectorAll('.ai-btn').forEach(btn => btn.disabled = true);
+                button.textContent = '⏳ Processing...';
+                
+                try {
+                    const result = await invoke('process_text', { 
+                        text: clipboardText, 
+                        option: option 
+                    });
+                    console.log('Text processed successfully:', result);
+                    
+                    // Update UI to show processed text and ready-to-paste status
+                    document.getElementById('text-content').textContent = result;
+                    document.querySelector('.popup-header').textContent = '✅ Ready to Paste';
+                    
+                    // Hide AI buttons and show paste instructions
+                    document.querySelectorAll('.ai-btn').forEach(btn => btn.style.display = 'none');
+                    
+                    // Create and show paste instruction
+                    let pasteMsg = document.createElement('div');
+                    pasteMsg.id = 'paste-instruction';
+                    pasteMsg.style.cssText = 'text-align: center; margin: 10px 0; color: #4CAF50; font-weight: bold; font-size: 12px;';
+                    pasteMsg.textContent = '📋 Text copied! Press Ctrl+V to paste where you want it';
+                    document.querySelector('.popup-actions').insertBefore(pasteMsg, document.getElementById('close-btn'));
+                    
+                    // Add Save Chat button
+                    let saveChatBtn = document.createElement('button');
+                    saveChatBtn.id = 'save-chat-btn';
+                    saveChatBtn.className = 'popup-btn save-btn';
+                    saveChatBtn.textContent = '💾 Save to History';
+                    saveChatBtn.onclick = async () => {
+                        try {
+                            await invoke('save_chat_entry', {
+                                originalText: clipboardText,
+                                aiOption: option,
+                                processedText: result
+                            });
+                            saveChatBtn.textContent = '✅ Saved!';
+                            setTimeout(() => {
+                                saveChatBtn.textContent = '💾 Save to History';
+                            }, 2000);
+                        } catch (err) {
+                            console.error('Failed to save chat:', err);
+                            saveChatBtn.textContent = '❌ Failed';
+                            setTimeout(() => {
+                                saveChatBtn.textContent = '💾 Save to History';
+                            }, 2000);
+                        }
+                    };
+                    document.querySelector('.popup-actions').insertBefore(saveChatBtn, document.getElementById('close-btn'));
+                    
+                    // Auto-close after 10 seconds
+                    setTimeout(() => {
+                        clearAndClose();
+                    }, 10000);
+                    
+                } catch (err) {
+                    console.error('Failed to process text:', err);
+                    
+                    // Re-enable buttons on error
+                    document.querySelectorAll('.ai-btn').forEach(btn => btn.disabled = false);
+                    button.textContent = button.getAttribute('data-original-text') || 'Error';
                 }
-                const btn = document.getElementById('copy-btn');
-                btn.textContent = 'Copied!';
-                setTimeout(() => {
-                    btn.textContent = 'Copy';
-                }, 1000);
-            } catch (err) {
-                console.error('Failed to copy text: ', err);
-            }
+            });
+            
+            // Store original button text for error recovery
+            button.setAttribute('data-original-text', button.textContent);
         });
 
         // Clear all data before closing

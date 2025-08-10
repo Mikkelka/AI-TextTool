@@ -4,10 +4,25 @@ import { invoke } from "@tauri-apps/api/core";
 
 const greetMsg = ref("");
 const name = ref("");
+const chatHistory = ref([]);
+const showHistory = ref(false);
 
 async function greet() {
   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
   greetMsg.value = await invoke("greet", { name: name.value });
+}
+
+async function loadChatHistory() {
+  try {
+    chatHistory.value = await invoke("load_chat_history");
+    showHistory.value = true;
+  } catch (err) {
+    console.error("Failed to load chat history:", err);
+  }
+}
+
+function closeChatHistory() {
+  showHistory.value = false;
 }
 </script>
 
@@ -34,6 +49,43 @@ async function greet() {
       <button type="submit">Greet</button>
     </form>
     <p>{{ greetMsg }}</p>
+
+    <div class="chat-history-section">
+      <button @click="loadChatHistory" class="history-btn">
+        📚 View Chat History
+      </button>
+      
+      <!-- Chat History Modal -->
+      <div v-if="showHistory" class="modal-overlay" @click="closeChatHistory">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h2>📚 Chat History</h2>
+            <button @click="closeChatHistory" class="close-modal-btn">×</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="chatHistory.length === 0" class="no-history">
+              No chat history found. Use Ctrl+Space to capture and process text!
+            </div>
+            <div v-else class="history-list">
+              <div v-for="(entry, index) in chatHistory" :key="index" class="history-entry">
+                <div class="entry-timestamp">{{ entry.timestamp }}</div>
+                <div class="entry-content">
+                  <div class="original-text">
+                    <strong>Original:</strong> {{ entry.original_text }}
+                  </div>
+                  <div class="ai-option">
+                    <strong>Action:</strong> {{ entry.ai_option }}
+                  </div>
+                  <div class="processed-text">
+                    <strong>Result:</strong> {{ entry.processed_text }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -136,6 +188,143 @@ button {
 
 #greet-input {
   margin-right: 5px;
+}
+
+.chat-history-section {
+  margin-top: 30px;
+}
+
+.history-btn {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.history-btn:hover {
+  background-color: #1976D2;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90%;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2196F3;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.modal-body {
+  padding: 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.no-history {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 40px 20px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-entry {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+.entry-timestamp {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.entry-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.original-text {
+  color: #333;
+}
+
+.ai-option {
+  color: #2196F3;
+  font-size: 14px;
+}
+
+.processed-text {
+  color: #4CAF50;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    background: #2f2f2f;
+    color: #f6f6f6;
+  }
+  
+  .modal-header {
+    border-bottom-color: #555;
+  }
+  
+  .history-entry {
+    background-color: #3a3a3a;
+    border-color: #555;
+  }
+  
+  .close-modal-btn {
+    color: #ccc;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
