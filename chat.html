@@ -34,27 +34,6 @@
 <body>
     <div id="app"></div>
     
-    <script type="module">
-        import { createApp } from 'vue';
-        import ChatWindow from './src/components/ChatWindow.vue';
-        
-        // Get parameters from URL or window object
-        const urlParams = new URLSearchParams(window.location.search);
-        const operation = urlParams.get('operation') || window.operation || 'Chat';
-        const initialText = urlParams.get('text') || window.initialText || '';
-        const title = urlParams.get('title') || window.chatTitle || 'AI Chat';
-        const instruction = urlParams.get('instruction') || window.instruction || '';
-        
-        // Create Vue app instance
-        const app = createApp(ChatWindow, {
-            operation: operation,
-            initialText: initialText,
-            title: title,
-            instruction: instruction
-        });
-        
-        // Mount the app
-        app.mount('#app');
-    </script>
+    <script type="module" src="/src/chat.ts"></script>
 </body>
 </html>

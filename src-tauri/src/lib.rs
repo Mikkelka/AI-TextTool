@@ -393,12 +393,14 @@ fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Resul
 }
 
 fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
+    let chat_i = MenuItem::with_id(app, "chat", "Chat", true, None::<&str>)?;
+    let separator1 = tauri::menu::PredefinedMenuItem::separator(app)?;
     let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
     let edit_operations_i = MenuItem::with_id(app, "edit_operations", "Edit Operations", true, None::<&str>)?;
     let chat_history_i = MenuItem::with_id(app, "chat_history", "Chat History", true, None::<&str>)?;
-    let separator = tauri::menu::PredefinedMenuItem::separator(app)?;
+    let separator2 = tauri::menu::PredefinedMenuItem::separator(app)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&settings_i, &edit_operations_i, &chat_history_i, &separator, &quit_i])?;
+    let menu = Menu::with_items(app, &[&chat_i, &separator1, &settings_i, &edit_operations_i, &chat_history_i, &separator2, &quit_i])?;
 
     // Use the default app icon from the bundle
     let _ = TrayIconBuilder::with_id("main-tray")
@@ -407,6 +409,50 @@ fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "quit" => {
                 app.exit(0);
+            }
+            "chat" => {
+                println!("Opening chat window from tray...");
+                
+                // Close existing chat windows
+                let existing_chat_windows = vec!["chat", "chat_direct"];
+                for window_name in &existing_chat_windows {
+                    if let Some(existing_chat) = app.get_webview_window(window_name) {
+                        let _ = existing_chat.close();
+                    }
+                }
+                
+                // Create timestamp for unique window ID
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis();
+                let window_id = format!("chat_tray_{}", timestamp);
+                
+                // Create chat window centered on screen
+                match WebviewWindowBuilder::new(
+                    app,
+                    &window_id,
+                    tauri::WebviewUrl::App(format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp).into())
+                )
+                .title("AI Chat")
+                .inner_size(900.0, 700.0)
+                .min_inner_size(700.0, 500.0)
+                .center()
+                .resizable(true)
+                .maximizable(true)
+                .minimizable(true)
+                .closable(true)
+                .always_on_top(false)
+                .skip_taskbar(false)
+                .build() {
+                    Ok(chat_window) => {
+                        println!("Chat window opened successfully from tray");
+                        let _ = chat_window.set_focus();
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to create chat window from tray: {:?}", e);
+                    }
+                }
             }
             "settings" => {
                 println!("Opening settings window...");
@@ -553,7 +599,11 @@ pub fn run() {
                         println!("Handling Ctrl+Space shortcut");
                         let app_handle = app.clone();
                         tauri::async_runtime::spawn(async move {
-                            // Automatically copy selected text by simulating Ctrl+C
+                            // First, get current clipboard content to compare later
+                            let original_clipboard = app_handle.clipboard().read_text().unwrap_or_else(|_| String::new());
+                            println!("Original clipboard content: '{}'", original_clipboard);
+                            
+                            // Simulate Ctrl+C to copy any selected text
                             println!("Simulating Ctrl+C...");
                             let mut enigo = Enigo::new(&Settings::default()).unwrap();
                             enigo.key(Key::Control, enigo::Direction::Press).unwrap();
@@ -563,11 +613,17 @@ pub fn run() {
                             // Small delay to let the copy operation complete
                             std::thread::sleep(std::time::Duration::from_millis(100));
                             
-                            // Get clipboard content (this will be the selected text after Ctrl+C)
-                            println!("Reading clipboard...");
-                            if let Ok(clipboard_text) = app_handle.clipboard().read_text() {
-                                println!("Clipboard content: '{}'", clipboard_text);
-                                if !clipboard_text.trim().is_empty() {
+                            // Get clipboard content after Ctrl+C
+                            println!("Reading clipboard after Ctrl+C...");
+                            if let Ok(new_clipboard) = app_handle.clipboard().read_text() {
+                                println!("New clipboard content: '{}'", new_clipboard);
+                                
+                                // Check if clipboard changed (meaning text was selected and copied)
+                                let text_was_selected = new_clipboard != original_clipboard && !new_clipboard.trim().is_empty();
+                                
+                                if text_was_selected {
+                                    println!("Text was selected - opening popup with operations");
+                                    let clipboard_text = new_clipboard;
                                     // Get mouse position
                                     let enigo_mouse = Enigo::new(&Settings::default()).unwrap();
                                     let (mouse_x, mouse_y) = enigo_mouse.location().unwrap_or((100, 100));
@@ -610,9 +666,90 @@ pub fn run() {
                                         // Send clipboard text directly to popup window
                                         let _ = window.emit("set-clipboard-text", clipboard_text);
                                     }
+                                } else {
+                                    // No text selected - open chat window directly
+                                    println!("No text selected - opening chat window directly");
+                                    
+                                    // Close existing chat windows
+                                    let existing_chat_windows = vec!["chat", "chat_direct"];
+                                    for window_name in &existing_chat_windows {
+                                        if let Some(existing_chat) = app_handle.get_webview_window(window_name) {
+                                            let _ = existing_chat.close();
+                                        }
+                                    }
+                                    
+                                    // Create timestamp for unique window ID
+                                    let timestamp = std::time::SystemTime::now()
+                                        .duration_since(std::time::UNIX_EPOCH)
+                                        .unwrap()
+                                        .as_millis();
+                                    let window_id = format!("chat_direct_{}", timestamp);
+                                    
+                                    // Create chat window centered on screen
+                                    let chat_window = WebviewWindowBuilder::new(
+                                        &app_handle,
+                                        &window_id,
+                                        tauri::WebviewUrl::App(format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp).into())
+                                    )
+                                    .title("AI Chat")
+                                    .inner_size(900.0, 700.0)
+                                    .min_inner_size(700.0, 500.0)
+                                    .center()
+                                    .resizable(true)
+                                    .decorations(true)
+                                    .closable(true)
+                                    .always_on_top(false)
+                                    .skip_taskbar(false)
+                                    .build();
+                                    
+                                    if let Ok(window) = chat_window {
+                                        println!("Chat window opened successfully");
+                                        let _ = window.set_focus();
+                                    } else {
+                                        println!("Failed to create chat window");
+                                    }
                                 }
                             } else {
-                                println!("Failed to read clipboard");
+                                println!("Failed to read clipboard - opening chat window as fallback");
+                                
+                                // Close existing chat windows
+                                let existing_chat_windows = vec!["chat", "chat_direct"];
+                                for window_name in &existing_chat_windows {
+                                    if let Some(existing_chat) = app_handle.get_webview_window(window_name) {
+                                        let _ = existing_chat.close();
+                                    }
+                                }
+                                
+                                // Create timestamp for unique window ID
+                                let timestamp = std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_millis();
+                                let window_id = format!("chat_fallback_{}", timestamp);
+                                
+                                // Create chat window centered on screen
+                                let chat_window = WebviewWindowBuilder::new(
+                                    &app_handle,
+                                    &window_id,
+                                    tauri::WebviewUrl::App(format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp).into())
+                                )
+                                .title("AI Chat")
+                                .inner_size(900.0, 700.0)
+                                .min_inner_size(700.0, 500.0)
+                                .center()
+                                .resizable(true)
+                                .decorations(true)
+                                .closable(true)
+                                .always_on_top(false)
+                                .skip_taskbar(false)
+                                .build();
+                                
+                                if let Ok(window) = chat_window {
+                                    println!("Fallback chat window opened successfully");
+                                    let _ = window.set_focus();
+                                } else {
+                                    println!("Failed to create fallback chat window");
+                                }
                             }
                         });
                     }
