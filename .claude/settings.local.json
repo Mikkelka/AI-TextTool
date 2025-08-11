@@ -6,7 +6,17 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
       "Bash(npm add:*)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(cargo check:*)",
+      "Bash(cargo:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(echo $USERPROFILE)",
+      "Bash(find:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

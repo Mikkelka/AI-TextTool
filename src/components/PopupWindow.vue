@@ -1,0 +1,636 @@
+<template>
+  <div class="popup-container" @keydown="handleKeydown" tabindex="0">
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading operations...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-icon">⚠️</div>
+      <p class="error-message">{{ error }}</p>
+      <button @click="loadOperations" class="retry-button">Retry</button>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else class="popup-content">
+      <!-- Header -->
+      <div class="popup-header">
+        <h2 class="popup-title">🤖 AI Text Tools</h2>
+        <p class="selected-text-preview">{{ textPreview }}</p>
+      </div>
+
+      <!-- Operations Grid -->
+      <div class="operations-grid">
+        <button
+          v-for="(operation, key, index) in operations"
+          :key="key"
+          :ref="el => buttonRefs[index] = el"
+          @click="handleOperationClick(key, operation)"
+          @mouseenter="selectedIndex = index"
+          :class="[
+            'operation-button',
+            {
+              'operation-button--chat': operation.open_in_window,
+              'operation-button--direct': !operation.open_in_window,
+              'operation-button--selected': selectedIndex === index,
+              'operation-button--processing': processingOperation === key
+            }
+          ]"
+          :disabled="processingOperation !== null"
+          :title="getOperationTooltip(operation)"
+        >
+          <div class="operation-button-content">
+            <div class="operation-label">
+              {{ processingOperation === key ? 'Processing...' : key }}
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Processing Indicator -->
+      <div v-if="processingOperation" class="processing-indicator">
+        <div class="processing-spinner"></div>
+        <p>Processing with AI...</p>
+      </div>
+    </div>
+
+    <!-- Fade-in animation -->
+    <div class="fade-overlay" :class="{ 'fade-overlay--hidden': !showFadeIn }"></div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+
+// Props
+interface Props {
+  selectedText?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  selectedText: ''
+})
+
+// Emits
+interface Emits {
+  (e: 'close'): void
+  (e: 'operation-selected', operation: string, details: any): void
+}
+
+const emit = defineEmits<Emits>()
+
+// Types
+interface Operation {
+  prefix: string
+  instruction: string
+  icon?: string
+  open_in_window: boolean
+}
+
+// Reactive state
+const operations = ref<Record<string, Operation>>({})
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+const processingOperation = ref<string | null>(null)
+const selectedIndex = ref(0)
+const buttonRefs = ref<HTMLElement[]>([])
+const showFadeIn = ref(true)
+
+// Get text from props or window.clipboardText injection
+const clipboardText = ref(props.selectedText || (window as any).clipboardText || '')
+
+// Computed properties
+const textPreview = computed(() => {
+  const text = clipboardText.value
+  if (!text || text.trim().length === 0) return 'No text selected'
+  
+  const maxLength = 60
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+})
+
+const operationsArray = computed(() => {
+  return Object.entries(operations.value)
+})
+
+// Methods
+const loadOperations = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+    
+    const result = await invoke('load_operations') as Record<string, Operation>
+    operations.value = result
+    
+    // Reset selected index if operations changed
+    if (selectedIndex.value >= Object.keys(result).length) {
+      selectedIndex.value = 0
+    }
+    
+  } catch (err) {
+    console.error('Failed to load operations:', err)
+    error.value = err instanceof Error ? err.message : 'Failed to load operations'
+  } finally {
+    isLoading.value = false
+    // Hide fade-in overlay after loading
+    setTimeout(() => {
+      showFadeIn.value = false
+    }, 300)
+  }
+}
+
+const handleOperationClick = async (operationKey: string, operation: Operation) => {
+  if (!clipboardText.value?.trim()) {
+    error.value = 'No text selected for processing'
+    return
+  }
+
+  try {
+    processingOperation.value = operationKey
+    emit('operation-selected', operationKey, operation)
+
+    if (operation.open_in_window) {
+      // Open chat window for chat operations
+      await openChatWindow(operationKey, operation)
+    } else {
+      // Process directly for non-chat operations
+      await processTextDirectly(operationKey, operation)
+    }
+  } catch (err) {
+    console.error('Operation failed:', err)
+    error.value = err instanceof Error ? err.message : 'Operation failed'
+  } finally {
+    processingOperation.value = null
+  }
+}
+
+const processTextDirectly = async (operationKey: string, operation: Operation) => {
+  try {
+    const result = await invoke('process_text_with_ai', {
+      text: clipboardText.value,
+      operation: operationKey
+    }) as string
+
+    console.log('Text processed successfully:', result)
+    
+    // Save to chat history
+    await invoke('save_chat_entry', {
+      originalText: clipboardText.value,
+      aiOption: operationKey,
+      processedText: result
+    })
+
+    // Close window first
+    closeWindow()
+
+    // Small delay then simulate paste to replace original text
+    setTimeout(async () => {
+      try {
+        await invoke('simulate_paste')
+        console.log('Auto-paste completed')
+      } catch (pasteError) {
+        console.error('Auto-paste failed:', pasteError)
+      }
+    }, 200)
+
+  } catch (err) {
+    throw new Error(`Failed to process text: ${err}`)
+  }
+}
+
+const openChatWindow = async (operationKey: string, operation: Operation) => {
+  try {
+    // Create a unique window ID
+    const timestamp = Date.now()
+    const windowId = `chat_${operationKey.toLowerCase()}_${timestamp}`
+    
+    // Prepare the text with operation prefix if needed
+    const processedText = operation.prefix ? 
+      `${operation.prefix}${clipboardText.value}` : 
+      clipboardText.value
+
+    // Create chat window with proper parameters
+    const chatWindow = new WebviewWindow(windowId, {
+      url: `chat.html?operation=${encodeURIComponent(operationKey)}&text=${encodeURIComponent(processedText)}&title=${encodeURIComponent(operationKey + ' - AI Chat')}&instruction=${encodeURIComponent(operation.instruction)}&t=${timestamp}`,
+      title: `${operationKey} - AI Chat`,
+      width: 900,
+      height: 700,
+      resizable: true,
+      decorations: true,
+      alwaysOnTop: false,
+      skipTaskbar: false
+    })
+
+    // Wait for window to be ready and send initial data
+    await chatWindow.once('tauri://created', () => {
+      chatWindow.emit('init-chat', {
+        operation: operationKey,
+        instruction: operation.instruction,
+        initialText: processedText,
+        originalText: clipboardText.value
+      })
+    })
+
+    // Close popup after opening chat
+    closeWindow()
+
+  } catch (err) {
+    throw new Error(`Failed to open chat window: ${err}`)
+  }
+}
+
+
+const handleKeydown = async (event: KeyboardEvent) => {
+  const operationCount = Object.keys(operations.value).length
+
+  switch (event.key) {
+    // Note: ESC is handled globally in popup.html, so we don't handle it here
+      
+    case 'ArrowUp':
+      event.preventDefault()
+      selectedIndex.value = selectedIndex.value > 0 ? selectedIndex.value - 1 : operationCount - 1
+      scrollToSelected()
+      break
+      
+    case 'ArrowDown':
+      event.preventDefault()
+      selectedIndex.value = selectedIndex.value < operationCount - 1 ? selectedIndex.value + 1 : 0
+      scrollToSelected()
+      break
+      
+    case 'ArrowLeft':
+      event.preventDefault()
+      const cols = getGridColumns()
+      selectedIndex.value = Math.max(0, selectedIndex.value - cols)
+      scrollToSelected()
+      break
+      
+    case 'ArrowRight':
+      event.preventDefault()
+      const columns = getGridColumns()
+      selectedIndex.value = Math.min(operationCount - 1, selectedIndex.value + columns)
+      scrollToSelected()
+      break
+      
+    case 'Enter':
+      event.preventDefault()
+      if (selectedIndex.value < operationCount && processingOperation.value === null) {
+        const [key, operation] = operationsArray.value[selectedIndex.value]
+        await handleOperationClick(key, operation)
+      }
+      break
+  }
+}
+
+const scrollToSelected = async () => {
+  await nextTick()
+  const button = buttonRefs.value[selectedIndex.value]
+  if (button) {
+    button.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+}
+
+const getGridColumns = (): number => {
+  // This matches the CSS grid-template-columns
+  const operationCount = Object.keys(operations.value).length
+  if (operationCount <= 2) return 1
+  if (operationCount <= 4) return 2
+  if (operationCount <= 6) return 3
+  if (operationCount <= 9) return 3
+  return 4
+}
+
+const getOperationTooltip = (operation: Operation): string => {
+  const type = operation.open_in_window ? 'Opens chat window' : 'Direct processing'
+  const instruction = operation.instruction ? `\n\nInstruction: ${operation.instruction.substring(0, 100)}...` : ''
+  return `${type}${instruction}`
+}
+
+const closeWindow = () => {
+  emit('close')
+}
+
+// Lifecycle
+onMounted(() => {
+  loadOperations()
+  
+  // Set up keyboard event listener for arrow key navigation
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  // Cleanup keyboard event listener
+  document.removeEventListener('keydown', handleKeydown)
+  
+  // Clear sensitive data
+  clipboardText.value = ''
+  ;(window as any).clipboardText = ''
+})
+</script>
+
+<style scoped>
+.popup-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 12px;
+  box-sizing: border-box;
+  outline: none;
+  overflow: hidden;
+}
+
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  text-align: center;
+}
+
+.loading-spinner,
+.processing-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.error-container {
+  color: #d32f2f;
+}
+
+.error-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.error-message {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.retry-button {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background: #1976D2;
+}
+
+.popup-content {
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.popup-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.popup-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.selected-text-preview {
+  font-size: 12px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  word-break: break-word;
+}
+
+.operations-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.operation-button {
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 8px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  min-height: 45px;
+  max-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.operation-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.operation-button--selected {
+  border-color: #2196F3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
+}
+
+.operation-button--chat {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-color: rgba(33, 150, 243, 0.3);
+}
+
+.operation-button--chat:hover:not(:disabled) {
+  background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+  border-color: #2196F3;
+}
+
+.operation-button--direct {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-color: rgba(156, 39, 176, 0.3);
+}
+
+.operation-button--direct:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%);
+  border-color: #9c27b0;
+}
+
+.operation-button--processing {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.operation-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.operation-button-content {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.operation-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.processing-indicator {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(33, 150, 243, 0.95);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+}
+
+.processing-indicator .processing-spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  margin: 0;
+}
+
+.fade-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.fade-overlay--hidden {
+  opacity: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .popup-container {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  }
+
+
+  .popup-title {
+    color: #e2e8f0;
+  }
+
+  .selected-text-preview {
+    background: rgba(45, 55, 72, 0.8);
+    color: #cbd5e0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .loading-text {
+    color: #a0aec0;
+  }
+
+  .operation-button {
+    background: rgba(45, 55, 72, 0.8);
+    color: #e2e8f0;
+  }
+
+  .operation-button--chat {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  .operation-button--direct {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  .operation-label {
+    color: #e2e8f0;
+  }
+
+  .fade-overlay {
+    background: rgba(45, 55, 72, 0.8);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 350px) {
+  .operations-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .operation-button {
+    min-height: 40px;
+    max-height: 40px;
+    padding: 6px 4px;
+  }
+  
+  .operation-label {
+    font-size: 10px;
+    white-space: normal;
+    line-height: 1.1;
+  }
+}
+</style>

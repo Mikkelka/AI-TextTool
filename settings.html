@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - AI Text Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        
+        #app {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script type="module">
+        import { createApp } from 'vue';
+        import SettingsWindow from './src/components/SettingsWindow.vue';
+        
+        // Create Vue app instance
+        const app = createApp(SettingsWindow);
+        
+        // Handle settings save event
+        app.config.globalProperties.$onSettingsSaved = () => {
+            console.log('Settings saved successfully');
+        };
+        
+        // Make close function available
+        window.closeSettings = () => {
+            if (window.__TAURI__?.window?.getCurrent) {
+                window.__TAURI__.window.getCurrent().then(win => {
+                    win.close();
+                }).catch(e => {
+                    console.error('Failed to close settings window:', e);
+                });
+            }
+        };
+        
+        // Mount the app
+        app.mount('#app');
+        
+        // Auto-focus first input
+        setTimeout(() => {
+            const firstInput = document.querySelector('input');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }, 100);
+    </script>
+</body>
+</html>
