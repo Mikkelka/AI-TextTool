@@ -2,10 +2,17 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "edit_operations"],
+  "windows": ["main", "edit_operations", "*"],
   "permissions": [
     "core:default",
+    "core:window:default",
+    "core:window:allow-create",
     "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:webview:default",
+    "core:webview:allow-create-webview-window",
     "opener:default"
   ]
 }

@@ -53,7 +53,8 @@ This is a **complete AI-powered text processing desktop application** built with
 **Production**: `src-tauri/target/release/`
 
 - **`options.json`** - Text operations configuration (10 operations including Danish)
-- **`chat_history.json`** - AI conversation history (auto-saved, max 100 entries)
+- **`chat_history.json`** - Individual operation history (auto-saved, max 100 entries)
+- **`saved_conversations.json`** - Complete chat conversations with custom titles
 - **`config.json`** - App settings (API keys, models, system instructions)
 
 ## Configuration Files
@@ -111,8 +112,11 @@ This is a **complete AI-powered text processing desktop application** built with
 - **Shortcuts**: Configurable hotkey (default Ctrl+Space)
 
 ### 📚 Chat History Window
-- **Search & Filter**: Search content and filter by operation
-- **Actions**: Copy original/result, reprocess text with same operation
+- **Dual View System**: Separate tabs for "Conversations" (full saved chats) and "Entries" (individual operations)
+- **Conversation Management**: Save complete chat conversations with custom titles
+- **Conversation Actions**: Reopen saved conversations, export as markdown, delete conversations
+- **Search & Filter**: Search content and filter by operation type
+- **Legacy Support**: View individual operation history entries
 - **Management**: Clear history, view statistics
 - **Responsive**: Mobile-friendly layout
 
@@ -199,6 +203,45 @@ if now.duration_since(*last_time).as_millis() < 200 {
 }
 ```
 
+#### Problem 7: Frontend WebviewWindow Creation Fails in Tauri v2
+**Issue**: Frontend `new WebviewWindow()` shows console logs but no window actually opens  
+**Root Cause**: Missing permissions in `capabilities/default.json` and frontend context limitations  
+**Critical Solution**: Always use backend commands for window creation
+```rust
+#[tauri::command]
+async fn reopen_chat_conversation(app: AppHandle, conversation_id: String, operation: String, title: String) -> Result<(), String> {
+    let chat_url = format!(
+        "chat.html?operation={}&title={}&conversationId={}&t={}",
+        urlencoding::encode(&operation),
+        urlencoding::encode(&title),
+        urlencoding::encode(&conversation_id),
+        timestamp
+    );
+    
+    WebviewWindowBuilder::new(&app, &window_id, tauri::WebviewUrl::App(chat_url.into()))
+        .title(&title)
+        .inner_size(900.0, 700.0)
+        .build()
+}
+```
+
+**Frontend Usage**:
+```typescript
+// Instead of: new WebviewWindow() - this often fails
+// Use: Backend command
+await invoke('reopen_chat_conversation', {
+    conversationId: conversation.id,
+    operation: conversation.operation,
+    title: conversation.title
+})
+```
+
+**Why Backend Works Better**:
+- Uses `tauri::WebviewUrl::App()` instead of string URLs
+- Avoids frontend permission and context issues
+- Consistent with proven tray chat pattern
+- More reliable window creation in Tauri v2
+
 ### 📁 File Location Strategy We Learned
 
 #### Problem: Hidden AppData Files
@@ -276,6 +319,7 @@ tauri-plugin-opener = "2.0"           # Opening URLs
 tauri-plugin-clipboard-manager = "2.0" # Clipboard operations  
 tauri-plugin-global-shortcut = "2.0"  # System-wide hotkeys
 tauri-plugin-fs = "2.0"              # File system access
+urlencoding = "2.1"                  # URL encoding for window creation
 ```
 
 #### Plugin Usage Pattern

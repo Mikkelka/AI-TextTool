@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
-    Manager, Runtime, Emitter, WebviewWindowBuilder,
+    Manager, Runtime, Emitter, WebviewWindowBuilder, AppHandle,
 };
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 use tauri_plugin_clipboard_manager::ClipboardExt;
@@ -226,6 +226,24 @@ struct ChatEntry {
     processed_text: String,
 }
 
+// New structures for full conversation support
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct ConversationMessage {
+    role: String,  // "user" or "assistant"
+    content: String,
+    timestamp: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]  
+struct SavedConversation {
+    id: String,
+    title: String,
+    operation: String,  // The operation that started this conversation
+    messages: Vec<ConversationMessage>,
+    created_at: String,
+    updated_at: String,
+}
+
 #[tauri::command]
 async fn save_chat_entry(app: tauri::AppHandle, original_text: String, ai_option: String, processed_text: String) -> Result<String, String> {
     println!("Saving chat entry: {} -> {}", original_text, processed_text);
@@ -345,6 +363,191 @@ async fn clear_chat_history(app: tauri::AppHandle) -> Result<String, String> {
     
     println!("Chat history cleared successfully");
     Ok("Chat history cleared successfully".to_string())
+}
+
+// New conversation management functions
+#[tauri::command]
+async fn save_conversation(
+    app: tauri::AppHandle,
+    title: String,
+    operation: String, 
+    messages: Vec<ConversationMessage>
+) -> Result<String, String> {
+    println!("Saving conversation: '{}'", title);
+    
+    // Generate unique ID for the conversation
+    let conversation_id = format!("conv_{}", chrono::Utc::now().timestamp_millis());
+    let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
+    
+    // Create conversation object
+    let conversation = SavedConversation {
+        id: conversation_id.clone(),
+        title: title.clone(),
+        operation,
+        messages,
+        created_at: now.clone(),
+        updated_at: now,
+    };
+    
+    // Get conversations file path (next to exe, fallback to app data)
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
+    
+    let conversations_file = if let Some(exe_path) = exe_dir {
+        println!("Saving conversations next to exe: {:?}", exe_path.join("saved_conversations.json"));
+        exe_path.join("saved_conversations.json")
+    } else {
+        // Fallback to app data directory
+        let app_data_dir = app.path().app_data_dir()
+            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
+        println!("Saving conversations in app data: {:?}", app_data_dir.join("saved_conversations.json"));
+        app_data_dir.join("saved_conversations.json")
+    };
+    
+    // Load existing conversations
+    let mut conversations: Vec<SavedConversation> = if conversations_file.exists() {
+        let content = std::fs::read_to_string(&conversations_file)
+            .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
+        serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse conversations: {:?}", e))?
+    } else {
+        Vec::new()
+    };
+    
+    // Add new conversation
+    conversations.push(conversation);
+    
+    // Keep only last 100 conversations 
+    if conversations.len() > 100 {
+        conversations.drain(0..conversations.len()-100);
+    }
+    
+    // Save back to file
+    let json_content = serde_json::to_string_pretty(&conversations)
+        .map_err(|e| format!("Failed to serialize conversations: {:?}", e))?;
+    
+    std::fs::write(&conversations_file, json_content)
+        .map_err(|e| format!("Failed to write conversations: {:?}", e))?;
+    
+    println!("Conversation '{}' saved successfully with ID: {}", title, conversation_id);
+    Ok(conversation_id)
+}
+
+#[tauri::command]
+async fn load_saved_conversations(app: tauri::AppHandle) -> Result<Vec<SavedConversation>, String> {
+    println!("Loading saved conversations...");
+    
+    // Get conversations file path 
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
+    
+    let conversations_file = if let Some(exe_path) = exe_dir {
+        exe_path.join("saved_conversations.json")
+    } else {
+        let app_data_dir = app.path().app_data_dir()
+            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
+        app_data_dir.join("saved_conversations.json")
+    };
+    
+    if !conversations_file.exists() {
+        println!("No conversations file found");
+        return Ok(Vec::new());
+    }
+    
+    let content = std::fs::read_to_string(&conversations_file)
+        .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
+    
+    let conversations: Vec<SavedConversation> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse conversations: {:?}", e))?;
+    
+    println!("Loaded {} conversations", conversations.len());
+    Ok(conversations)
+}
+
+#[tauri::command]
+async fn delete_saved_conversation(app: tauri::AppHandle, conversation_id: String) -> Result<String, String> {
+    println!("Deleting conversation: {}", conversation_id);
+    
+    // Get conversations file path
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
+    
+    let conversations_file = if let Some(exe_path) = exe_dir {
+        exe_path.join("saved_conversations.json")
+    } else {
+        let app_data_dir = app.path().app_data_dir()
+            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
+        app_data_dir.join("saved_conversations.json")
+    };
+    
+    if !conversations_file.exists() {
+        return Err("No conversations file found".to_string());
+    }
+    
+    // Load existing conversations
+    let content = std::fs::read_to_string(&conversations_file)
+        .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
+    
+    let mut conversations: Vec<SavedConversation> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse conversations: {:?}", e))?;
+    
+    // Remove the conversation
+    let initial_len = conversations.len();
+    conversations.retain(|conv| conv.id != conversation_id);
+    
+    if conversations.len() == initial_len {
+        return Err(format!("Conversation '{}' not found", conversation_id));
+    }
+    
+    // Save back to file
+    let json_content = serde_json::to_string_pretty(&conversations)
+        .map_err(|e| format!("Failed to serialize conversations: {:?}", e))?;
+    
+    std::fs::write(&conversations_file, json_content)
+        .map_err(|e| format!("Failed to write conversations: {:?}", e))?;
+    
+    println!("Conversation '{}' deleted successfully", conversation_id);
+    Ok("Conversation deleted successfully".to_string())
+}
+
+#[tauri::command] 
+async fn load_conversation_messages(app: tauri::AppHandle, conversation_id: String) -> Result<SavedConversation, String> {
+    println!("Loading conversation messages for: {}", conversation_id);
+    
+    // Get conversations file path
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
+    
+    let conversations_file = if let Some(exe_path) = exe_dir {
+        exe_path.join("saved_conversations.json")
+    } else {
+        let app_data_dir = app.path().app_data_dir()
+            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
+        app_data_dir.join("saved_conversations.json")
+    };
+    
+    if !conversations_file.exists() {
+        return Err("No conversations file found".to_string());
+    }
+    
+    let content = std::fs::read_to_string(&conversations_file)
+        .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
+    
+    let conversations: Vec<SavedConversation> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse conversations: {:?}", e))?;
+    
+    // Find the specific conversation
+    let conversation = conversations
+        .into_iter()
+        .find(|conv| conv.id == conversation_id)
+        .ok_or_else(|| format!("Conversation '{}' not found", conversation_id))?;
+    
+    println!("Found conversation '{}' with {} messages", conversation.title, conversation.messages.len());
+    Ok(conversation)
 }
 
 fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
@@ -572,6 +775,55 @@ fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
         .build(app);
 
     Ok(())
+}
+
+#[tauri::command]
+async fn reopen_chat_conversation(app: AppHandle, conversation_id: String, operation: String, title: String) -> Result<(), String> {
+    println!("Reopening conversation: {}", title);
+    
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    
+    let window_id = format!("chat_reopen_{}", timestamp);
+    
+    // Create the chat URL with conversation data
+    let chat_url = format!(
+        "chat.html?operation={}&title={}&conversationId={}&t={}",
+        urlencoding::encode(&operation),
+        urlencoding::encode(&title),
+        urlencoding::encode(&conversation_id),
+        timestamp
+    );
+    
+    // Create chat window using backend WebviewWindowBuilder (same as tray chat)
+    match WebviewWindowBuilder::new(
+        &app,
+        &window_id,
+        tauri::WebviewUrl::App(chat_url.into())
+    )
+    .title(&title)
+    .inner_size(900.0, 700.0)
+    .min_inner_size(700.0, 500.0)
+    .center()
+    .resizable(true)
+    .maximizable(true)
+    .minimizable(true)
+    .closable(true)
+    .always_on_top(false)
+    .skip_taskbar(false)
+    .build() {
+        Ok(chat_window) => {
+            println!("Chat conversation reopened successfully: {}", title);
+            let _ = chat_window.set_focus();
+            Ok(())
+        },
+        Err(e) => {
+            eprintln!("Failed to reopen chat conversation: {:?}", e);
+            Err(format!("Failed to reopen conversation: {}", e))
+        }
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -810,6 +1062,12 @@ pub fn run() {
             save_chat_entry, 
             load_chat_history,
             clear_chat_history,
+            // New conversation management commands
+            save_conversation,
+            load_saved_conversations,
+            delete_saved_conversation,
+            load_conversation_messages,
+            reopen_chat_conversation,
             config::load_config,
             config::save_config,
             config::load_operations,

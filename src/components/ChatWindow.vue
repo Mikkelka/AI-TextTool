@@ -227,13 +227,15 @@ interface Props {
   initialText?: string
   title?: string
   instruction?: string
+  conversationId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   operation: '',
   initialText: '',
   title: 'AI Chat',
-  instruction: ''
+  instruction: '',
+  conversationId: ''
 })
 
 // Message Interface
@@ -459,24 +461,45 @@ const saveConversation = async () => {
   if (messages.value.length === 0) return
 
   try {
-    // Save each message pair as a chat entry
-    for (let i = 0; i < messages.value.length - 1; i += 2) {
-      const userMsg = messages.value[i]
-      const aiMsg = messages.value[i + 1]
-      
-      if (userMsg.role === 'user' && aiMsg && aiMsg.role === 'assistant') {
-        await invoke('save_chat_entry', {
-          originalText: userMsg.content,
-          aiOption: props.operation || 'chat',
-          processedText: aiMsg.content
-        })
-      }
-    }
+    // Generate a smart default title from first user message
+    const firstUserMessage = messages.value.find(m => m.role === 'user')
+    const defaultTitle = firstUserMessage ? 
+      (firstUserMessage.content.length > 50 ? 
+        firstUserMessage.content.substring(0, 50) + '...' : 
+        firstUserMessage.content
+      ) : 'Untitled Conversation'
+
+    // Prompt user for conversation title
+    const title = prompt(`Save conversation as:`, defaultTitle)
+    if (!title) return // User cancelled
+
+    // Convert messages to ConversationMessage format
+    const conversationMessages = messages.value
+      .filter(msg => !msg.isProcessing) // Exclude any processing messages
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp
+      }))
+
+    // Save the full conversation
+    const conversationId = await invoke('save_conversation', {
+      title: title.trim(),
+      operation: props.operation || 'Chat',
+      messages: conversationMessages
+    }) as string
+
+    console.log('Conversation saved successfully with ID:', conversationId)
     
-    // Could add success notification here
+    // Show success feedback (simple alert for now)
+    alert('✅ Conversation saved successfully!')
+    
   } catch (err) {
     console.error('Failed to save conversation:', err)
-    error.value = 'Failed to save conversation'
+    error.value = 'Failed to save conversation: ' + (err instanceof Error ? err.message : String(err))
+    
+    // Show error feedback
+    alert('❌ Failed to save conversation: ' + error.value)
   }
 }
 
@@ -607,6 +630,49 @@ const escapeHtml = (text: string): string => {
   return div.innerHTML
 }
 
+// Load existing conversation
+const loadConversation = async () => {
+  if (!props.conversationId) return
+  
+  try {
+    console.log('Loading conversation:', props.conversationId)
+    
+    // Load the conversation from backend
+    const conversation = await invoke('load_conversation_messages', {
+      conversationId: props.conversationId
+    }) as {
+      id: string
+      title: string
+      operation: string
+      messages: Array<{
+        role: string
+        content: string
+        timestamp: string
+      }>
+      created_at: string
+      updated_at: string
+    }
+    
+    // Convert and load messages
+    messages.value = conversation.messages.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+      timestamp: msg.timestamp,
+      isProcessing: false
+    }))
+    
+    console.log(`Loaded conversation "${conversation.title}" with ${conversation.messages.length} messages`)
+    
+    // Scroll to bottom after messages are loaded
+    await nextTick()
+    scrollToBottom()
+    
+  } catch (err) {
+    console.error('Failed to load conversation:', err)
+    error.value = 'Failed to load conversation: ' + (err instanceof Error ? err.message : String(err))
+  }
+}
+
 // Auto-scroll on new messages
 watch(() => messages.value.length, () => {
   scrollToBottom()
@@ -624,10 +690,15 @@ onMounted(async () => {
   await loadAvailableModels()
   focusInput()
   
-  // Send initial message if there's initial text and operation
-  if (props.initialText && props.operation) {
-    currentMessage.value = `Please ${props.operation.toLowerCase()} this text:`
-    await sendMessage()
+  // Load existing conversation if conversationId is provided
+  if (props.conversationId) {
+    await loadConversation()
+  } else {
+    // Send initial message if there's initial text and operation (only for new chats)
+    if (props.initialText && props.operation) {
+      currentMessage.value = `Please ${props.operation.toLowerCase()} this text:`
+      await sendMessage()
+    }
   }
   
   // Add global copy code function

@@ -58,6 +58,22 @@
 
     <!-- History Content -->
     <div v-else class="history-content">
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button 
+          @click="currentTab = 'conversations'"
+          :class="['tab-btn', { 'tab-btn--active': currentTab === 'conversations' }]"
+        >
+          💬 Conversations ({{ conversations.length }})
+        </button>
+        <button 
+          @click="currentTab = 'entries'"
+          :class="['tab-btn', { 'tab-btn--active': currentTab === 'entries' }]"
+        >
+          📝 Entries ({{ entries.length }})
+        </button>
+      </div>
+
       <!-- Search and Filter -->
       <div class="search-section">
         <div class="search-box">
@@ -79,8 +95,76 @@
         </div>
       </div>
 
-      <!-- History Entries -->
-      <div class="history-entries">
+      <!-- Conversations Tab -->
+      <div v-if="currentTab === 'conversations'" class="history-entries">
+        <div 
+          v-for="conversation in filteredConversations" 
+          :key="conversation.id" 
+          class="conversation-entry"
+        >
+          <div class="conversation-header">
+            <div class="conversation-info">
+              <span class="conversation-title">{{ conversation.title }}</span>
+              <div class="conversation-meta">
+                <span class="operation-badge" :class="getOperationClass(conversation.operation)">
+                  {{ conversation.operation }}
+                </span>
+                <span class="conversation-timestamp">
+                  {{ formatTimestamp(conversation.created_at) }}
+                </span>
+                <span class="conversation-message-count">
+                  {{ conversation.messages.length }} messages
+                </span>
+              </div>
+            </div>
+            <div class="conversation-actions">
+              <button 
+                @click="reopenConversation(conversation)"
+                class="reopen-btn"
+                title="Continue this conversation"
+              >
+                💬 Open
+              </button>
+              <button 
+                @click="exportConversation(conversation)"
+                class="export-btn"
+                title="Export as markdown"
+              >
+                📄 Export
+              </button>
+              <button 
+                @click="deleteConversation(conversation.id)"
+                class="delete-btn"
+                title="Delete conversation"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+          
+          <div class="conversation-preview">
+            <div class="preview-messages">
+              <div 
+                v-for="(message, idx) in conversation.messages.slice(0, 2)" 
+                :key="idx"
+                class="preview-message"
+                :class="message.role"
+              >
+                <span class="message-role">{{ message.role === 'user' ? '👤' : '🤖' }}:</span>
+                <span class="message-text">
+                  {{ message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content }}
+                </span>
+              </div>
+              <div v-if="conversation.messages.length > 2" class="more-messages">
+                +{{ conversation.messages.length - 2 }} more messages...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entries Tab -->
+      <div v-else-if="currentTab === 'entries'" class="history-entries">
         <div 
           v-for="(entry, index) in filteredEntries" 
           :key="index" 
@@ -139,7 +223,10 @@
 
       <!-- Stats Footer -->
       <div class="stats-footer">
-        <div class="stats-info">
+        <div class="stats-info" v-if="currentTab === 'conversations'">
+          Showing {{ filteredConversations.length }} of {{ conversations.length }} conversations
+        </div>
+        <div class="stats-info" v-else>
           Showing {{ filteredEntries.length }} of {{ entries.length }} entries
         </div>
       </div>
@@ -160,8 +247,26 @@ interface ChatEntry {
   processed_text: string
 }
 
+// Conversation Interfaces
+interface ConversationMessage {
+  role: string
+  content: string
+  timestamp: string
+}
+
+interface SavedConversation {
+  id: string
+  title: string
+  operation: string
+  messages: ConversationMessage[]
+  created_at: string
+  updated_at: string
+}
+
 // Reactive state
+const currentTab = ref<'conversations' | 'entries'>('conversations')
 const entries = ref<ChatEntry[]>([])
+const conversations = ref<SavedConversation[]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
@@ -195,18 +300,46 @@ const filteredEntries = computed(() => {
   return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 })
 
+const filteredConversations = computed(() => {
+  let filtered = conversations.value
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(conversation => 
+      conversation.title.toLowerCase().includes(query) ||
+      conversation.operation.toLowerCase().includes(query) ||
+      conversation.messages.some(msg => msg.content.toLowerCase().includes(query))
+    )
+  }
+
+  // Filter by operation
+  if (selectedOperation.value) {
+    filtered = filtered.filter(conversation => conversation.operation === selectedOperation.value)
+  }
+
+  // Sort by created_at timestamp (newest first)
+  return filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+})
+
 // Methods
 const loadHistory = async () => {
   try {
     isLoading.value = true
     error.value = null
     
-    const history = await invoke('load_chat_history') as ChatEntry[]
+    // Load both entries and conversations
+    const [history, savedConversations] = await Promise.all([
+      invoke('load_chat_history') as Promise<ChatEntry[]>,
+      invoke('load_saved_conversations') as Promise<SavedConversation[]>
+    ])
+    
     entries.value = history
+    conversations.value = savedConversations
     
   } catch (err) {
-    console.error('Failed to load chat history:', err)
-    error.value = err instanceof Error ? err.message : 'Failed to load chat history'
+    console.error('Failed to load history:', err)
+    error.value = err instanceof Error ? err.message : 'Failed to load history'
   } finally {
     isLoading.value = false
   }
@@ -349,6 +482,72 @@ const escapeHtml = (text: string): string => {
   const div = document.createElement('div')
   div.textContent = text
   return div.innerHTML
+}
+
+// New conversation management methods  
+const reopenConversation = async (conversation: SavedConversation) => {
+  try {
+    // Use backend command to create chat window (more reliable than frontend WebviewWindow)
+    await invoke('reopen_chat_conversation', {
+      conversationId: conversation.id,
+      operation: conversation.operation,
+      title: conversation.title
+    })
+    
+    console.log('Reopened conversation:', conversation.title)
+    
+  } catch (err) {
+    console.error('Failed to reopen conversation:', err)
+    error.value = 'Failed to reopen conversation: ' + (err instanceof Error ? err.message : String(err))
+    alert('❌ Failed to reopen conversation')
+  }
+}
+
+const exportConversation = async (conversation: SavedConversation) => {
+  try {
+    // Generate markdown content
+    let markdown = `# ${conversation.title}\n\n`
+    markdown += `**Operation:** ${conversation.operation}  \n`
+    markdown += `**Created:** ${new Date(conversation.created_at).toLocaleString()}  \n`
+    markdown += `**Messages:** ${conversation.messages.length}  \n\n`
+    markdown += `---\n\n`
+    
+    conversation.messages.forEach((message, index) => {
+      const role = message.role === 'user' ? '👤 **User**' : '🤖 **Assistant**'
+      markdown += `## ${role}\n\n${message.content}\n\n`
+    })
+    
+    // Copy to clipboard
+    await navigator.clipboard.writeText(markdown)
+    alert('✅ Conversation exported to clipboard as Markdown!')
+    
+  } catch (err) {
+    console.error('Failed to export conversation:', err)
+    error.value = 'Failed to export conversation'
+    alert('❌ Failed to export conversation')
+  }
+}
+
+const deleteConversation = async (conversationId: string) => {
+  const conversation = conversations.value.find(c => c.id === conversationId)
+  if (!conversation) return
+  
+  const confirmDelete = confirm(`Are you sure you want to delete the conversation "${conversation.title}"?\n\nThis action cannot be undone.`)
+  if (!confirmDelete) return
+
+  try {
+    await invoke('delete_saved_conversation', { conversationId })
+    
+    // Remove from local state
+    conversations.value = conversations.value.filter(c => c.id !== conversationId)
+    
+    console.log('Conversation deleted:', conversation.title)
+    
+  } catch (err) {
+    console.error('Failed to delete conversation:', err)
+    error.value = 'Failed to delete conversation: ' + (err instanceof Error ? err.message : String(err))
+    alert('❌ Failed to delete conversation')
+  }
 }
 
 // Lifecycle
@@ -841,6 +1040,283 @@ onMounted(async () => {
 
   .entry-content {
     padding: 16px;
+  }
+}
+
+/* New styles for conversations and tabs */
+.tab-navigation {
+  display: flex;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 16px 24px 0 24px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+  margin-right: 16px;
+}
+
+.tab-btn:hover {
+  color: #2196F3;
+  background: rgba(33, 150, 243, 0.05);
+}
+
+.tab-btn--active {
+  color: #2196F3;
+  border-bottom-color: #2196F3;
+  background: rgba(33, 150, 243, 0.05);
+}
+
+.conversation-entry {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.conversation-entry:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.conversation-info {
+  flex: 1;
+}
+
+.conversation-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  display: block;
+  line-height: 1.3;
+}
+
+.conversation-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.conversation-timestamp {
+  font-size: 12px;
+  color: #666;
+}
+
+.conversation-message-count {
+  font-size: 12px;
+  color: #666;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.conversation-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.reopen-btn,
+.export-btn,
+.delete-btn {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.reopen-btn:hover {
+  background: #e3f2fd;
+  border-color: #2196F3;
+  color: #2196F3;
+}
+
+.export-btn:hover {
+  background: #f3e5f5;
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.delete-btn:hover {
+  background: #ffebee;
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.conversation-preview {
+  padding: 16px 20px;
+}
+
+.preview-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.preview-message.user {
+  color: #333;
+}
+
+.preview-message.assistant {
+  color: #555;
+  background: rgba(33, 150, 243, 0.05);
+  padding: 8px;
+  border-radius: 6px;
+  margin-left: 12px;
+}
+
+.message-role {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.message-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.more-messages {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* Dark mode support for new elements */
+@media (prefers-color-scheme: dark) {
+  .tab-navigation {
+    background: rgba(45, 55, 72, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .tab-btn {
+    color: #a0aec0;
+  }
+
+  .tab-btn:hover {
+    color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+  }
+
+  .tab-btn--active {
+    color: #3182ce;
+    border-bottom-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+  }
+
+  .conversation-entry {
+    background: rgba(45, 55, 72, 0.8);
+  }
+
+  .conversation-header {
+    background: #2d3748;
+    border-bottom-color: #4a5568;
+  }
+
+  .conversation-title {
+    color: #e2e8f0;
+  }
+
+  .conversation-timestamp,
+  .conversation-message-count {
+    color: #a0aec0;
+  }
+
+  .conversation-message-count {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .reopen-btn,
+  .export-btn,
+  .delete-btn {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
+
+  .preview-message.user {
+    color: #e2e8f0;
+  }
+
+  .preview-message.assistant {
+    color: #cbd5e0;
+    background: rgba(49, 130, 206, 0.1);
+  }
+
+  .more-messages {
+    color: #718096;
+  }
+}
+
+/* Responsive adjustments for new elements */
+@media (max-width: 768px) {
+  .tab-navigation {
+    padding: 12px 16px 0 16px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+
+  .conversation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .conversation-actions {
+    align-self: flex-end;
+  }
+
+  .conversation-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .conversation-preview {
+    padding: 12px 16px;
+  }
+
+  .preview-message.assistant {
+    margin-left: 8px;
   }
 }
 </style>

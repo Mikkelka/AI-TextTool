@@ -2,9 +2,16 @@
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 
+interface ChatHistoryEntry {
+  timestamp: string;
+  original_text: string;
+  ai_option: string;
+  processed_text: string;
+}
+
 const greetMsg = ref("");
 const name = ref("");
-const chatHistory = ref([]);
+const chatHistory = ref<ChatHistoryEntry[]>([]);
 const showHistory = ref(false);
 
 async function greet() {
