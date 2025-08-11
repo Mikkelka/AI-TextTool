@@ -86,6 +86,8 @@ pub struct Operation {
     pub icon: Option<String>,
     #[serde(default)]
     pub open_in_window: bool,
+    #[serde(default)]
+    pub order: i32,
 }
 
 impl Default for Operation {
@@ -95,6 +97,7 @@ impl Default for Operation {
             instruction: "You are a helpful writing assistant. Follow the user's instructions precisely and provide clear, accurate assistance with their text.".to_string(),
             icon: None,
             open_in_window: false,
+            order: 999, // High number for new operations to appear at end
         }
     }
 }
@@ -221,6 +224,33 @@ impl ConfigManager {
         let content = fs::read_to_string(&options_path).await?;
         self.operations = serde_json::from_str(&content)?;
         
+        // Fix missing order fields - assign sequential order based on current HashMap iteration
+        let mut needs_reordering = false;
+        for operation in self.operations.values() {
+            if operation.order == 0 {
+                needs_reordering = true;
+                break;
+            }
+        }
+        
+        if needs_reordering {
+            println!("Assigning sequential order to operations");
+            let mut sorted_names: Vec<String> = self.operations.keys().cloned().collect();
+            // Sort by name to get consistent order when order is missing
+            sorted_names.sort();
+            
+            for (index, name) in sorted_names.iter().enumerate() {
+                if let Some(operation) = self.operations.get_mut(name) {
+                    if operation.order == 0 {
+                        operation.order = (index + 1) as i32;
+                    }
+                }
+            }
+            
+            // Save the updated operations with order
+            self.save_operations().await?;
+        }
+        
         Ok(())
     }
 
@@ -233,6 +263,7 @@ impl ConfigManager {
             instruction: "You are a grammar proofreading assistant.\nOutput ONLY the corrected text without any additional comments.\nMaintain the original text structure and writing style.\nRespond in the same language as the input (e.g., English US, French).\nDo not answer or respond to the user's text content.\nIf the text is absolutely incompatible with this (e.g., totally random gibberish), output \"ERROR_TEXT_INCOMPATIBLE_WITH_REQUEST\".".to_string(),
             icon: None,
             open_in_window: false,
+            order: 1,
         });
 
         default_operations.insert("Rewrite".to_string(), Operation {
@@ -240,6 +271,7 @@ impl ConfigManager {
             instruction: "You are a writing assistant.\nRewrite the text provided by the user to improve phrasing.\nOutput ONLY the rewritten text without additional comments.\nRespond in the same language as the input (e.g., English US, French).\nDo not answer or respond to the user's text content.\nIf the text is absolutely incompatible with proofreading (e.g., totally random gibberish), output \"ERROR_TEXT_INCOMPATIBLE_WITH_REQUEST\".".to_string(),
             icon: None,
             open_in_window: false,
+            order: 2,
         });
 
         default_operations.insert("Concise".to_string(), Operation {
@@ -247,6 +279,7 @@ impl ConfigManager {
             instruction: "You are a writing assistant focused on brevity.\nRewrite the text to be more concise and to-the-point while preserving all essential information and meaning.\nOutput ONLY the rewritten text without additional comments.\nKeep the same language as the input.\nEliminate redundancy, filler words, and unnecessary elaboration.\nIf the text is incompatible with this request, output \"ERROR_TEXT_INCOMPATIBLE_WITH_REQUEST\".".to_string(),
             icon: None,
             open_in_window: false,
+            order: 3,
         });
 
         default_operations.insert("Summary".to_string(), Operation {
@@ -254,6 +287,7 @@ impl ConfigManager {
             instruction: "You are an expert text summarizer.\nProvide a comprehensive summary of the given text that captures the main points, key details, and overall message.\nUse Markdown formatting with appropriate headers, bullet points, and emphasis where helpful.\nMaintain the tone and style appropriate to the source material.\nEnsure the summary is concise yet complete, typically 20-30% of the original length.".to_string(),
             icon: None,
             open_in_window: true,
+            order: 4,
         });
 
         default_operations.insert("Key Points".to_string(), Operation {
@@ -261,6 +295,7 @@ impl ConfigManager {
             instruction: "You are an expert at extracting key information.\nAnalyze the given text and extract the most important key points.\nPresent the key points as a well-organized list using Markdown formatting.\nUse bullet points or numbered lists as appropriate.\nHighlight the most critical information using **bold** text.\nEnsure each point is clear, concise, and captures essential information.".to_string(),
             icon: None,
             open_in_window: true,
+            order: 5,
         });
 
         default_operations.insert("Dansk".to_string(), Operation {
@@ -268,6 +303,7 @@ impl ConfigManager {
             instruction: "Du er en professionel oversætter. Oversæt teksten til naturligt og flydende dansk.\nBevar den oprindelige betydning og tone.\nOutput KUN den oversatte tekst uden yderligere kommentarer.\nHvis teksten allerede er på dansk, output \"TEKSTEN_ER_ALLEREDE_PÅ_DANSK\".\nSørg for at bruge korrekt dansk grammatik og idiomatiske udtryk.".to_string(),
             icon: Some("🇩🇰".to_string()),
             open_in_window: false,
+            order: 6,
         });
 
         default_operations.insert("Friendly".to_string(), Operation {
@@ -275,6 +311,7 @@ impl ConfigManager {
             instruction: "You are a writing assistant focused on tone adjustment.\nRewrite the text to sound more friendly, warm, and approachable while maintaining the core message.\nOutput ONLY the rewritten text without additional comments.\nKeep the same language as the input.\nMaintain professionalism while adding warmth.\nIf the text is incompatible with this request, output \"ERROR_TEXT_INCOMPATIBLE_WITH_REQUEST\".".to_string(),
             icon: Some("heart".to_string()),
             open_in_window: false,
+            order: 7,
         });
 
         default_operations.insert("Professional".to_string(), Operation {
@@ -282,6 +319,7 @@ impl ConfigManager {
             instruction: "You are a writing assistant focused on professional tone.\nRewrite the text to sound more professional, formal, and business-appropriate while maintaining the core message.\nOutput ONLY the rewritten text without additional comments.\nKeep the same language as the input.\nUse appropriate professional vocabulary and structure.\nIf the text is incompatible with this request, output \"ERROR_TEXT_INCOMPATIBLE_WITH_REQUEST\".".to_string(),
             icon: Some("briefcase".to_string()),
             open_in_window: false,
+            order: 8,
         });
 
         default_operations.insert("Chat".to_string(), Operation {
@@ -289,6 +327,7 @@ impl ConfigManager {
             instruction: "You are a helpful, friendly AI assistant. Have a natural conversation with the user about the text they've selected or any questions they have.".to_string(),
             icon: Some("chat".to_string()),
             open_in_window: true,
+            order: 9,
         });
 
         default_operations.insert("Custom".to_string(), Operation {
@@ -296,6 +335,7 @@ impl ConfigManager {
             instruction: "You are a helpful writing assistant. Follow the user's instructions precisely and provide clear, accurate assistance with their text.".to_string(),
             icon: Some("wand".to_string()),
             open_in_window: true,
+            order: 10,
         });
 
         // Ensure parent directory exists
@@ -319,6 +359,39 @@ impl ConfigManager {
     /// Get current operations
     pub fn get_operations(&self) -> &HashMap<String, Operation> {
         &self.operations
+    }
+
+    /// Get operations as sorted list by order
+    pub fn get_operations_sorted(&self) -> Vec<(String, Operation)> {
+        let mut operations_list: Vec<(String, Operation)> = self.operations.iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+        
+        // Sort by order field, then by name as fallback
+        operations_list.sort_by(|a, b| {
+            let order_cmp = a.1.order.cmp(&b.1.order);
+            if order_cmp == std::cmp::Ordering::Equal {
+                a.0.cmp(&b.0) // Sort by name if order is the same
+            } else {
+                order_cmp
+            }
+        });
+        
+        operations_list
+    }
+
+    /// Normalize all order values to be sequential (1, 2, 3, 4...)
+    pub async fn normalize_order(&mut self) -> Result<(), ConfigError> {
+        let sorted_ops = self.get_operations_sorted();
+        
+        for (index, (name, _)) in sorted_ops.iter().enumerate() {
+            if let Some(operation) = self.operations.get_mut(name) {
+                operation.order = (index + 1) as i32;
+            }
+        }
+        
+        self.save_operations().await?;
+        Ok(())
     }
 
     /// Get a specific operation by name
@@ -353,17 +426,53 @@ impl ConfigManager {
         Ok(removed)
     }
 
-    /// Save operations to options.json in app data directory
-    pub async fn save_operations(&self) -> Result<(), ConfigError> {
-        let app_data_dir = self.app_handle.path().app_data_dir()?;
-        fs::create_dir_all(&app_data_dir).await?;
+    /// Save operations to options.json - prioritize file next to exe
+    pub async fn save_operations(&mut self) -> Result<(), ConfigError> {
+        // Normalize order values to be sequential before saving
+        let sorted_ops = self.get_operations_sorted();
+        for (index, (name, _)) in sorted_ops.iter().enumerate() {
+            if let Some(operation) = self.operations.get_mut(name) {
+                operation.order = (index + 1) as i32;
+            }
+        }
         
-        let options_path = app_data_dir.join("options.json");
+        // First priority: same directory as executable 
+        let exe_dir_path = if let Ok(exe_path) = std::env::current_exe() {
+            exe_path.parent()
+                .map(|parent| parent.join("options.json"))
+        } else {
+            None
+        };
+        
+        // Second priority: app data directory
+        let app_data_path = self.app_handle.path().app_data_dir()
+            .ok()
+            .map(|dir| dir.join("options.json"));
+            
+        let options_path = if let Some(exe_path) = exe_dir_path.as_ref() {
+            // Try to save next to exe first
+            exe_path.clone()
+        } else if let Some(data_path) = app_data_path.as_ref() {
+            // Fallback to app data directory
+            data_path.clone()
+        } else {
+            return Err(ConfigError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound, 
+                "Unable to determine options.json save path"
+            )));
+        };
+
+        // Ensure parent directory exists
+        if let Some(parent) = options_path.parent() {
+            fs::create_dir_all(parent).await?;
+        }
+        
         let json_content = serde_json::to_string_pretty(&self.operations)?;
         let mut file = fs::File::create(&options_path).await?;
         file.write_all(json_content.as_bytes()).await?;
         file.flush().await?;
         
+        println!("Saved operations with normalized order to: {:?}", options_path);
         Ok(())
     }
 
@@ -527,6 +636,13 @@ pub async fn load_operations(app: AppHandle) -> Result<HashMap<String, Operation
 }
 
 #[tauri::command]
+pub async fn load_operations_sorted(app: AppHandle) -> Result<Vec<(String, Operation)>, String> {
+    let mut manager = ConfigManager::new(app).map_err(|e| e.to_string())?;
+    manager.initialize().await.map_err(|e| e.to_string())?;
+    Ok(manager.get_operations_sorted())
+}
+
+#[tauri::command]
 pub async fn save_operations(app: AppHandle, operations: HashMap<String, Operation>) -> Result<(), String> {
     let mut manager = ConfigManager::new(app).map_err(|e| e.to_string())?;
     manager.initialize().await.map_err(|e| e.to_string())?;
@@ -598,5 +714,13 @@ pub async fn update_text_model(app: AppHandle, model: String) -> Result<(), Stri
     let mut manager = ConfigManager::new(app).map_err(|e| e.to_string())?;
     manager.initialize().await.map_err(|e| e.to_string())?;
     manager.update_text_model(model).await.map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn reset_operations(app: AppHandle) -> Result<(), String> {
+    let mut manager = ConfigManager::new(app).map_err(|e| e.to_string())?;
+    manager.initialize().await.map_err(|e| e.to_string())?;
+    manager.reset_operations().await.map_err(|e| e.to_string())?;
     Ok(())
 }

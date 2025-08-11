@@ -27,7 +27,7 @@
         <button
           v-for="(operation, key, index) in operations"
           :key="key"
-          :ref="el => buttonRefs[index] = el"
+          :ref="el => buttonRefs[index] = el as HTMLElement"
           @click="handleOperationClick(key, operation)"
           @mouseenter="selectedIndex = index"
           :class="[
@@ -98,7 +98,7 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 const processingOperation = ref<string | null>(null)
 const selectedIndex = ref(0)
-const buttonRefs = ref<HTMLElement[]>([])
+const buttonRefs = ref<(HTMLElement | null)[]>([])
 const showFadeIn = ref(true)
 
 // Get text from props or window.clipboardText injection
@@ -289,7 +289,7 @@ const handleKeydown = async (event: KeyboardEvent) => {
 
 const scrollToSelected = async () => {
   await nextTick()
-  const button = buttonRefs.value[selectedIndex.value]
+  const button = buttonRefs.value[selectedIndex.value] as HTMLElement | null
   if (button) {
     button.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }

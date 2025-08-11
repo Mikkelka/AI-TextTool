@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit AI Operations - AI Text Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        
+        #app {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+                color-scheme: dark;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script type="module">
+        import { createApp } from 'vue';
+        import OperationEditWindow from './src/components/OperationEditWindow.vue';
+        
+        // Debug: Check if Tauri is available
+        console.log('Tauri available:', !!window.__TAURI__);
+        console.log('Window object:', window.__TAURI__?.window ? 'Available' : 'Not available');
+        
+        // Create Vue app instance
+        const app = createApp(OperationEditWindow);
+        
+        // Close function that handles window closing
+        const closeWindow = () => {
+            console.log('Closing operation edit window...');
+            
+            try {
+                // Use Tauri API to close window
+                if (window.__TAURI__?.window?.getCurrentWindow) {
+                    window.__TAURI__.window.getCurrentWindow().then(win => {
+                        win.close();
+                    }).catch(e => {
+                        console.log('Failed to close:', e);
+                        // Fallback to browser close
+                        window.close();
+                    });
+                } else {
+                    // Fallback for development
+                    window.close();
+                }
+            } catch (e) {
+                console.error('Close error:', e);
+            }
+        };
+        
+        // Handle ESC key globally for easy window closing
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                console.log('ESC pressed - closing window');
+                closeWindow();
+            }
+        });
+        
+        // Make close function globally available
+        window.closeOperationEdit = closeWindow;
+        
+        // Handle the close event from the Vue component
+        app.config.globalProperties.$onClose = closeWindow;
+        
+        // Mount the app
+        app.mount('#app');
+        
+        // Auto-focus the document for keyboard events
+        setTimeout(() => {
+            document.body.focus();
+        }, 100);
+    </script>
+</body>
+</html>

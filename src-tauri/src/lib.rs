@@ -394,10 +394,11 @@ fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Resul
 
 fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+    let edit_operations_i = MenuItem::with_id(app, "edit_operations", "Edit Operations", true, None::<&str>)?;
     let chat_history_i = MenuItem::with_id(app, "chat_history", "Chat History", true, None::<&str>)?;
     let separator = tauri::menu::PredefinedMenuItem::separator(app)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&settings_i, &chat_history_i, &separator, &quit_i])?;
+    let menu = Menu::with_items(app, &[&settings_i, &edit_operations_i, &chat_history_i, &separator, &quit_i])?;
 
     // Use the default app icon from the bundle
     let _ = TrayIconBuilder::with_id("main-tray")
@@ -472,6 +473,40 @@ fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
                     },
                     Err(e) => {
                         eprintln!("Failed to create chat history window: {:?}", e);
+                    }
+                }
+            }
+            "edit_operations" => {
+                println!("Opening edit operations window...");
+                
+                // Close existing edit operations window if open
+                if let Some(existing_edit) = app.get_webview_window("edit_operations") {
+                    let _ = existing_edit.close();
+                }
+                
+                // Create edit operations window
+                match WebviewWindowBuilder::new(
+                    app,
+                    "edit_operations",
+                    tauri::WebviewUrl::App("operation-edit.html".into())
+                )
+                .title("Edit Operations - AI Text Tools")
+                .inner_size(900.0, 700.0)
+                .min_inner_size(700.0, 500.0)
+                .center()
+                .resizable(true)
+                .maximizable(true)
+                .minimizable(true)
+                .closable(true)
+                .always_on_top(false)
+                .skip_taskbar(false)
+                .build() {
+                    Ok(edit_window) => {
+                        println!("Edit operations window opened successfully");
+                        let _ = edit_window.set_focus();
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to create edit operations window: {:?}", e);
                     }
                 }
             }
@@ -641,13 +676,15 @@ pub fn run() {
             config::load_config,
             config::save_config,
             config::load_operations,
+            config::load_operations_sorted,
             config::save_operations,
             config::get_operation,
             config::update_api_key,
             config::update_shortcut,
             config::switch_provider,
             config::update_operation,
-            config::remove_operation
+            config::remove_operation,
+            config::reset_operations
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
