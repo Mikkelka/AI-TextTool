@@ -232,7 +232,7 @@ const loadOperations = async () => {
     error.value = null
     
     // Load operations as sorted array
-    const sortedResult = await invoke('load_operations_sorted') as Array<[string, Operation]>
+    const sortedResult = await invoke('dm_load_operations_sorted') as Array<[string, Operation]>
     operationsArray.value = sortedResult
     
     // Also populate operations object for compatibility
@@ -293,7 +293,7 @@ const deleteOperation = (operationKey: string) => {
 const performDelete = async (operationKey: string) => {
   try {
     console.log('Attempting to delete operation:', operationKey)
-    const success = await invoke('remove_operation', { name: operationKey }) as boolean
+    const success = await invoke('dm_remove_operation', { name: operationKey }) as boolean
     console.log('Delete result:', success)
     
     // Remove from operationsArray to maintain order
@@ -332,7 +332,7 @@ const resetToDefaults = () => {
 
 const performReset = async () => {
   try {
-    await invoke('reset_operations')
+    await invoke('dm_reset_operations')
     
     // Reload operations to show the defaults
     await loadOperations()
@@ -356,7 +356,7 @@ const saveOperation = async () => {
       open_in_window: editForm.value.open_in_window
     }
 
-    await invoke('update_operation', { 
+    await invoke('dm_update_operation', { 
       name: editForm.value.name.trim(), 
       operation: operation 
     })
@@ -462,7 +462,7 @@ const moveOperation = async (index: number, direction: number) => {
     operationsArray.value = newArray
     
     // Save the new order to backend
-    await invoke('save_operations', { operations: newOperations })
+    await invoke('dm_save_operations', { operations: newOperations })
     
     console.log('Operation moved successfully')
     

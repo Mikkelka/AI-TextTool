@@ -400,7 +400,7 @@ const runConnectionTest = async () => {
   
   try {
     // First save the API key temporarily for testing
-    await invoke('update_api_key', { apiKey: formData.value.apiKey })
+    await invoke('dm_update_api_key', { apiKey: formData.value.apiKey })
     
     // Test the connection
     const isConnected = await invoke('test_ai_connection') as boolean
@@ -459,7 +459,7 @@ const completeSetup = async () => {
     // Load existing config first
     let config: Config
     try {
-      config = await invoke('load_config') as Config
+      config = await invoke('dm_load_config') as Config
     } catch {
       // If no config exists, create a default one
       config = {
@@ -493,13 +493,24 @@ const completeSetup = async () => {
     }
     
     // Save the configuration
-    await invoke('save_config', { config })
+    await invoke('dm_save_config', { config })
     
     loadingMessage.value = 'Setup complete!'
     
-    // Small delay to show completion message
-    setTimeout(() => {
-      emit('setup-complete')
+    // Small delay to show completion message, then close window
+    setTimeout(async () => {
+      isLoading.value = false
+      
+      // Close the onboarding window
+      try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window')
+        const currentWindow = getCurrentWindow()
+        await currentWindow.close()
+      } catch (error) {
+        console.error('Failed to close onboarding window:', error)
+        // Fallback: emit event in case window close fails
+        emit('setup-complete')
+      }
     }, 1000)
     
   } catch (err) {
@@ -509,9 +520,16 @@ const completeSetup = async () => {
   }
 }
 
-const skipSetup = () => {
+const skipSetup = async () => {
   if (confirm('Are you sure you want to skip setup? You can configure settings later from the system tray menu.')) {
-    emit('setup-skipped')
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const currentWindow = getCurrentWindow()
+      await currentWindow.close()
+    } catch (error) {
+      console.error('Failed to close onboarding window:', error)
+      emit('setup-skipped')
+    }
   }
 }
 
@@ -570,12 +588,13 @@ onMounted(() => {
 .onboarding-window {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 40px 20px;
   box-sizing: border-box;
   outline: none;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;

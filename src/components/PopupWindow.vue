@@ -25,7 +25,7 @@
       <!-- Operations Grid -->
       <div class="operations-grid">
         <button
-          v-for="(operation, key, index) in operations"
+          v-for="([key, operation], index) in operationsArray"
           :key="key"
           :ref="el => buttonRefs[index] = el as HTMLElement"
           @click="handleOperationClick(key, operation)"
@@ -93,7 +93,7 @@ interface Operation {
 }
 
 // Reactive state
-const operations = ref<Record<string, Operation>>({})
+const operations = ref<[string, Operation][]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
 const processingOperation = ref<string | null>(null)
@@ -115,7 +115,7 @@ const textPreview = computed(() => {
 })
 
 const operationsArray = computed(() => {
-  return Object.entries(operations.value)
+  return operations.value
 })
 
 // Methods
@@ -124,11 +124,11 @@ const loadOperations = async () => {
     isLoading.value = true
     error.value = null
     
-    const result = await invoke('load_operations') as Record<string, Operation>
+    const result = await invoke('dm_load_operations_sorted') as [string, Operation][]
     operations.value = result
     
     // Reset selected index if operations changed
-    if (selectedIndex.value >= Object.keys(result).length) {
+    if (selectedIndex.value >= result.length) {
       selectedIndex.value = 0
     }
     
@@ -246,7 +246,7 @@ const openChatWindow = async (operationKey: string, operation: Operation) => {
 
 
 const handleKeydown = async (event: KeyboardEvent) => {
-  const operationCount = Object.keys(operations.value).length
+  const operationCount = operations.value.length
 
   switch (event.key) {
     // Note: ESC is handled globally in popup.html, so we don't handle it here
@@ -297,7 +297,7 @@ const scrollToSelected = async () => {
 
 const getGridColumns = (): number => {
   // This matches the CSS grid-template-columns
-  const operationCount = Object.keys(operations.value).length
+  const operationCount = operations.value.length
   if (operationCount <= 2) return 1
   if (operationCount <= 4) return 2
   if (operationCount <= 6) return 3
@@ -337,12 +337,13 @@ onUnmounted(() => {
 .popup-container {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 12px;
   box-sizing: border-box;
   outline: none;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 

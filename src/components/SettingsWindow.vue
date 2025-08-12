@@ -1,15 +1,6 @@
 <template>
   <div class="settings-window">
     <h1>Settings</h1>
-    <div class="form-section">
-      <label>Shortcut Key:</label>
-      <input 
-        type="text" 
-        v-model="formData.shortcut" 
-        class="form-input" 
-        placeholder="e.g., ctrl+space" 
-      />
-    </div>
     
     <div class="form-section">
       <h2>Gemini AI</h2>
@@ -47,7 +38,6 @@
     <button class="save-btn" @click="saveSettings" :disabled="isSaving">
       {{ isSaving ? 'Saving...' : 'Save' }}
     </button>
-    <p class="restart-notice">Restart required for changes to take effect</p>
     
     <div v-if="message" class="message" :class="messageType">
       {{ message }}
@@ -67,14 +57,12 @@ interface Config {
   provider: string
   chat_model: string
   text_model: string
-  shortcut: string
   locale: string
   streaming: boolean
   providers: Record<string, any>
 }
 
 const formData = ref({
-  shortcut: 'ctrl+space',
   apiKey: '',
   chatModel: 'gemini-2.5-flash',
   textModel: 'gemini-2.5-flash-lite',
@@ -96,11 +84,10 @@ const showMessage = (text: string, type: 'success' | 'error' = 'success') => {
 const loadConfig = async () => {
   try {
     console.log('Loading existing configuration...')
-    const config = await invoke<Config>('load_config')
+    const config = await invoke<Config>('dm_load_config')
     
     // Populate form with existing config
     formData.value = {
-      shortcut: config.shortcut || 'ctrl+space',
       apiKey: config.api_key || '',
       chatModel: config.chat_model || 'gemini-2.5-flash',
       textModel: config.text_model || 'gemini-2.5-flash-lite',
@@ -135,7 +122,7 @@ const saveSettings = async () => {
     // Load existing config first to preserve other settings
     let config: Config
     try {
-      config = await invoke<Config>('load_config')
+      config = await invoke<Config>('dm_load_config')
     } catch {
       // Create default config if none exists
       config = {
@@ -144,19 +131,18 @@ const saveSettings = async () => {
         provider: 'Gemini',
         chat_model: 'gemini-2.5-flash',
         text_model: 'gemini-2.5-flash-lite',
-        shortcut: 'ctrl+space',
         locale: 'en',
         streaming: false,
         providers: {}
       }
     }
     
+    
     // Update config with form values
     config.api_key = formData.value.apiKey
     config.chat_system_instruction = formData.value.systemInstruction
     config.chat_model = formData.value.chatModel
     config.text_model = formData.value.textModel
-    config.shortcut = formData.value.shortcut
     
     // Ensure provider config exists and is updated
     if (!config.providers.Gemini) {
@@ -168,7 +154,7 @@ const saveSettings = async () => {
     config.providers.Gemini.chat_system_instruction = formData.value.systemInstruction
     
     // Save the updated configuration
-    await invoke('save_config', { config })
+    await invoke('dm_save_config', { config })
     
     showMessage('Settings saved successfully!', 'success')
     console.log('Settings saved successfully')
@@ -191,6 +177,7 @@ const saveSettings = async () => {
   }
 }
 
+
 onMounted(() => {
   console.log('SettingsWindow mounted successfully')
   loadConfig()
@@ -202,7 +189,10 @@ onMounted(() => {
   padding: 20px;
   background: #1a1a1a;
   color: #ffffff;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -316,5 +306,71 @@ label {
   background: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
+}
+
+.form-input.error {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+  padding: 5px;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.success-message {
+  color: #28a745;
+  font-size: 12px;
+  margin-top: 5px;
+  padding: 5px;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.suggestions-title {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.suggestion-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.suggestion-btn {
+  padding: 4px 8px;
+  background: #333;
+  color: #ccc;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-btn:hover {
+  background: #4a9eff;
+  color: white;
+  border-color: #4a9eff;
+}
+
+.restart-notice {
+  text-align: center;
+  color: #ff9800;
+  font-size: 13px;
+  margin-top: 15px;
+  padding: 8px;
+  background: rgba(255, 152, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 152, 0, 0.3);
 }
 </style>

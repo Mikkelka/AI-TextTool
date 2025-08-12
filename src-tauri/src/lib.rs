@@ -8,11 +8,11 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 use enigo::{Enigo, Key, Keyboard, Settings, Mouse};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use serde::{Serialize, Deserialize};
 use ai_provider::{GeminiProvider, ChatMessage};
+use data_manager::DataManager;
 
-mod config;
 mod ai_provider;
+mod data_manager;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -29,10 +29,9 @@ async fn process_text_with_ai(
     println!("Processing text with AI: '{}' using operation: '{}'", text, operation);
     
     // Load configuration to get API key and model settings
-    let config = match config::load_config(app.clone()).await {
-        Ok(config) => config,
-        Err(e) => return Err(format!("Failed to load config: {}", e)),
-    };
+    let mut manager = DataManager::new(app.clone());
+    let _ = manager.initialize().await.map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let config = manager.get_config().clone();
     
     // Check if API key is configured
     if config.api_key.trim().is_empty() {
@@ -46,11 +45,9 @@ async fn process_text_with_ai(
     };
     
     // Get operation details
-    let operation_details = match config::get_operation(app.clone(), operation.clone()).await {
-        Ok(Some(op)) => op,
-        Ok(None) => return Err(format!("Operation '{}' not found", operation)),
-        Err(e) => return Err(format!("Failed to get operation: {}", e)),
-    };
+    let operation_details = manager.get_operation(&operation)
+        .cloned()
+        .ok_or_else(|| format!("Operation '{}' not found", operation))?;
     
     // Prepare the prompt
     let full_prompt = if operation_details.prefix.is_empty() {
@@ -89,10 +86,9 @@ async fn chat_with_ai(
     println!("Chat with AI: '{}'", message);
     
     // Load configuration
-    let config = match config::load_config(app).await {
-        Ok(config) => config,
-        Err(e) => return Err(format!("Failed to load config: {}", e)),
-    };
+    let mut manager = DataManager::new(app);
+    let _ = manager.initialize().await.map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let config = manager.get_config().clone();
     
     if config.api_key.trim().is_empty() {
         return Err("API key not configured".to_string());
@@ -132,10 +128,9 @@ async fn chat_with_ai(
 async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     println!("Testing AI connection...");
     
-    let config = match config::load_config(app).await {
-        Ok(config) => config,
-        Err(e) => return Err(format!("Failed to load config: {}", e)),
-    };
+    let mut manager = DataManager::new(app);
+    let _ = manager.initialize().await.map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let config = manager.get_config().clone();
     
     if config.api_key.trim().is_empty() {
         return Ok(false);
@@ -218,337 +213,7 @@ fn simulate_paste() -> Result<String, String> {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-struct ChatEntry {
-    timestamp: String,
-    original_text: String,
-    ai_option: String,
-    processed_text: String,
-}
 
-// New structures for full conversation support
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct ConversationMessage {
-    role: String,  // "user" or "assistant"
-    content: String,
-    timestamp: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]  
-struct SavedConversation {
-    id: String,
-    title: String,
-    operation: String,  // The operation that started this conversation
-    messages: Vec<ConversationMessage>,
-    created_at: String,
-    updated_at: String,
-}
-
-#[tauri::command]
-async fn save_chat_entry(app: tauri::AppHandle, original_text: String, ai_option: String, processed_text: String) -> Result<String, String> {
-    println!("Saving chat entry: {} -> {}", original_text, processed_text);
-    
-    // Create chat entry
-    let entry = ChatEntry {
-        timestamp: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string(),
-        original_text,
-        ai_option,
-        processed_text,
-    };
-    
-    // Get directory next to executable, fallback to app data
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let history_file = if let Some(exe_path) = exe_dir {
-        println!("Saving chat history next to exe: {:?}", exe_path.join("chat_history.json"));
-        exe_path.join("chat_history.json")
-    } else {
-        // Fallback to app data directory
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        let chats_dir = app_data_dir.join("chats");
-        std::fs::create_dir_all(&chats_dir)
-            .map_err(|e| format!("Failed to create chats directory: {:?}", e))?;
-        println!("Saving chat history in app data: {:?}", chats_dir.join("chat_history.json"));
-        chats_dir.join("chat_history.json")
-    };
-    let mut chat_history: Vec<ChatEntry> = if history_file.exists() {
-        let content = std::fs::read_to_string(&history_file)
-            .map_err(|e| format!("Failed to read chat history: {:?}", e))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse chat history: {:?}", e))?
-    } else {
-        Vec::new()
-    };
-    
-    // Add new entry
-    chat_history.push(entry);
-    
-    // Keep only last 100 entries
-    if chat_history.len() > 100 {
-        chat_history.drain(0..chat_history.len()-100);
-    }
-    
-    // Save back to file
-    let json_content = serde_json::to_string_pretty(&chat_history)
-        .map_err(|e| format!("Failed to serialize chat history: {:?}", e))?;
-    
-    std::fs::write(&history_file, json_content)
-        .map_err(|e| format!("Failed to write chat history: {:?}", e))?;
-    
-    println!("Chat entry saved successfully to: {:?}", history_file);
-    Ok("Chat saved successfully".to_string())
-}
-
-#[tauri::command]
-async fn load_chat_history(app: tauri::AppHandle) -> Result<Vec<ChatEntry>, String> {
-    println!("Loading chat history...");
-    
-    // Get directory next to executable, fallback to app data
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let history_file = if let Some(exe_path) = exe_dir {
-        println!("Loading chat history from exe directory: {:?}", exe_path.join("chat_history.json"));
-        exe_path.join("chat_history.json")
-    } else {
-        // Fallback to app data directory
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        println!("Loading chat history from app data: {:?}", app_data_dir.join("chats").join("chat_history.json"));
-        app_data_dir.join("chats").join("chat_history.json")
-    };
-    
-    if !history_file.exists() {
-        return Ok(Vec::new());
-    }
-    
-    let content = std::fs::read_to_string(&history_file)
-        .map_err(|e| format!("Failed to read chat history: {:?}", e))?;
-    
-    let chat_history: Vec<ChatEntry> = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse chat history: {:?}", e))?;
-    
-    println!("Loaded {} chat entries", chat_history.len());
-    Ok(chat_history)
-}
-
-#[tauri::command]
-async fn clear_chat_history(app: tauri::AppHandle) -> Result<String, String> {
-    println!("Clearing chat history...");
-    
-    // Get directory next to executable, fallback to app data  
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let history_file = if let Some(exe_path) = exe_dir {
-        println!("Clearing chat history from exe directory: {:?}", exe_path.join("chat_history.json"));
-        exe_path.join("chat_history.json")
-    } else {
-        // Fallback to app data directory
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        println!("Clearing chat history from app data: {:?}", app_data_dir.join("chats").join("chat_history.json"));
-        app_data_dir.join("chats").join("chat_history.json")
-    };
-    
-    if history_file.exists() {
-        std::fs::write(&history_file, "[]")
-            .map_err(|e| format!("Failed to clear chat history: {:?}", e))?;
-    }
-    
-    println!("Chat history cleared successfully");
-    Ok("Chat history cleared successfully".to_string())
-}
-
-// New conversation management functions
-#[tauri::command]
-async fn save_conversation(
-    app: tauri::AppHandle,
-    title: String,
-    operation: String, 
-    messages: Vec<ConversationMessage>
-) -> Result<String, String> {
-    println!("Saving conversation: '{}'", title);
-    
-    // Generate unique ID for the conversation
-    let conversation_id = format!("conv_{}", chrono::Utc::now().timestamp_millis());
-    let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
-    
-    // Create conversation object
-    let conversation = SavedConversation {
-        id: conversation_id.clone(),
-        title: title.clone(),
-        operation,
-        messages,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-    
-    // Get conversations file path (next to exe, fallback to app data)
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let conversations_file = if let Some(exe_path) = exe_dir {
-        println!("Saving conversations next to exe: {:?}", exe_path.join("saved_conversations.json"));
-        exe_path.join("saved_conversations.json")
-    } else {
-        // Fallback to app data directory
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        println!("Saving conversations in app data: {:?}", app_data_dir.join("saved_conversations.json"));
-        app_data_dir.join("saved_conversations.json")
-    };
-    
-    // Load existing conversations
-    let mut conversations: Vec<SavedConversation> = if conversations_file.exists() {
-        let content = std::fs::read_to_string(&conversations_file)
-            .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse conversations: {:?}", e))?
-    } else {
-        Vec::new()
-    };
-    
-    // Add new conversation
-    conversations.push(conversation);
-    
-    // Keep only last 100 conversations 
-    if conversations.len() > 100 {
-        conversations.drain(0..conversations.len()-100);
-    }
-    
-    // Save back to file
-    let json_content = serde_json::to_string_pretty(&conversations)
-        .map_err(|e| format!("Failed to serialize conversations: {:?}", e))?;
-    
-    std::fs::write(&conversations_file, json_content)
-        .map_err(|e| format!("Failed to write conversations: {:?}", e))?;
-    
-    println!("Conversation '{}' saved successfully with ID: {}", title, conversation_id);
-    Ok(conversation_id)
-}
-
-#[tauri::command]
-async fn load_saved_conversations(app: tauri::AppHandle) -> Result<Vec<SavedConversation>, String> {
-    println!("Loading saved conversations...");
-    
-    // Get conversations file path 
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let conversations_file = if let Some(exe_path) = exe_dir {
-        exe_path.join("saved_conversations.json")
-    } else {
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        app_data_dir.join("saved_conversations.json")
-    };
-    
-    if !conversations_file.exists() {
-        println!("No conversations file found");
-        return Ok(Vec::new());
-    }
-    
-    let content = std::fs::read_to_string(&conversations_file)
-        .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
-    
-    let conversations: Vec<SavedConversation> = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse conversations: {:?}", e))?;
-    
-    println!("Loaded {} conversations", conversations.len());
-    Ok(conversations)
-}
-
-#[tauri::command]
-async fn delete_saved_conversation(app: tauri::AppHandle, conversation_id: String) -> Result<String, String> {
-    println!("Deleting conversation: {}", conversation_id);
-    
-    // Get conversations file path
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let conversations_file = if let Some(exe_path) = exe_dir {
-        exe_path.join("saved_conversations.json")
-    } else {
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        app_data_dir.join("saved_conversations.json")
-    };
-    
-    if !conversations_file.exists() {
-        return Err("No conversations file found".to_string());
-    }
-    
-    // Load existing conversations
-    let content = std::fs::read_to_string(&conversations_file)
-        .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
-    
-    let mut conversations: Vec<SavedConversation> = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse conversations: {:?}", e))?;
-    
-    // Remove the conversation
-    let initial_len = conversations.len();
-    conversations.retain(|conv| conv.id != conversation_id);
-    
-    if conversations.len() == initial_len {
-        return Err(format!("Conversation '{}' not found", conversation_id));
-    }
-    
-    // Save back to file
-    let json_content = serde_json::to_string_pretty(&conversations)
-        .map_err(|e| format!("Failed to serialize conversations: {:?}", e))?;
-    
-    std::fs::write(&conversations_file, json_content)
-        .map_err(|e| format!("Failed to write conversations: {:?}", e))?;
-    
-    println!("Conversation '{}' deleted successfully", conversation_id);
-    Ok("Conversation deleted successfully".to_string())
-}
-
-#[tauri::command] 
-async fn load_conversation_messages(app: tauri::AppHandle, conversation_id: String) -> Result<SavedConversation, String> {
-    println!("Loading conversation messages for: {}", conversation_id);
-    
-    // Get conversations file path
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-    
-    let conversations_file = if let Some(exe_path) = exe_dir {
-        exe_path.join("saved_conversations.json")
-    } else {
-        let app_data_dir = app.path().app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {:?}", e))?;
-        app_data_dir.join("saved_conversations.json")
-    };
-    
-    if !conversations_file.exists() {
-        return Err("No conversations file found".to_string());
-    }
-    
-    let content = std::fs::read_to_string(&conversations_file)
-        .map_err(|e| format!("Failed to read conversations: {:?}", e))?;
-    
-    let conversations: Vec<SavedConversation> = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse conversations: {:?}", e))?;
-    
-    // Find the specific conversation
-    let conversation = conversations
-        .into_iter()
-        .find(|conv| conv.id == conversation_id)
-        .ok_or_else(|| format!("Conversation '{}' not found", conversation_id))?;
-    
-    println!("Found conversation '{}' with {} messages", conversation.title, conversation.messages.len());
-    Ok(conversation)
-}
 
 fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     println!("Creating onboarding window");
@@ -583,10 +248,9 @@ fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Resul
                 eprintln!("Failed to create tray after onboarding: {:?}", e);
             }
             
-            // Register global shortcut
-            let shortcuts = app_handle.global_shortcut();
-            match shortcuts.register("CmdOrCtrl+Space") {
-                Ok(()) => println!("Global shortcut registered after onboarding!"),
+            // Register global shortcut after onboarding (hardcoded to ctrl+space)
+            match app_handle.global_shortcut().register("CmdOrCtrl+Space") {
+                Ok(()) => println!("Global shortcut registered after onboarding"),
                 Err(e) => println!("Failed to register shortcut after onboarding: {:?}", e),
             }
         }
@@ -833,10 +497,8 @@ pub fn run() {
         .plugin({
             let last_trigger = Arc::new(Mutex::new(Instant::now() - std::time::Duration::from_millis(1000)));
             tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(move |app, shortcut, _event| {
-                    println!("Global shortcut triggered: {}", shortcut.to_string());
-                    let shortcut_str = shortcut.to_string().to_lowercase();
-                    if shortcut_str == "control+space" || shortcut_str == "cmd+space" {
+                .with_handler(move |app, _shortcut, _event| {
+                    {
                         // Debouncing - only handle if 200ms have passed since last trigger
                         let now = Instant::now();
                         {
@@ -848,15 +510,12 @@ pub fn run() {
                             *last_time = now;
                         }
                         
-                        println!("Handling Ctrl+Space shortcut");
                         let app_handle = app.clone();
                         tauri::async_runtime::spawn(async move {
                             // First, get current clipboard content to compare later
                             let original_clipboard = app_handle.clipboard().read_text().unwrap_or_else(|_| String::new());
-                            println!("Original clipboard content: '{}'", original_clipboard);
                             
                             // Simulate Ctrl+C to copy any selected text
-                            println!("Simulating Ctrl+C...");
                             let mut enigo = Enigo::new(&Settings::default()).unwrap();
                             enigo.key(Key::Control, enigo::Direction::Press).unwrap();
                             enigo.key(Key::Unicode('c'), enigo::Direction::Click).unwrap();
@@ -866,15 +525,11 @@ pub fn run() {
                             std::thread::sleep(std::time::Duration::from_millis(100));
                             
                             // Get clipboard content after Ctrl+C
-                            println!("Reading clipboard after Ctrl+C...");
                             if let Ok(new_clipboard) = app_handle.clipboard().read_text() {
-                                println!("New clipboard content: '{}'", new_clipboard);
-                                
                                 // Check if clipboard changed (meaning text was selected and copied)
                                 let text_was_selected = new_clipboard != original_clipboard && !new_clipboard.trim().is_empty();
                                 
                                 if text_was_selected {
-                                    println!("Text was selected - opening popup with operations");
                                     let clipboard_text = new_clipboard;
                                     // Get mouse position
                                     let enigo_mouse = Enigo::new(&Settings::default()).unwrap();
@@ -1018,9 +673,14 @@ pub fn run() {
             }
             
             // Check if config exists - if not, show onboarding
-            let config_path = app.path().app_data_dir()
-                .map(|dir| dir.join("config.json"))
-                .unwrap_or_else(|_| std::env::current_dir().unwrap().join("config.json"));
+            // Only check exe directory (same as ConfigManager)
+            let config_path = if let Ok(exe_path) = std::env::current_exe() {
+                exe_path.parent()
+                    .map(|parent| parent.join("config.json"))
+                    .unwrap_or_else(|| std::env::current_dir().unwrap().join("config.json"))
+            } else {
+                std::env::current_dir().unwrap().join("config.json")
+            };
             
             if !config_path.exists() {
                 println!("No config found - showing onboarding window");
@@ -1029,10 +689,9 @@ pub fn run() {
                 println!("Config found - setting up tray and global shortcut");
                 create_tray(app.handle())?;
                 
-                // Register global shortcut Ctrl+Space
-                println!("Registering global shortcut: CmdOrCtrl+Space");
-                match app.global_shortcut().register("CmdOrCtrl+Space") {
-                    Ok(()) => println!("Global shortcut registered successfully!"),
+                // Register global shortcut (hardcoded to ctrl+space)
+                match app.handle().global_shortcut().register("CmdOrCtrl+Space") {
+                    Ok(()) => println!("Global shortcut 'Ctrl+Space' registered successfully!"),
                     Err(e) => println!("Failed to register global shortcut: {:?}", e),
                 }
             }
@@ -1059,27 +718,26 @@ pub fn run() {
             test_ai_connection,
             get_ai_models,
             simulate_paste, 
-            save_chat_entry, 
-            load_chat_history,
-            clear_chat_history,
-            // New conversation management commands
-            save_conversation,
-            load_saved_conversations,
-            delete_saved_conversation,
-            load_conversation_messages,
             reopen_chat_conversation,
-            config::load_config,
-            config::save_config,
-            config::load_operations,
-            config::load_operations_sorted,
-            config::save_operations,
-            config::get_operation,
-            config::update_api_key,
-            config::update_shortcut,
-            config::switch_provider,
-            config::update_operation,
-            config::remove_operation,
-            config::reset_operations
+            // Data management commands (config, operations, chat, conversations)
+            data_manager::dm_load_config,
+            data_manager::dm_save_config,
+            data_manager::dm_load_operations,
+            data_manager::dm_load_operations_sorted,
+            data_manager::dm_save_operations,
+            data_manager::dm_get_operation,
+            data_manager::dm_update_operation,
+            data_manager::dm_remove_operation,
+            data_manager::dm_reset_operations,
+            data_manager::dm_update_api_key,
+            data_manager::dm_switch_provider,
+            data_manager::save_chat_entry, 
+            data_manager::load_chat_history,
+            data_manager::clear_chat_history,
+            data_manager::save_conversation,
+            data_manager::load_saved_conversations,
+            data_manager::delete_saved_conversation,
+            data_manager::load_conversation_messages
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
