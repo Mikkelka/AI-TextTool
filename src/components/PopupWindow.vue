@@ -65,7 +65,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
 // Props
 interface Props {
@@ -145,19 +144,26 @@ const loadOperations = async () => {
 }
 
 const handleOperationClick = async (operationKey: string, operation: Operation) => {
+  console.log(`Operation clicked: ${operationKey}, open_in_window: ${operation.open_in_window}`)
+  
   if (!clipboardText.value?.trim()) {
+    console.warn('No text selected for processing')
     error.value = 'No text selected for processing'
     return
   }
+
+  console.log(`Processing operation: ${operationKey} with text length: ${clipboardText.value.length}`)
 
   try {
     processingOperation.value = operationKey
     emit('operation-selected', operationKey, operation)
 
     if (operation.open_in_window) {
+      console.log(`Opening chat window for operation: ${operationKey}`)
       // Open chat window for chat operations
       await openChatWindow(operationKey, operation)
     } else {
+      console.log(`Processing text directly for operation: ${operationKey}`)
       // Process directly for non-chat operations
       await processTextDirectly(operationKey, operation)
     }
@@ -169,7 +175,7 @@ const handleOperationClick = async (operationKey: string, operation: Operation) 
   }
 }
 
-const processTextDirectly = async (operationKey: string, operation: Operation) => {
+const processTextDirectly = async (operationKey: string, _operation: Operation) => {
   try {
     const result = await invoke('process_text_with_ai', {
       text: clipboardText.value,
@@ -205,41 +211,26 @@ const processTextDirectly = async (operationKey: string, operation: Operation) =
 
 const openChatWindow = async (operationKey: string, operation: Operation) => {
   try {
-    // Create a unique window ID
-    const timestamp = Date.now()
-    const windowId = `chat_${operationKey.toLowerCase()}_${timestamp}`
+    console.log(`Opening chat window for operation: ${operationKey}`)
     
-    // Prepare the text with operation prefix if needed
-    const processedText = operation.prefix ? 
-      `${operation.prefix}${clipboardText.value}` : 
-      clipboardText.value
+    // Send raw text - let the backend handle operation prefix
+    const textToSend = clipboardText.value
+    console.log(`Text to send (length: ${textToSend.length}):`, textToSend.substring(0, 100) + '...')
 
-    // Create chat window with proper parameters
-    const chatWindow = new WebviewWindow(windowId, {
-      url: `chat.html?operation=${encodeURIComponent(operationKey)}&text=${encodeURIComponent(processedText)}&title=${encodeURIComponent(operationKey + ' - AI Chat')}&instruction=${encodeURIComponent(operation.instruction)}&t=${timestamp}`,
-      title: `${operationKey} - AI Chat`,
-      width: 900,
-      height: 700,
-      resizable: true,
-      decorations: true,
-      alwaysOnTop: false,
-      skipTaskbar: false
+    // Use backend command instead of frontend WebviewWindow
+    await invoke('open_chat_window', {
+      operation: operationKey,
+      text: textToSend,
+      instruction: operation.instruction
     })
 
-    // Wait for window to be ready and send initial data
-    await chatWindow.once('tauri://created', () => {
-      chatWindow.emit('init-chat', {
-        operation: operationKey,
-        instruction: operation.instruction,
-        initialText: processedText,
-        originalText: clipboardText.value
-      })
-    })
+    console.log('Chat window opened successfully via backend command')
 
     // Close popup after opening chat
     closeWindow()
 
   } catch (err) {
+    console.error('Failed to open chat window:', err)
     throw new Error(`Failed to open chat window: ${err}`)
   }
 }

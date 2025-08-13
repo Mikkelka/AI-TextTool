@@ -172,14 +172,14 @@ interface Props {
   // No props needed for now
 }
 
-const props = withDefaults(defineProps<Props>(), {})
+withDefaults(defineProps<Props>(), {})
 
 // Emits
 interface Emits {
   (e: 'close'): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
 
 // Types
 interface Operation {

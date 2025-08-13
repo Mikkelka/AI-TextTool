@@ -458,7 +458,7 @@ const renderMarkdown = (text: string): string => {
   let html = text
   
   // Code blocks
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
     const language = lang || 'text'
     return `<pre class="code-block"><code class="language-${language}">${escapeHtml(code.trim())}</code></pre>`
   })
@@ -512,7 +512,7 @@ const exportConversation = async (conversation: SavedConversation) => {
     markdown += `**Messages:** ${conversation.messages.length}  \n\n`
     markdown += `---\n\n`
     
-    conversation.messages.forEach((message, index) => {
+    conversation.messages.forEach((message, _index) => {
       const role = message.role === 'user' ? '👤 **User**' : '🤖 **Assistant**'
       markdown += `## ${role}\n\n${message.content}\n\n`
     })

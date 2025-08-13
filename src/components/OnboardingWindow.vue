@@ -254,7 +254,7 @@ interface Props {
   visible?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   visible: true
 })
 
@@ -572,10 +572,10 @@ const watchApiKey = () => {
 // Lifecycle
 onMounted(() => {
   // Focus the component for keyboard navigation
-  document.querySelector('.onboarding-window')?.focus()
+  (document.querySelector('.onboarding-window') as HTMLElement)?.focus()
   
   // Watch for API key changes
-  const unwatch = ref(formData.value.apiKey)
+  // Watch for API key changes
   const interval = setInterval(watchApiKey, 500)
   
   onUnmounted(() => {

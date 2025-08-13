@@ -597,7 +597,7 @@ const renderMarkdown = (text: string): string => {
   let html = text
   
   // Code blocks
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
     return `<pre class="code-block"><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code><button class="copy-code-btn" onclick="copyCode(this)">📋</button></pre>`
   })
   
@@ -687,17 +687,39 @@ watch(isProcessing, (newVal) => {
 
 // Lifecycle
 onMounted(async () => {
+  console.log('ChatWindow mounted with props:', {
+    operation: props.operation,
+    initialText: props.initialText ? `${props.initialText.length} chars` : 'none',
+    title: props.title,
+    conversationId: props.conversationId
+  })
+  
   await loadAvailableModels()
   focusInput()
   
+  // Parse URL parameters if not provided as props (fallback)
+  const urlParams = new URLSearchParams(window.location.search)
+  const operation = props.operation || urlParams.get('operation') || ''
+  const initialText = props.initialText || urlParams.get('text') || ''
+  
+  console.log('Final values after URL parsing:', {
+    operation,
+    initialText: initialText ? `${initialText.length} chars` : 'none'
+  })
+  
   // Load existing conversation if conversationId is provided
   if (props.conversationId) {
+    console.log('Loading existing conversation:', props.conversationId)
     await loadConversation()
   } else {
     // Send initial message if there's initial text and operation (only for new chats)
-    if (props.initialText && props.operation) {
-      currentMessage.value = `Please ${props.operation.toLowerCase()} this text:`
+    if (initialText && operation) {
+      console.log(`Auto-sending initial text for operation: ${operation}`)
+      // Send the actual selected text as the first message
+      currentMessage.value = initialText
       await sendMessage()
+    } else {
+      console.log('No initial text or operation - waiting for user input')
     }
   }
   
