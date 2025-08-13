@@ -93,6 +93,7 @@ pub struct ConversationMessage {
     pub role: String,
     pub content: String,
     pub timestamp: String,
+    pub thoughts: Option<String>,
 }
 
 /// Saved conversation

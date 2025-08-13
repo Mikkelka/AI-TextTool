@@ -502,7 +502,8 @@ const saveConversation = async () => {
       .map(msg => ({
         role: msg.role,
         content: msg.content,
-        timestamp: msg.timestamp
+        timestamp: msg.timestamp,
+        thoughts: msg.thoughts
       }))
 
     // Save the full conversation
@@ -681,7 +682,8 @@ const loadConversation = async () => {
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
       timestamp: msg.timestamp,
-      isProcessing: false
+      isProcessing: false,
+      thoughts: msg.thoughts
     }))
     
     console.log(`Loaded conversation "${conversation.title}" with ${conversation.messages.length} messages`)
