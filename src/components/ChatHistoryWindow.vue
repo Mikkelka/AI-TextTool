@@ -17,7 +17,7 @@
         </button>
         <button 
           @click="clearAllHistory" 
-          :disabled="entries.length === 0"
+          :disabled="entries.length === 0 && conversations.length === 0"
           class="clear-btn"
           title="Clear all history"
         >
@@ -47,7 +47,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="entries.length === 0" class="empty-container">
+    <div v-else-if="entries.length === 0 && conversations.length === 0" class="empty-container">
       <div class="empty-icon">📝</div>
       <h3 class="empty-title">No history yet</h3>
       <p class="empty-message">
@@ -360,6 +360,7 @@ const clearAllHistory = async () => {
     
     // Clear local state to show empty state immediately
     entries.value = []
+    conversations.value = []
     
   } catch (err) {
     console.error('Failed to clear history:', err)

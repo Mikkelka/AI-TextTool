@@ -425,6 +425,7 @@ impl DataManager {
     
     pub async fn clear_chat_history(&mut self) -> Result<(), DataError> {
         self.data.chat_history.clear();
+        self.data.saved_conversations.clear();
         self.save_data().await
     }
     
