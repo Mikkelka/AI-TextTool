@@ -47,6 +47,8 @@ pub enum GeminiError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Part {
     pub text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thought: Option<bool>,
 }
 
 /// Content structure for Gemini API requests
@@ -61,7 +63,7 @@ impl Content {
     /// Create new content from text with optional role
     pub fn new(text: impl Into<String>, role: Option<String>) -> Self {
         Self {
-            parts: vec![Part { text: text.into() }],
+            parts: vec![Part { text: text.into(), thought: None }],
             role,
         }
     }
@@ -109,6 +111,41 @@ impl Default for SafetySetting {
     }
 }
 
+/// Thinking configuration for Gemini models
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThinkingConfig {
+    #[serde(rename = "thinkingBudget")]
+    pub thinking_budget: i32,
+    #[serde(rename = "includeThoughts")]
+    pub include_thoughts: bool,
+}
+
+impl ThinkingConfig {
+    /// Create dynamic thinking config with thought summaries
+    pub fn dynamic_with_thoughts() -> Self {
+        Self {
+            thinking_budget: -1,
+            include_thoughts: true,
+        }
+    }
+    
+    /// Create dynamic thinking config (model decides complexity)
+    pub fn dynamic() -> Self {
+        Self {
+            thinking_budget: -1,
+            include_thoughts: false,
+        }
+    }
+    
+    /// Create no thinking config (fast responses)
+    pub fn disabled() -> Self {
+        Self {
+            thinking_budget: 0,
+            include_thoughts: false,
+        }
+    }
+}
+
 /// Generation configuration parameters
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationConfig {
@@ -122,6 +159,9 @@ pub struct GenerationConfig {
     pub max_output_tokens: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub candidate_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "thinkingConfig")]
+    pub thinking_config: Option<ThinkingConfig>,
 }
 
 impl Default for GenerationConfig {
@@ -132,6 +172,7 @@ impl Default for GenerationConfig {
             top_k: Some(40),
             max_output_tokens: Some(8192),
             candidate_count: Some(1),
+            thinking_config: None, // No thinking by default (fast for text operations)
         }
     }
 }
@@ -181,6 +222,14 @@ pub struct GeminiResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[allow(dead_code)]
     pub usage_metadata: Option<UsageMetadata>,
+}
+
+/// Chat response with separated answer and thought summaries
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatResponse {
+    pub answer: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thoughts: Option<String>,
 }
 
 /// Error response from Gemini API
@@ -431,6 +480,150 @@ impl GeminiProvider {
         })
     }
     
+    /// Generate chat content with thought summaries support
+    pub async fn generate_chat_content(
+        &self,
+        model: &str,
+        contents: Vec<Content>,
+        system_instruction: Option<&str>,
+        generation_config: Option<GenerationConfig>,
+    ) -> Result<ChatResponse, GeminiError> {
+        self.generate_chat_content_with_retry(model, contents, system_instruction, generation_config, 0)
+            .await
+    }
+    
+    /// Internal method with retry logic for chat responses
+    fn generate_chat_content_with_retry<'a>(
+        &'a self,
+        model: &'a str,
+        contents: Vec<Content>,
+        system_instruction: Option<&'a str>,
+        generation_config: Option<GenerationConfig>,
+        retry_count: u32,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<ChatResponse, GeminiError>> + Send + 'a>> {
+        Box::pin(async move {
+        // Check rate limits
+        {
+            let mut rate_limiter = self.rate_limiter.lock().await;
+            rate_limiter.check_rate_limit().await?;
+        }
+        
+        let request = GeminiRequest {
+            contents,
+            system_instruction: system_instruction.map(|instruction| {
+                Content::new(instruction, None)
+            }),
+            generation_config: generation_config.or_else(|| Some(self.default_generation_config.clone())),
+            safety_settings: Some(self.default_safety_settings.clone()),
+        };
+        
+        let url = format!("{}/models/{}:generateContent", self.base_url, model);
+        
+        let response = self.client
+            .post(&url)
+            .query(&[("key", &self.api_key)])
+            .json(&request)
+            .send()
+            .await;
+        
+        match response {
+            Ok(resp) => {
+                let status = resp.status();
+                
+                if status.is_success() {
+                    let gemini_response: GeminiResponse = resp.json().await?;
+                    
+                    if let Some(candidate) = gemini_response.candidates.first() {
+                        // Parse thoughts and answers separately
+                        let mut thoughts_parts = Vec::new();
+                        let mut answer_parts = Vec::new();
+                        
+                        for part in &candidate.content.parts {
+                            if part.thought.unwrap_or(false) {
+                                thoughts_parts.push(part.text.clone());
+                            } else {
+                                answer_parts.push(part.text.clone());
+                            }
+                        }
+                        
+                        let answer = answer_parts.join("");
+                        let thoughts = if thoughts_parts.is_empty() {
+                            None
+                        } else {
+                            Some(thoughts_parts.join("\n"))
+                        };
+                        
+                        return Ok(ChatResponse { answer, thoughts });
+                    }
+                    
+                    Err(GeminiError::InvalidRequest {
+                        message: "No content in response".to_string(),
+                    })
+                } else {
+                    // Handle different error status codes (same logic as original method)
+                    match status.as_u16() {
+                        401 => Err(GeminiError::InvalidApiKey),
+                        404 => Err(GeminiError::ModelNotFound {
+                            model: model.to_string(),
+                        }),
+                        429 => {
+                            if retry_count < self.max_retries {
+                                let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
+                                sleep(delay).await;
+                                return self.generate_chat_content_with_retry(
+                                    model,
+                                    request.contents,
+                                    system_instruction,
+                                    request.generation_config,
+                                    retry_count + 1,
+                                ).await;
+                            } else {
+                                Err(GeminiError::RateLimitExceeded {
+                                    retry_after_seconds: 60,
+                                })
+                            }
+                        }
+                        500..=599 => {
+                            if retry_count < self.max_retries {
+                                let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
+                                sleep(delay).await;
+                                return self.generate_chat_content_with_retry(
+                                    model,
+                                    request.contents,
+                                    system_instruction,
+                                    request.generation_config,
+                                    retry_count + 1,
+                                ).await;
+                            } else {
+                                Err(GeminiError::ServiceUnavailable)
+                            }
+                        }
+                        _ => {
+                            if let Ok(error_resp) = resp.json::<GeminiErrorResponse>().await {
+                                Err(GeminiError::ApiError {
+                                    status: status.as_u16(),
+                                    message: error_resp.error.message,
+                                })
+                            } else {
+                                Err(GeminiError::ApiError {
+                                    status: status.as_u16(),
+                                    message: "Unknown error".to_string(),
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                if e.is_timeout() {
+                    Err(GeminiError::Timeout)
+                } else {
+                    Err(GeminiError::HttpError(e))
+                }
+            }
+        }
+        })
+    }
     
     /// Process text with a specific operation
     pub async fn process_text_operation(
@@ -492,14 +685,36 @@ impl GeminiProvider {
         ).await
     }
     
+    /// Handle chat completion with conversation history and thought summaries
+    pub async fn chat_completion_with_thoughts(
+        &self,
+        messages: Vec<ChatMessage>,
+        system_instruction: Option<&str>,
+        model: &str,
+        generation_config: Option<GenerationConfig>,
+    ) -> Result<ChatResponse, GeminiError> {
+        // Convert chat messages to Gemini Content format
+        let contents: Vec<Content> = messages
+            .into_iter()
+            .map(|msg| {
+                let role = if msg.role == "user" { "user" } else { "model" };
+                Content::new(msg.content, Some(role.to_string()))
+            })
+            .collect();
+        
+        self.generate_chat_content(
+            model,
+            contents,
+            system_instruction,
+            generation_config,
+        ).await
+    }
+    
     /// Get available models (placeholder - would require additional API call)
     pub fn get_available_models() -> Vec<&'static str> {
         vec![
             "gemini-2.5-flash",
             "gemini-2.5-flash-lite",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-lite",
-            "gemini-1.5-pro",
         ]
     }
     

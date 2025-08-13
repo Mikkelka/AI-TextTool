@@ -8,7 +8,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 use enigo::{Enigo, Key, Keyboard, Settings, Mouse};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use ai_provider::{GeminiProvider, ChatMessage};
+use ai_provider::{GeminiProvider, ChatMessage, GenerationConfig, ThinkingConfig, ChatResponse};
 use data_manager::DataManager;
 
 mod ai_provider;
@@ -81,8 +81,9 @@ async fn chat_with_ai(
     message: String,
     history: Vec<ChatMessage>,
     custom_instruction: Option<String>,
+    enable_thinking: Option<bool>,
     app: tauri::AppHandle,
-) -> Result<String, String> {
+) -> Result<ChatResponse, String> {
     println!("Chat with AI: '{}'", message);
     
     // Load configuration
@@ -109,12 +110,26 @@ async fn chat_with_ai(
         .as_ref()
         .unwrap_or(&config.chat_system_instruction);
     
+    // Create generation config with thinking if enabled
+    let generation_config = if enable_thinking.unwrap_or(false) {
+        Some(GenerationConfig {
+            temperature: Some(0.7),
+            top_p: Some(0.8),
+            top_k: Some(40),
+            max_output_tokens: Some(8192),
+            candidate_count: Some(1),
+            thinking_config: Some(ThinkingConfig::dynamic_with_thoughts()),
+        })
+    } else {
+        None // Use default config (no thinking)
+    };
+    
     // Generate response
-    match provider.chat_completion(
+    match provider.chat_completion_with_thoughts(
         messages,
         Some(system_instruction),
         &config.chat_model,
-        None,
+        generation_config,
     ).await {
         Ok(response) => {
             println!("Chat response generated successfully");

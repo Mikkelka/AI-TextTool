@@ -132,6 +132,24 @@
             </div>
           </div>
 
+          <!-- Thinking Process (only for assistant messages with thoughts) -->
+          <div 
+            v-if="message.role === 'assistant' && message.thoughts && !message.isProcessing" 
+            class="thoughts-section"
+          >
+            <details class="thoughts-details">
+              <summary class="thoughts-header">
+                💭 AI's Thinking Process
+              </summary>
+              <div class="thoughts-content">
+                <div 
+                  class="markdown-content thoughts-markdown"
+                  v-html="renderMarkdown(message.thoughts)"
+                ></div>
+              </div>
+            </details>
+          </div>
+
           <!-- Message Content -->
           <div class="message-content">
             <div 
@@ -244,6 +262,7 @@ interface ChatMessage {
   content: string
   timestamp: string
   isProcessing?: boolean
+  thoughts?: string
 }
 
 // Reactive State
@@ -277,7 +296,7 @@ const canSend = computed(() => {
 })
 
 const supportsThinking = computed(() => {
-  return ['gemini-2.5-flash', 'gemini-1.5-pro'].includes(selectedModel.value)
+  return ['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(selectedModel.value)
 })
 
 // Methods
@@ -356,17 +375,19 @@ const sendMessage = async () => {
     const response = await invoke('chat_with_ai', {
       message: messageToSend,
       history: chatHistory.slice(0, -1), // Exclude the current user message since it's included separately
-      customInstruction: props.instruction || null
-    }) as string
+      customInstruction: props.instruction || null,
+      enableThinking: enableThinking.value
+    }) as { answer: string, thoughts?: string }
 
     // Update AI message with response
     const aiIndex = messages.value.findIndex(m => m.isProcessing)
     if (aiIndex !== -1) {
       messages.value[aiIndex] = {
         role: 'assistant',
-        content: response,
+        content: response.answer,
         timestamp: new Date().toISOString(),
-        isProcessing: false
+        isProcessing: false,
+        thoughts: response.thoughts
       }
     }
 
@@ -419,17 +440,19 @@ const regenerateResponse = async (messageIndex: number) => {
     const response = await invoke('chat_with_ai', {
       message: userMessage.content,
       history: chatHistory.slice(0, -1),
-      customInstruction: props.instruction || null
-    }) as string
+      customInstruction: props.instruction || null,
+      enableThinking: enableThinking.value
+    }) as { answer: string, thoughts?: string }
 
     // Update AI message
     const aiIndex = messages.value.findIndex(m => m.isProcessing)
     if (aiIndex !== -1) {
       messages.value[aiIndex] = {
         role: 'assistant',
-        content: response,
+        content: response.answer,
         timestamp: new Date().toISOString(),
-        isProcessing: false
+        isProcessing: false,
+        thoughts: response.thoughts
       }
     }
 
@@ -1388,6 +1411,90 @@ onUnmounted(() => {
   .welcome-content h2 {
     color: #e2e8f0;
   }
+
+  .thoughts-details {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .thoughts-header {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  .thoughts-header:hover {
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  .thoughts-markdown {
+    color: #a0aec0;
+  }
+
+  .thoughts-markdown :deep(code) {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  .thoughts-markdown :deep(pre) {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* Thoughts Section */
+.thoughts-section {
+  margin-bottom: 12px;
+}
+
+.thoughts-details {
+  background: rgba(173, 216, 230, 0.1); /* Light blue background */
+  border: 1px solid rgba(173, 216, 230, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.thoughts-header {
+  background: rgba(173, 216, 230, 0.2);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4682b4; /* Steel blue color */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  border: none;
+  outline: none;
+}
+
+.thoughts-header:hover {
+  background: rgba(173, 216, 230, 0.3);
+}
+
+.thoughts-content {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.thoughts-markdown {
+  color: #666;
+  font-style: italic;
+}
+
+.thoughts-markdown :deep(p) {
+  margin: 6px 0;
+}
+
+.thoughts-markdown :deep(code) {
+  background: rgba(173, 216, 230, 0.2);
+  color: #4682b4;
+}
+
+.thoughts-markdown :deep(pre) {
+  background: rgba(173, 216, 230, 0.15);
+  border-color: rgba(173, 216, 230, 0.3);
 }
 
 /* Responsive */
