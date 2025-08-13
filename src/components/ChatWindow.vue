@@ -510,7 +510,8 @@ const saveConversation = async () => {
     const conversationId = await invoke('save_conversation', {
       title: title.trim(),
       operation: props.operation || 'Chat',
-      messages: conversationMessages
+      messages: conversationMessages,
+      thinkingModeEnabled: enableThinking.value
     }) as string
 
     console.log('Conversation saved successfully with ID:', conversationId)
@@ -672,9 +673,11 @@ const loadConversation = async () => {
         role: string
         content: string
         timestamp: string
+        thoughts?: string
       }>
       created_at: string
       updated_at: string
+      thinking_mode_enabled?: boolean
     }
     
     // Convert and load messages
@@ -685,6 +688,12 @@ const loadConversation = async () => {
       isProcessing: false,
       thoughts: msg.thoughts
     }))
+    
+    // Restore thinking mode setting from saved conversation
+    if (conversation.thinking_mode_enabled !== undefined) {
+      enableThinking.value = conversation.thinking_mode_enabled
+      console.log(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
+    }
     
     console.log(`Loaded conversation "${conversation.title}" with ${conversation.messages.length} messages`)
     

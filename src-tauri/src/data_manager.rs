@@ -105,6 +105,8 @@ pub struct SavedConversation {
     pub messages: Vec<ConversationMessage>,
     pub created_at: String,
     pub updated_at: String,
+    #[serde(default)]
+    pub thinking_mode_enabled: bool,
 }
 
 /// Metadata for the data file
@@ -505,7 +507,8 @@ pub async fn save_conversation(
     app: AppHandle,
     title: String,
     operation: String,
-    messages: Vec<ConversationMessage>
+    messages: Vec<ConversationMessage>,
+    thinking_mode_enabled: Option<bool>
 ) -> Result<String, String> {
     let mut manager = DataManager::new(app);
     manager.initialize().await.map_err(|e| e.to_string())?;
@@ -520,6 +523,7 @@ pub async fn save_conversation(
         messages,
         created_at: now.clone(),
         updated_at: now,
+        thinking_mode_enabled: thinking_mode_enabled.unwrap_or(false),
     };
     
     manager.add_saved_conversation(conversation).await.map_err(|e| e.to_string())?;
