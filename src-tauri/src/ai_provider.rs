@@ -71,10 +71,6 @@ impl Content {
         Self::new(text, Some("user".to_string()))
     }
     
-    /// Create model content
-    pub fn model(text: impl Into<String>) -> Self {
-        Self::new(text, Some("model".to_string()))
-    }
 }
 
 /// Chat message for conversation history
@@ -95,14 +91,6 @@ impl ChatMessage {
         }
     }
     
-    /// Create a model/assistant message
-    pub fn assistant(content: impl Into<String>) -> Self {
-        Self {
-            role: "model".to_string(),
-            content: content.into(),
-            timestamp: Some(chrono::Utc::now().to_rfc3339()),
-        }
-    }
 }
 
 /// Safety settings for content filtering
@@ -165,8 +153,10 @@ pub struct GeminiRequest {
 pub struct Candidate {
     pub content: Content,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub finish_reason: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub safety_ratings: Option<Vec<serde_json::Value>>,
 }
 
@@ -174,10 +164,13 @@ pub struct Candidate {
 #[derive(Debug, Deserialize)]
 pub struct UsageMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub prompt_token_count: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub candidates_token_count: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub total_token_count: Option<i32>,
 }
 
@@ -186,6 +179,7 @@ pub struct UsageMetadata {
 pub struct GeminiResponse {
     pub candidates: Vec<Candidate>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub usage_metadata: Option<UsageMetadata>,
 }
 
@@ -197,9 +191,11 @@ pub struct GeminiErrorResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct GeminiErrorDetails {
+    #[allow(dead_code)]
     pub code: i32,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
     pub status: Option<String>,
 }
 
@@ -435,18 +431,6 @@ impl GeminiProvider {
         })
     }
     
-    /// Generate content with streaming response (placeholder for now)
-    pub async fn generate_content_stream(
-        &self,
-        model: &str,
-        contents: Vec<Content>,
-        system_instruction: Option<&str>,
-        generation_config: Option<GenerationConfig>,
-    ) -> Result<String, GeminiError> {
-        // For now, fallback to regular generation
-        // In a full implementation, this would use Server-Sent Events or similar
-        self.generate_content(model, contents, system_instruction, generation_config).await
-    }
     
     /// Process text with a specific operation
     pub async fn process_text_operation(
@@ -520,63 +504,16 @@ impl GeminiProvider {
     }
     
     /// Check if a model supports thinking mode (for advanced reasoning)
+    #[cfg(test)]
     pub fn supports_thinking_mode(model: &str) -> bool {
         // Currently, thinking mode is supported by certain models
         matches!(model, "gemini-2.5-flash" | "gemini-1.5-pro")
     }
     
-    /// Generate content with thinking mode (experimental feature)
-    pub async fn generate_with_thinking(
-        &self,
-        model: &str,
-        contents: Vec<Content>,
-        system_instruction: Option<&str>,
-        thinking_budget: Option<i32>,
-    ) -> Result<String, GeminiError> {
-        if !Self::supports_thinking_mode(model) {
-            return self.generate_content(model, contents, system_instruction, None).await;
-        }
-        
-        let generation_config = self.default_generation_config.clone();
-        
-        // Add thinking budget if supported (this is experimental)
-        if let Some(_budget) = thinking_budget {
-            // In a full implementation, this would be added to the request
-            // For now, we'll use the standard generation
-        }
-        
-        self.generate_content(model, contents, system_instruction, Some(generation_config)).await
-    }
     
-    /// Update API key
-    pub fn update_api_key(&mut self, new_api_key: String) -> Result<(), GeminiError> {
-        if new_api_key.trim().is_empty() {
-            return Err(GeminiError::InvalidApiKey);
-        }
-        self.api_key = new_api_key;
-        Ok(())
-    }
     
-    /// Update generation config defaults
-    pub fn update_generation_config(&mut self, config: GenerationConfig) {
-        self.default_generation_config = config;
-    }
     
-    /// Update safety settings
-    pub fn update_safety_settings(&mut self, settings: Vec<SafetySetting>) {
-        self.default_safety_settings = settings;
-    }
     
-    /// Get current rate limiting status
-    pub async fn get_rate_limit_info(&self) -> (usize, usize) {
-        let rate_limiter = self.rate_limiter.lock().await;
-        let now = Instant::now();
-        let recent_calls = rate_limiter.calls.iter()
-            .filter(|&&call_time| now.duration_since(call_time) < Duration::from_secs(60))
-            .count();
-        
-        (recent_calls, rate_limiter.max_calls_per_minute)
-    }
     
     /// Test the connection to Gemini API
     pub async fn test_connection(&self) -> Result<bool, GeminiError> {
@@ -599,26 +536,6 @@ impl GeminiProvider {
     }
 }
 
-/// Convenience functions for common operations
-impl GeminiProvider {
-    /// Quick text processing with default settings
-    pub async fn quick_process(&self, text: &str, operation: &str) -> Result<String, GeminiError> {
-        self.process_text_operation(text, operation, None, "gemini-2.5-flash-lite").await
-    }
-    
-    /// Quick chat response
-    pub async fn quick_chat(&self, message: &str, context: Option<Vec<ChatMessage>>) -> Result<String, GeminiError> {
-        let mut messages = context.unwrap_or_default();
-        messages.push(ChatMessage::user(message));
-        
-        self.chat_completion(
-            messages,
-            Some("You are a helpful AI assistant."),
-            "gemini-2.5-flash",
-            None,
-        ).await
-    }
-}
 
 #[cfg(test)]
 mod tests {

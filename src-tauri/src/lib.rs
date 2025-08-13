@@ -672,21 +672,21 @@ pub fn run() {
                 println!("Main window hidden on startup");
             }
             
-            // Check if config exists - if not, show onboarding
-            // Only check exe directory (same as ConfigManager)
+            // Check if app_data.json exists - if not, show onboarding
+            // Same logic as DataManager uses
             let config_path = if let Ok(exe_path) = std::env::current_exe() {
                 exe_path.parent()
-                    .map(|parent| parent.join("config.json"))
-                    .unwrap_or_else(|| std::env::current_dir().unwrap().join("config.json"))
+                    .map(|parent| parent.join("app_data.json"))
+                    .unwrap_or_else(|| std::env::current_dir().unwrap().join("app_data.json"))
             } else {
-                std::env::current_dir().unwrap().join("config.json")
+                std::env::current_dir().unwrap().join("app_data.json")
             };
             
             if !config_path.exists() {
-                println!("No config found - showing onboarding window");
+                println!("No app_data.json found - showing onboarding window");
                 show_onboarding_window(app.handle())?;
             } else {
-                println!("Config found - setting up tray and global shortcut");
+                println!("app_data.json found - setting up tray and global shortcut");
                 create_tray(app.handle())?;
                 
                 // Register global shortcut (hardcoded to ctrl+space)

@@ -15,11 +15,6 @@ pub enum DataError {
     #[error("JSON serialization/deserialization error: {0}")]
     Json(#[from] serde_json::Error),
     
-    #[error("Data not found: {0}")]
-    NotFound(String),
-    
-    #[error("Invalid data: {0}")]
-    Invalid(String),
 }
 
 /// AI Provider configuration
@@ -240,16 +235,14 @@ impl AppData {
 
 /// Data manager for handling all application data
 pub struct DataManager {
-    app_handle: AppHandle,
     data: AppData,
     file_path: PathBuf,
 }
 
 impl DataManager {
     /// Create a new DataManager instance
-    pub fn new(app_handle: AppHandle) -> Self {
+    pub fn new(_app_handle: AppHandle) -> Self {
         Self {
-            app_handle,
             data: AppData::default(),
             file_path: PathBuf::new(),
         }
