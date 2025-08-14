@@ -25,10 +25,14 @@ This is a **complete AI-powered text processing desktop application** built with
   - **Chat History**: `src/components/ChatHistoryWindow.vue` (history management)
   - **Onboarding**: `src/components/OnboardingWindow.vue` (first-time setup)
 
-- **Backend**: Rust with async/await
-  - **Core Logic**: `src-tauri/src/lib.rs` (window management, global shortcuts)
-  - **Configuration**: `src-tauri/src/config.rs` (config & operations management)  
-  - **AI Provider**: `src-tauri/src/ai_provider.rs` (Gemini integration with rate limiting)
+- **Backend**: Rust with async/await - **Modular Architecture**
+  - **Entry Point**: `src-tauri/src/lib.rs` (minimal Tauri app setup)
+  - **AI Provider Module**: `src-tauri/src/ai_provider/` (Gemini integration with rate limiting)
+  - **Data Manager Module**: `src-tauri/src/data_manager/` (configuration & data persistence)
+  - **Window Manager**: `src-tauri/src/window_manager.rs` (all window creation & lifecycle)
+  - **Tray Manager**: `src-tauri/src/tray_manager.rs` (system tray functionality)
+  - **Shortcut Manager**: `src-tauri/src/shortcut_manager.rs` (global shortcuts & clipboard)
+  - **Commands Module**: `src-tauri/src/commands/` (organized Tauri commands)
 
 - **Communication**: Tauri command system with `invoke()` calls
 
@@ -67,7 +71,12 @@ This is a **complete AI-powered text processing desktop application** built with
 ## Adding New Features
 
 1. **Frontend components**: Add Vue components in `src/` directory
-2. **Rust commands**: Add functions with `#[tauri::command]` in `src-tauri/src/lib.rs` and register them in the `invoke_handler`
+2. **Rust commands**: Add functions with `#[tauri::command]` in appropriate module:
+   - **AI commands**: `src-tauri/src/commands/ai_commands.rs`
+   - **Window commands**: `src-tauri/src/commands/window_commands.rs`
+   - **Utility commands**: `src-tauri/src/commands/utility_commands.rs`
+   - **Data commands**: `src-tauri/src/data_manager/commands.rs`
+   - Register new commands in `src-tauri/src/lib.rs` invoke_handler
 3. **Frontend-backend communication**: Use `invoke("command_name", { params })` from the frontend to call Rust commands
 
 ## Core Features
@@ -329,7 +338,43 @@ urlencoding = "2.1"                  # URL encoding for window creation
 
 ## Project Structure Notes
 
+### 🗂️ Rust Backend File Structure
+
+```
+src-tauri/src/
+├── lib.rs                           # Minimal entry point (~80 lines)
+├── main.rs                          # Binary entry point (calls lib::run)
+├── ai_provider/
+│   ├── mod.rs                       # Module exports & re-exports
+│   ├── types.rs                     # Data structures (Content, ChatMessage, etc.)
+│   └── gemini.rs                    # GeminiProvider implementation & rate limiting
+├── data_manager/
+│   ├── mod.rs                       # Module exports & re-exports
+│   ├── types.rs                     # Data structures (Config, Operation, etc.)
+│   ├── manager.rs                   # DataManager core logic & file I/O
+│   └── commands.rs                  # Tauri commands for data operations
+├── commands/
+│   ├── mod.rs                       # Command module exports
+│   ├── ai_commands.rs              # AI-related commands (process_text_with_ai, chat_with_ai)
+│   ├── window_commands.rs          # Window management commands (reopen_chat_conversation)
+│   └── utility_commands.rs         # Utility commands (greet, simulate_paste)
+├── window_manager.rs               # All window creation & management functions
+├── tray_manager.rs                 # System tray creation & menu handling
+└── shortcut_manager.rs             # Global shortcuts, clipboard & debouncing
+```
+
+### 📁 Module Organization Benefits
+
+- **Better Maintainability**: Each file has a clear, focused responsibility
+- **Easier Navigation**: Find specific functionality quickly
+- **Cleaner Separation**: Window, tray, shortcuts, AI, data all separated
+- **Rust Best Practices**: Proper module structure with mod.rs files
+- **Reusability**: Modules can be easily tested and reused
+
+### 🔧 Development Notes
+
 - The application uses a lib/main split in Rust (`lib.rs` contains core logic, `main.rs` is minimal entry point)
 - Vite is configured to ignore `src-tauri` directory during watch mode  
 - Configuration: `withGlobalTauri: true` in tauri.conf.json enables global Tauri object access
 - Uses `enigo` crate for keyboard/mouse simulation (Ctrl+C, Ctrl+V)
+- All Tauri commands are organized by functionality and re-exported through modules
