@@ -16,12 +16,6 @@
 
     <!-- Main Content -->
     <div v-else class="popup-content">
-      <!-- Header -->
-      <div class="popup-header">
-        <h2 class="popup-title">🤖 AI Text Tools</h2>
-        <p class="selected-text-preview">{{ textPreview }}</p>
-      </div>
-
       <!-- Operations Grid -->
       <div class="operations-grid">
         <button
@@ -104,15 +98,6 @@ const showFadeIn = ref(true)
 const clipboardText = ref(props.selectedText || (window as any).clipboardText || '')
 
 // Computed properties
-const textPreview = computed(() => {
-  const text = clipboardText.value
-  if (!text || text.trim().length === 0) return 'No text selected'
-  
-  const maxLength = 60
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
-})
-
 const operationsArray = computed(() => {
   return operations.value
 })
@@ -287,13 +272,8 @@ const scrollToSelected = async () => {
 }
 
 const getGridColumns = (): number => {
-  // This matches the CSS grid-template-columns
-  const operationCount = operations.value.length
-  if (operationCount <= 2) return 1
-  if (operationCount <= 4) return 2
-  if (operationCount <= 6) return 3
-  if (operationCount <= 9) return 3
-  return 4
+  // This matches the CSS grid-template-columns (now 2 columns)
+  return 2
 }
 
 const getOperationTooltip = (operation: Operation): string => {
@@ -330,7 +310,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 12px;
+  padding: 8px;
   box-sizing: border-box;
   outline: none;
   overflow-y: auto;
@@ -399,35 +379,13 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.popup-header {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.popup-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
-}
-
-.selected-text-preview {
-  font-size: 12px;
-  color: #666;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: 0;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  word-break: break-word;
-}
 
 .operations-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 100%;
-  max-height: 300px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  max-width: 300px;
+  max-height: 400px;
   overflow-y: auto;
   padding: 2px;
 }
@@ -436,12 +394,12 @@ onUnmounted(() => {
   background: white;
   border: 2px solid transparent;
   border-radius: 6px;
-  padding: 8px 6px;
+  padding: 12px 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  min-height: 45px;
-  max-height: 45px;
+  min-height: 55px;
+  max-height: 55px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -502,7 +460,7 @@ onUnmounted(() => {
 }
 
 .operation-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #333;
   line-height: 1.1;
@@ -568,15 +526,6 @@ onUnmounted(() => {
   }
 
 
-  .popup-title {
-    color: #e2e8f0;
-  }
-
-  .selected-text-preview {
-    background: rgba(45, 55, 72, 0.8);
-    color: #cbd5e0;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
 
   .loading-text {
     color: #a0aec0;
@@ -609,7 +558,7 @@ onUnmounted(() => {
 /* Responsive adjustments */
 @media (max-width: 350px) {
   .operations-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 6px;
   }
   
@@ -620,7 +569,7 @@ onUnmounted(() => {
   }
   
   .operation-label {
-    font-size: 10px;
+    font-size: 12px;
     white-space: normal;
     line-height: 1.1;
   }

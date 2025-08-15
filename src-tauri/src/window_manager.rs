@@ -73,7 +73,7 @@ pub fn create_popup_window<R: Runtime>(
         tauri::WebviewUrl::App(format!("popup.html?t={}", timestamp).into())
     )
     .title("AI Text Operations")
-    .inner_size(420.0, 280.0)  // Very compact 4-column layout
+    .inner_size(320.0, 350.0)  // Compact 2-column layout without header
     .position(mouse_x as f64, mouse_y as f64)
     .resizable(false)
     .decorations(true)  // Enable decorations so window can be closed

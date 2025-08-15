@@ -1515,7 +1515,7 @@ onUnmounted(() => {
   }
 
   .thoughts-markdown {
-    color: #a0aec0;
+    color: white;
   }
 
   .thoughts-markdown :deep(code) {
@@ -1627,7 +1627,7 @@ onUnmounted(() => {
 }
 
 .thoughts-markdown {
-  color: #666;
+  color: white;
   font-style: italic;
 }
 

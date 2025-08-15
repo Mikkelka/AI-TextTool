@@ -149,7 +149,7 @@ impl AppData {
         
         operations.insert("Proofread".to_string(), Operation {
             prefix: "Proofread the following text:\n\n".to_string(),
-            instruction: "You are a professional proofreader. Correct any spelling, grammar, and punctuation errors. Maintain the original tone and style. Only return the corrected text.".to_string(),
+            instruction: "You are a professional proofreader. Correct any spelling, grammar, and punctuation errors. Maintain the original tone and style. IMPORTANT: Return ONLY the corrected text without any markdown formatting, headers, explanations, or additional content.".to_string(),
             icon: Some("pencil".to_string()),
             open_in_window: false,
             order: 1,
@@ -157,7 +157,7 @@ impl AppData {
         
         operations.insert("Rewrite".to_string(), Operation {
             prefix: "Rewrite the following text to improve clarity:\n\n".to_string(),
-            instruction: "You are a professional editor. Rewrite the text to be clearer and more engaging while maintaining the original meaning. Only return the rewritten text.".to_string(),
+            instruction: "You are a professional editor. Rewrite the text to be clearer and more engaging while maintaining the original meaning. IMPORTANT: Return ONLY the rewritten text without any markdown formatting, headers, explanations, or additional content.".to_string(),
             icon: Some("rewrite".to_string()),
             open_in_window: false,
             order: 2,
@@ -165,7 +165,7 @@ impl AppData {
         
         operations.insert("Dansk".to_string(), Operation {
             prefix: "Oversæt følgende tekst til dansk:\n\n".to_string(),
-            instruction: "Du er en professionel oversætter med speciale i dansk. Oversæt teksten til naturligt og korrekt dansk. Bevar den oprindelige tone og stil. Returner kun den oversatte tekst.".to_string(),
+            instruction: "Du er en professionel oversætter med speciale i dansk. Oversæt teksten til naturligt og korrekt dansk. Bevar den oprindelige tone og stil. VIGTIGT: Returner KUN den oversatte tekst uden markdown formatering, overskrifter, forklaringer eller ekstra indhold.".to_string(),
             icon: Some("translate".to_string()),
             open_in_window: false,
             order: 3,
@@ -173,7 +173,7 @@ impl AppData {
         
         operations.insert("Concise".to_string(), Operation {
             prefix: "Make the following text more concise:\n\n".to_string(),
-            instruction: "You are a professional editor. Make the text shorter and more direct while keeping all important information. Only return the concise version.".to_string(),
+            instruction: "You are a professional editor. Make the text shorter and more direct while keeping all important information. IMPORTANT: Return ONLY the concise text without any markdown formatting, headers, explanations, or additional content.".to_string(),
             icon: Some("concise".to_string()),
             open_in_window: false,
             order: 4,
@@ -181,7 +181,7 @@ impl AppData {
         
         operations.insert("Friendly".to_string(), Operation {
             prefix: "Make the following text sound more friendly:\n\n".to_string(),
-            instruction: "You are a communication expert. Rewrite the text to sound warmer and more approachable while maintaining professionalism. Only return the friendly version.".to_string(),
+            instruction: "You are a communication expert. Rewrite the text to sound warmer and more approachable while maintaining professionalism. IMPORTANT: Return ONLY the friendly text without any markdown formatting, headers, explanations, or additional content.".to_string(),
             icon: Some("smiley-face".to_string()),
             open_in_window: false,
             order: 5,
@@ -189,7 +189,7 @@ impl AppData {
         
         operations.insert("Professional".to_string(), Operation {
             prefix: "Make the following text more professional:\n\n".to_string(),
-            instruction: "You are a business communication expert. Rewrite the text to be more formal and professional. Only return the professional version.".to_string(),
+            instruction: "You are a business communication expert. Rewrite the text to be more formal and professional. IMPORTANT: Return ONLY the professional text without any markdown formatting, headers, explanations, or additional content.".to_string(),
             icon: Some("briefcase".to_string()),
             open_in_window: false,
             order: 6,

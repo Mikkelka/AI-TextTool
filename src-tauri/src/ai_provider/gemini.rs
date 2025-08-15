@@ -126,7 +126,20 @@ impl GeminiProvider {
         system_instruction: Option<&str>,
         generation_config: Option<GenerationConfig>,
     ) -> Result<String, GeminiError> {
-        self.generate_content_with_retry(model, contents, system_instruction, generation_config, 0)
+        self.generate_content_with_formatting(model, contents, system_instruction, generation_config, true)
+            .await
+    }
+
+    /// Generate content with optional formatting control
+    pub async fn generate_content_with_formatting(
+        &self,
+        model: &str,
+        contents: Vec<Content>,
+        system_instruction: Option<&str>,
+        generation_config: Option<GenerationConfig>,
+        use_formatting: bool,
+    ) -> Result<String, GeminiError> {
+        self.generate_content_with_retry(model, contents, system_instruction, generation_config, use_formatting, 0)
             .await
     }
     
@@ -137,6 +150,7 @@ impl GeminiProvider {
         contents: Vec<Content>,
         system_instruction: Option<&'a str>,
         generation_config: Option<GenerationConfig>,
+        use_formatting: bool,
         retry_count: u32,
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, GeminiError>> + Send + 'a>> {
         Box::pin(async move {
@@ -146,10 +160,14 @@ impl GeminiProvider {
             rate_limiter.check_rate_limit().await?;
         }
         
-        // Combine formatting instruction with custom system instruction
-        let combined_instruction = match system_instruction {
-            Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
-            None => FORMATTING_INSTRUCTION.to_string(),
+        // Combine formatting instruction with custom system instruction (only if formatting is enabled)
+        let combined_instruction = if use_formatting {
+            match system_instruction {
+                Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
+                None => FORMATTING_INSTRUCTION.to_string(),
+            }
+        } else {
+            system_instruction.unwrap_or("").to_string()
         };
         
         let request = GeminiRequest {
@@ -202,6 +220,7 @@ impl GeminiProvider {
                                     request.contents,
                                     system_instruction,
                                     request.generation_config,
+                                    use_formatting,
                                     retry_count + 1,
                                 ).await;
                             } else {
@@ -221,6 +240,7 @@ impl GeminiProvider {
                                     request.contents,
                                     system_instruction,
                                     request.generation_config,
+                                    use_formatting,
                                     retry_count + 1,
                                 ).await;
                             } else {
@@ -276,6 +296,7 @@ impl GeminiProvider {
         generation_config: Option<GenerationConfig>,
         retry_count: u32,
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<ChatResponse, GeminiError>> + Send + 'a>> {
+        let use_formatting = true; // Chat responses should always use formatting
         Box::pin(async move {
         // Check rate limits
         {
@@ -283,10 +304,14 @@ impl GeminiProvider {
             rate_limiter.check_rate_limit().await?;
         }
         
-        // Combine formatting instruction with custom system instruction
-        let combined_instruction = match system_instruction {
-            Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
-            None => FORMATTING_INSTRUCTION.to_string(),
+        // Combine formatting instruction with custom system instruction (only if formatting is enabled)
+        let combined_instruction = if use_formatting {
+            match system_instruction {
+                Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
+                None => FORMATTING_INSTRUCTION.to_string(),
+            }
+        } else {
+            system_instruction.unwrap_or("").to_string()
         };
         
         let request = GeminiRequest {
@@ -431,11 +456,12 @@ impl GeminiProvider {
         
         let contents = vec![Content::user(prompt)];
         
-        self.generate_content(
+        self.generate_content_with_formatting(
             model,
             contents,
             instruction,
             None,
+            false,  // Disable formatting for direct text operations
         ).await
     }
     
