@@ -21,7 +21,10 @@
       "Bash(dir:*)",
       "Bash(cmd /c \"copy \"\"%APPDATA%\\com.mikke.ai-tool\\config.json\"\" \"\"C:\\Users\\mikke\\Desktop\\AI-Tool\\src-tauri\\target\\debug\\config.json\"\"\")",
       "Bash(powershell:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(mkdir:*)",
+      "WebSearch",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }
