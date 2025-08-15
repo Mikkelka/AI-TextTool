@@ -7,6 +7,18 @@ use tokio::time::sleep;
 
 use super::types::*;
 
+/// Central formatting instruction for all AI responses
+const FORMATTING_INSTRUCTION: &str = "\
+IMPORTANT: Use markdown formatting in your responses to make them clear and well-structured:
+- Headers: # ## ### for organizing content
+- Lists: - for bullet points, 1. for numbered lists  
+- Emphasis: **bold** for important points, *italic* for subtle emphasis
+- Code: `inline code` for technical terms, ```language blocks for code
+- Tables: | Column | Format | for data presentation
+- Quotes: > for important quotes or blockquotes
+- Separators: --- for horizontal rules/breaks
+Always format your response professionally using these markdown features.";
+
 /// Rate limiting tracker
 #[derive(Debug)]
 struct RateLimiter {
@@ -134,11 +146,15 @@ impl GeminiProvider {
             rate_limiter.check_rate_limit().await?;
         }
         
+        // Combine formatting instruction with custom system instruction
+        let combined_instruction = match system_instruction {
+            Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
+            None => FORMATTING_INSTRUCTION.to_string(),
+        };
+        
         let request = GeminiRequest {
             contents,
-            system_instruction: system_instruction.map(|instruction| {
-                Content::new(instruction, None)
-            }),
+            system_instruction: Some(Content::new(combined_instruction, None)),
             generation_config: generation_config.or_else(|| Some(self.default_generation_config.clone())),
             safety_settings: Some(self.default_safety_settings.clone()),
         };
@@ -267,11 +283,15 @@ impl GeminiProvider {
             rate_limiter.check_rate_limit().await?;
         }
         
+        // Combine formatting instruction with custom system instruction
+        let combined_instruction = match system_instruction {
+            Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
+            None => FORMATTING_INSTRUCTION.to_string(),
+        };
+        
         let request = GeminiRequest {
             contents,
-            system_instruction: system_instruction.map(|instruction| {
-                Content::new(instruction, None)
-            }),
+            system_instruction: Some(Content::new(combined_instruction, None)),
             generation_config: generation_config.or_else(|| Some(self.default_generation_config.clone())),
             safety_settings: Some(self.default_safety_settings.clone()),
         };

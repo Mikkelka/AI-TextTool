@@ -238,6 +238,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { renderMarkdown, setupMarkdownCopyFunction, cleanupMarkdownCopyFunction } from '../utils/markdown'
 
 // Props
 interface Props {
@@ -617,43 +618,7 @@ const handleInputKeydown = (event: KeyboardEvent) => {
   })
 }
 
-// Simple markdown renderer (basic implementation)
-const renderMarkdown = (text: string): string => {
-  let html = text
-  
-  // Code blocks
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
-    return `<pre class="code-block"><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code><button class="copy-code-btn" onclick="copyCode(this)">📋</button></pre>`
-  })
-  
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
-  
-  // Bold
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-  
-  // Italic
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>')
-  
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-  
-  // Lists
-  html = html.replace(/^- (.+)$/gm, '<li>$1</li>')
-  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-  
-  // Paragraphs
-  html = html.replace(/\n\n/g, '</p><p>')
-  html = `<p>${html}</p>`
-  
-  return html
-}
-
-const escapeHtml = (text: string): string => {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
-}
+// Use imported markdown renderer from utils
 
 // Load existing conversation
 const loadConversation = async () => {
@@ -757,18 +722,13 @@ onMounted(async () => {
     }
   }
   
-  // Add global copy code function
-  ;(window as any).copyCode = (button: HTMLButtonElement) => {
-    const codeBlock = button.parentElement?.querySelector('code')
-    if (codeBlock) {
-      navigator.clipboard.writeText(codeBlock.textContent || '')
-    }
-  }
+  // Setup global markdown copy function
+  setupMarkdownCopyFunction()
 })
 
 onUnmounted(() => {
-  // Cleanup
-  ;(window as any).copyCode = undefined
+  // Cleanup markdown copy function
+  cleanupMarkdownCopyFunction()
 })
 </script>
 
@@ -1126,6 +1086,123 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 
+/* Markdown Headings */
+.markdown-content :deep(.markdown-heading) {
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.markdown-content :deep(.markdown-h1) {
+  font-size: 24px;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.markdown-content :deep(.markdown-h2) {
+  font-size: 20px;
+  color: #333;
+}
+
+.markdown-content :deep(.markdown-h3) {
+  font-size: 18px;
+  color: #444;
+}
+
+.markdown-content :deep(.markdown-h4) {
+  font-size: 16px;
+  color: #555;
+}
+
+.markdown-content :deep(.markdown-h5) {
+  font-size: 14px;
+  color: #666;
+}
+
+.markdown-content :deep(.markdown-h6) {
+  font-size: 13px;
+  color: #777;
+}
+
+/* Markdown Tables */
+.markdown-content :deep(.table-wrapper) {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.markdown-content :deep(.markdown-table) {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.markdown-content :deep(.markdown-table th) {
+  background: #f5f5f5;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.markdown-content :deep(.markdown-table th:last-child) {
+  border-right: none;
+}
+
+.markdown-content :deep(.markdown-table td) {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+}
+
+.markdown-content :deep(.markdown-table td:last-child) {
+  border-right: none;
+}
+
+.markdown-content :deep(.markdown-table tr:last-child td) {
+  border-bottom: none;
+}
+
+.markdown-content :deep(.markdown-table tr:nth-child(even)) {
+  background: #fafafa;
+}
+
+/* Markdown Blockquotes */
+.markdown-content :deep(.markdown-blockquote) {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-left: 4px solid #2196f3;
+  background: rgba(33, 150, 243, 0.05);
+  border-radius: 0 6px 6px 0;
+  color: #555;
+  font-style: italic;
+}
+
+.markdown-content :deep(.markdown-blockquote p) {
+  margin: 0;
+}
+
+/* Markdown Lists */
+.markdown-content :deep(.markdown-list) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.markdown-content :deep(.markdown-list li) {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+/* Horizontal Rules */
+.markdown-content :deep(hr) {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
 .processing-indicator {
   display: flex;
   align-items: center;
@@ -1449,6 +1526,66 @@ onUnmounted(() => {
   .thoughts-markdown :deep(pre) {
     background: rgba(59, 130, 246, 0.15);
     border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  /* Dark mode markdown headings */
+  .markdown-content :deep(.markdown-h1) {
+    color: #e2e8f0;
+    border-bottom-color: #4a5568;
+  }
+
+  .markdown-content :deep(.markdown-h2) {
+    color: #e2e8f0;
+  }
+
+  .markdown-content :deep(.markdown-h3) {
+    color: #cbd5e0;
+  }
+
+  .markdown-content :deep(.markdown-h4) {
+    color: #a0aec0;
+  }
+
+  .markdown-content :deep(.markdown-h5) {
+    color: #a0aec0;
+  }
+
+  .markdown-content :deep(.markdown-h6) {
+    color: #a0aec0;
+  }
+
+  /* Dark mode tables */
+  .markdown-content :deep(.markdown-table) {
+    border-color: #4a5568;
+  }
+
+  .markdown-content :deep(.markdown-table th) {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-bottom-color: #2d3748;
+    border-right-color: #2d3748;
+  }
+
+  .markdown-content :deep(.markdown-table td) {
+    border-bottom-color: #4a5568;
+    border-right-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .markdown-content :deep(.markdown-table tr:nth-child(even)) {
+    background: rgba(74, 85, 104, 0.3);
+  }
+
+  /* Dark mode blockquotes */
+  .markdown-content :deep(.markdown-blockquote) {
+    border-left-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+    color: #cbd5e0;
+  }
+
+  /* Dark mode horizontal rules */
+  .markdown-content :deep(hr) {
+    border-top-color: #4a5568;
   }
 }
 

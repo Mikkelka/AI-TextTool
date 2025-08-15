@@ -238,6 +238,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { renderMarkdown } from '../utils/markdown'
 
 // Chat Entry Interface
 interface ChatEntry {
@@ -455,35 +456,7 @@ const getOperationClass = (operation: string): string => {
   return classMap[operation] || 'operation-default'
 }
 
-const renderMarkdown = (text: string): string => {
-  let html = text
-  
-  // Code blocks
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_match, lang, code) => {
-    const language = lang || 'text'
-    return `<pre class="code-block"><code class="language-${language}">${escapeHtml(code.trim())}</code></pre>`
-  })
-  
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
-  
-  // Bold
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-  
-  // Italic
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>')
-  
-  // Line breaks
-  html = html.replace(/\n/g, '<br>')
-  
-  return html
-}
-
-const escapeHtml = (text: string): string => {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
-}
+// Using imported renderMarkdown from utils
 
 // New conversation management methods  
 const reopenConversation = async (conversation: SavedConversation) => {
@@ -897,6 +870,143 @@ onMounted(async () => {
   font-size: 13px;
 }
 
+/* Markdown Headings */
+.processed-text :deep(.markdown-heading) {
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.processed-text :deep(.markdown-h1) {
+  font-size: 20px;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 6px;
+}
+
+.processed-text :deep(.markdown-h2) {
+  font-size: 18px;
+  color: #333;
+}
+
+.processed-text :deep(.markdown-h3) {
+  font-size: 16px;
+  color: #444;
+}
+
+.processed-text :deep(.markdown-h4) {
+  font-size: 14px;
+  color: #555;
+}
+
+.processed-text :deep(.markdown-h5) {
+  font-size: 13px;
+  color: #666;
+}
+
+.processed-text :deep(.markdown-h6) {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Markdown Tables */
+.processed-text :deep(.table-wrapper) {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.processed-text :deep(.markdown-table) {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.processed-text :deep(.markdown-table th) {
+  background: #f5f5f5;
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.processed-text :deep(.markdown-table th:last-child) {
+  border-right: none;
+}
+
+.processed-text :deep(.markdown-table td) {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+}
+
+.processed-text :deep(.markdown-table td:last-child) {
+  border-right: none;
+}
+
+.processed-text :deep(.markdown-table tr:last-child td) {
+  border-bottom: none;
+}
+
+.processed-text :deep(.markdown-table tr:nth-child(even)) {
+  background: #fafafa;
+}
+
+/* Markdown Blockquotes */
+.processed-text :deep(.markdown-blockquote) {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-left: 3px solid #2196f3;
+  background: rgba(33, 150, 243, 0.05);
+  border-radius: 0 4px 4px 0;
+  color: #555;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.processed-text :deep(.markdown-blockquote p) {
+  margin: 0;
+}
+
+/* Markdown Lists */
+.processed-text :deep(.markdown-list) {
+  margin: 8px 0;
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.processed-text :deep(.markdown-list li) {
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+/* Horizontal Rules */
+.processed-text :deep(hr) {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Copy button for code blocks */
+.processed-text :deep(.copy-code-btn) {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.processed-text :deep(.code-block) {
+  position: relative;
+}
+
 .stats-footer {
   padding: 16px 24px;
   background: rgba(255, 255, 255, 0.8);
@@ -990,6 +1100,66 @@ onMounted(async () => {
 
   .processed-text {
     color: #e2e8f0;
+  }
+
+  /* Dark mode markdown headings */
+  .processed-text :deep(.markdown-h1) {
+    color: #e2e8f0;
+    border-bottom-color: #4a5568;
+  }
+
+  .processed-text :deep(.markdown-h2) {
+    color: #e2e8f0;
+  }
+
+  .processed-text :deep(.markdown-h3) {
+    color: #cbd5e0;
+  }
+
+  .processed-text :deep(.markdown-h4) {
+    color: #a0aec0;
+  }
+
+  .processed-text :deep(.markdown-h5) {
+    color: #a0aec0;
+  }
+
+  .processed-text :deep(.markdown-h6) {
+    color: #a0aec0;
+  }
+
+  /* Dark mode tables */
+  .processed-text :deep(.markdown-table) {
+    border-color: #4a5568;
+  }
+
+  .processed-text :deep(.markdown-table th) {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-bottom-color: #2d3748;
+    border-right-color: #2d3748;
+  }
+
+  .processed-text :deep(.markdown-table td) {
+    border-bottom-color: #4a5568;
+    border-right-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .processed-text :deep(.markdown-table tr:nth-child(even)) {
+    background: rgba(74, 85, 104, 0.3);
+  }
+
+  /* Dark mode blockquotes */
+  .processed-text :deep(.markdown-blockquote) {
+    border-left-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+    color: #cbd5e0;
+  }
+
+  /* Dark mode horizontal rules */
+  .processed-text :deep(hr) {
+    border-top-color: #4a5568;
   }
 
   .stats-footer {

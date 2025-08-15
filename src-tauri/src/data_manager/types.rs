@@ -197,7 +197,7 @@ impl AppData {
         
         operations.insert("Key Points".to_string(), Operation {
             prefix: "Extract key points from the following text:\n\n".to_string(),
-            instruction: "You are an expert at analyzing and summarizing information. Extract the main points and present them as a clear, bulleted list in markdown format.".to_string(),
+            instruction: "You are an expert at analyzing and summarizing information. Extract the main points and present them as a clear, well-organized response.".to_string(),
             icon: Some("list".to_string()),
             open_in_window: true,
             order: 7,
@@ -205,7 +205,7 @@ impl AppData {
         
         operations.insert("Summary".to_string(), Operation {
             prefix: "Summarize the following text:\n\n".to_string(),
-            instruction: "You are an expert at creating comprehensive summaries. Create a well-structured summary that captures all important information. Use markdown formatting.".to_string(),
+            instruction: "You are an expert at creating comprehensive summaries. Create a well-structured summary that captures all important information.".to_string(),
             icon: Some("summary".to_string()),
             open_in_window: true,
             order: 8,
