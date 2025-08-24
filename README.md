@@ -59,17 +59,52 @@ A powerful desktop application that brings AI-powered text processing to your fi
 
 ## 📁 Project Structure
 
+AI TextTool uses **Tauri's hybrid architecture** - a Vue.js frontend communicates with a Rust backend:
+
 ```
 AI-TextTool/
-├── src/                     # Vue 3 frontend
-│   ├── components/          # Vue components
-│   └── assets/             # Static assets
-├── src-tauri/              # Rust backend
-│   ├── src/                # Rust source code
-│   └── target/             # Build outputs & data files
-├── public/                 # HTML templates
-└── dist/                   # Built frontend
+├── src/                     # 🌐 Vue 3 Frontend (runs in webview)
+│   ├── components/          # Vue components (PopupWindow, ChatWindow, etc.)
+│   ├── assets/              # CSS, images, static files
+│   └── main.ts              # Vue app entry point
+├── src-tauri/              # 🦀 Rust Backend (native desktop app)
+│   ├── src/
+│   │   ├── lib.rs           # Tauri app setup & command registration
+│   │   ├── main.rs          # Binary entry point
+│   │   ├── ai_provider/     # Google Gemini AI integration
+│   │   ├── data_manager/    # Configuration & file I/O
+│   │   ├── commands/        # Tauri commands (called from frontend)
+│   │   ├── window_manager.rs # Window creation & management
+│   │   ├── tray_manager.rs  # System tray functionality
+│   │   └── shortcut_manager.rs # Global hotkeys & clipboard
+│   ├── target/debug/        # 📁 Development build + data files
+│   ├── target/release/      # 📁 Production build + data files
+│   ├── Cargo.toml           # Rust dependencies
+│   └── tauri.conf.json      # Tauri configuration
+├── *.html                   # 📄 Separate window templates
+│   ├── index.html           # Main app window (hidden, tray only)
+│   ├── popup.html           # Operation selector (Ctrl+Space popup)
+│   ├── chat.html            # Chat windows
+│   ├── settings.html        # Settings window
+│   ├── history.html         # Chat history window
+│   └── onboarding.html      # First-time setup wizard
+├── public/                  # 📄 Static assets (icons, etc.)
+└── dist/                    # 📦 Built Vue frontend (served to webview)
 ```
+
+### Why This Structure?
+
+**`src/` (Frontend)**: Vue.js code that runs in Tauri's webview (like a browser)
+- Handles UI, user interactions, and visual components
+- Calls Rust functions using `invoke("command_name")`
+
+**`src-tauri/` (Backend)**: Native Rust code that runs as the desktop application
+- System integration (global shortcuts, clipboard, file I/O)
+- AI API calls and data processing
+- Window management and system tray
+- Exposes commands that frontend can call
+
+**Communication**: Frontend calls backend using Tauri's `invoke()` system - this is how Vue talks to Rust!
 
 ## 🔧 Development
 
