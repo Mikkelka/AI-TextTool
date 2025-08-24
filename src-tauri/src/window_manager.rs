@@ -55,21 +55,23 @@ pub fn create_popup_window<R: Runtime>(
 ) -> tauri::Result<()> {
     // Close existing popup windows
     if let Some(existing_popup) = app.get_webview_window("popup") {
-        let _ = existing_popup.close();
+        let _ = existing_popup.destroy();
+        // Small delay to ensure window is fully destroyed before creating new one
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
     
-    // Create popup window with unique label at mouse position
+    // Create popup window with fixed label at mouse position
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis();
-    let window_label = format!("popup_{}", timestamp);
+    let window_label = "popup";
     
     println!("Creating popup window '{}' at mouse position: ({}, {})", window_label, mouse_x, mouse_y);
     
     let popup_window = WebviewWindowBuilder::new(
         app,
-        &window_label,
+        window_label,
         tauri::WebviewUrl::App(format!("popup.html?t={}", timestamp).into())
     )
     .title("AI Text Operations")
