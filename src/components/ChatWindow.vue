@@ -1279,7 +1279,7 @@ onUnmounted(() => {
   flex: 1;
   min-height: 44px;
   max-height: 120px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: 2px solid #e0e0e0;
   border-radius: 22px;
   font-family: inherit;
