@@ -76,7 +76,7 @@ pub async fn open_chat_window(
         "chat.html?operation={}&text={}&title={}&instruction={}&t={}",
         urlencoding::encode(&operation),
         urlencoding::encode(&text),
-        urlencoding::encode(&format!("{} - AI Chat", operation)),
+        urlencoding::encode(&format!("{} - AI TextTool", operation)),
         urlencoding::encode(&instruction),
         timestamp
     );
@@ -89,7 +89,7 @@ pub async fn open_chat_window(
         &window_id,
         tauri::WebviewUrl::App(chat_url.into())
     )
-    .title(&format!("{} - AI Chat", operation))
+    .title(&format!("{} - AI TextTool", operation))
     .inner_size(900.0, 700.0)
     .min_inner_size(700.0, 500.0)
     .center()

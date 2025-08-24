@@ -9,7 +9,7 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
         "onboarding",
         tauri::WebviewUrl::App("onboarding.html".into())
     )
-    .title("AI Text Tools - Setup")
+    .title("AI TextTool - Setup")
     .inner_size(700.0, 600.0)
     .min_inner_size(600.0, 500.0)
     .center()
@@ -74,7 +74,7 @@ pub fn create_popup_window<R: Runtime>(
         window_label,
         tauri::WebviewUrl::App(format!("popup.html?t={}", timestamp).into())
     )
-    .title("AI Text Operations")
+    .title("AI TextTool - Operations")
     .inner_size(300.0, 270.0)  // Compact 2-column layout without header
     .position(mouse_x as f64, mouse_y as f64)
     .resizable(false)
@@ -120,7 +120,7 @@ pub fn create_direct_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri
         &window_id,
         tauri::WebviewUrl::App(format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp).into())
     )
-    .title("AI Chat")
+    .title("AI TextTool - Chat")
     .inner_size(900.0, 700.0)
     .min_inner_size(700.0, 500.0)
     .center()
@@ -162,7 +162,7 @@ pub fn create_fallback_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tau
         &window_id,
         tauri::WebviewUrl::App(format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp).into())
     )
-    .title("AI Chat")
+    .title("AI TextTool - Chat")
     .inner_size(900.0, 700.0)
     .min_inner_size(700.0, 500.0)
     .center()
@@ -204,7 +204,7 @@ pub fn create_tray_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::
         &window_id,
         tauri::WebviewUrl::App(format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp).into())
     )
-    .title("AI Chat")
+    .title("AI TextTool - Chat")
     .inner_size(900.0, 700.0)
     .min_inner_size(700.0, 500.0)
     .center()
@@ -237,7 +237,7 @@ pub fn create_settings_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
         "settings",
         tauri::WebviewUrl::App("settings.html".into())
     )
-    .title("Settings - AI Text Tools")
+    .title("Settings - AI TextTool")
     .inner_size(600.0, 700.0)
     .min_inner_size(500.0, 600.0)
     .center()
@@ -270,7 +270,7 @@ pub fn create_chat_history_window<R: Runtime>(app: &tauri::AppHandle<R>) -> taur
         "chat_history",
         tauri::WebviewUrl::App("history.html".into())
     )
-    .title("Chat History - AI Text Tools")
+    .title("Chat History - AI TextTool")
     .inner_size(1000.0, 700.0)
     .min_inner_size(800.0, 600.0)
     .center()
@@ -303,7 +303,7 @@ pub fn create_edit_operations_window<R: Runtime>(app: &tauri::AppHandle<R>) -> t
         "edit_operations",
         tauri::WebviewUrl::App("operation-edit.html".into())
     )
-    .title("Edit Operations - AI Text Tools")
+    .title("Edit Operations - AI TextTool")
     .inner_size(900.0, 700.0)
     .min_inner_size(700.0, 500.0)
     .center()
