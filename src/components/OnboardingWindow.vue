@@ -566,6 +566,10 @@ const handleKeydown = (event: KeyboardEvent) => {
 const watchApiKey = () => {
   if (formData.value.apiKey.trim()) {
     validateApiKey()
+  } else {
+    // Clear validation error when field becomes empty
+    clearFieldError('apiKey')
+    testResults.value.apiKey = false
   }
 }
 

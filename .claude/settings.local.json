@@ -3,8 +3,6 @@
     "allow": [
       "Bash(npm run tauri:*)",
       "Bash(taskkill:*)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
       "Bash(npm add:*)",
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(cargo check:*)",
@@ -24,7 +22,9 @@
       "Bash(del:*)",
       "Bash(mkdir:*)",
       "WebSearch",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }

@@ -19,19 +19,7 @@
     ],
     "security": {
       "csp": null,
-      "capabilities": [
-        {
-          "identifier": "window-management",
-          "description": "Window management permissions",
-          "windows": ["*"],
-          "permissions": [
-            "core:window:allow-set-focus",
-            "core:window:allow-show",
-            "core:window:allow-hide",
-            "core:window:allow-close"
-          ]
-        }
-      ]
+      "capabilities": ["default"]
     },
     "withGlobalTauri": true
   },
