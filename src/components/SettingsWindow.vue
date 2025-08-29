@@ -50,17 +50,7 @@ import { ref, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-
-interface Config {
-  api_key: string
-  chat_system_instruction: string
-  provider: string
-  chat_model: string
-  text_model: string
-  locale: string
-  streaming: boolean
-  providers: Record<string, any>
-}
+import type { Config } from '../types'
 
 const formData = ref({
   apiKey: '',

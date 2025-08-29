@@ -59,13 +59,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import type { Operation, PopupWindowProps } from '../types'
 
 // Props
-interface Props {
-  selectedText?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<PopupWindowProps>(), {
   selectedText: ''
 })
 
@@ -76,14 +73,6 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
-
-// Types
-interface Operation {
-  prefix: string
-  instruction: string
-  icon?: string
-  open_in_window: boolean
-}
 
 // Reactive state
 const operations = ref<[string, Operation][]>([])

@@ -15,11 +15,11 @@
           <label for="model-select">Model:</label>
           <select 
             id="model-select"
-            v-model="state.selectedModel" 
+            v-model="selectedModel" 
             class="model-dropdown"
-            :disabled="state.isProcessing"
+            :disabled="isProcessing"
           >
-            <option v-for="model in state.availableModels" :key="model" :value="model">
+            <option v-for="model in availableModels" :key="model" :value="model">
               {{ formatModelName(model) }}
             </option>
           </select>
@@ -30,8 +30,8 @@
           <label class="toggle-label">
             <input 
               type="checkbox" 
-              v-model="state.enableThinking"
-              :disabled="state.isProcessing"
+              v-model="enableThinking"
+              :disabled="isProcessing"
             />
             <span class="toggle-slider"></span>
             Thinking Mode
@@ -43,7 +43,7 @@
           <button 
             @click="saveConversation" 
             class="action-btn save-btn"
-            :disabled="state.messages.length === 0"
+            :disabled="messages.length === 0"
             title="Save conversation to history"
           >
             💾
@@ -51,7 +51,7 @@
           <button 
             @click="clearConversation" 
             class="action-btn clear-btn"
-            :disabled="state.messages.length === 0"
+            :disabled="messages.length === 0"
             title="Clear conversation (Ctrl+L)"
           >
             🗑️
@@ -84,7 +84,7 @@
     <!-- Chat Messages Area -->
     <div class="chat-messages" ref="messagesContainer">
       <!-- Welcome Message -->
-      <div v-if="state.messages.length === 0" class="welcome-message">
+      <div v-if="messages.length === 0" class="welcome-message">
         <div class="welcome-content">
           <h2>💬 AI Chat Assistant</h2>
           <p v-if="initialText">Ready to process your text and answer follow-up questions.</p>
@@ -98,14 +98,14 @@
 
       <!-- Message Bubbles -->
       <MessageBubble
-        v-for="(message, index) in state.messages" 
-        :key="`msg-${index}`"
+        v-for="(message, index) in messages" 
+        :key="index"
         :message="message"
         @regenerate="regenerateResponse(index)"
       />
 
       <!-- Typing Indicator -->
-      <div v-if="state.isProcessing && !state.messages.some(m => m.isProcessing)" class="typing-indicator">
+      <div v-if="isProcessing && !messages.some(m => m.isProcessing)" class="typing-indicator">
         <div class="typing-bubble">
           <div class="thinking-dots">
             <span></span>
@@ -120,15 +120,15 @@
     <!-- Input Area -->
     <InputArea
       ref="inputArea"
-      :is-processing="state.isProcessing"
+      :is-processing="isProcessing"
       @send="handleSendMessage"
     />
 
     <!-- Error Display -->
-    <div v-if="state.error" class="error-message">
+    <div v-if="error" class="error-message">
       <div class="error-content">
         <span class="error-icon">⚠️</span>
-        <span class="error-text">{{ state.error }}</span>
+        <span class="error-text">{{ error }}</span>
         <button @click="clearError" class="error-close">✕</button>
       </div>
     </div>
@@ -153,18 +153,18 @@ const props = withDefaults(defineProps<ChatWindowProps>(), {
   conversationId: ''
 })
 
-// Centralized reactive state
+// Reactive State - Group related state together
 const state = reactive({
   messages: [] as ChatMessage[],
   isProcessing: false,
   error: null as string | null,
-  selectedModel: 'gemini-2.5-flash' as string,
+  selectedModel: 'gemini-2.5-flash',
   enableThinking: false,
   availableModels: [] as string[],
   zoomLevel: 100
 })
 
-// Refs
+// Refs for DOM elements
 const messagesContainer = ref<HTMLElement>()
 const inputArea = ref<InstanceType<typeof InputArea>>()
 
@@ -186,6 +186,11 @@ const supportsThinking = computed(() => {
   return ['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(state.selectedModel)
 })
 
+// Shorthand getters for frequently accessed state
+const messages = computed(() => state.messages)
+const isProcessing = computed(() => state.isProcessing)
+const error = computed(() => state.error)
+
 // Methods
 const loadAvailableModels = async () => {
   try {
@@ -204,6 +209,15 @@ const formatModelName = (model: string): string => {
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+const formatTime = (timestamp: string): string => {
+  try {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
 }
 
 // Handle send from InputArea component
@@ -256,10 +270,10 @@ const sendMessage = async (userMessage: string) => {
       messageToSend = `${props.initialText}\n\n${userMessage}`
     }
 
-    // Call backend AI service
+    // Call backend AI service with custom instruction if available
     const response = await invoke('chat_with_ai', {
       message: messageToSend,
-      history: chatHistory.slice(0, -1),
+      history: chatHistory.slice(0, -1), // Exclude the current user message since it's included separately
       customInstruction: props.instruction || null,
       enableThinking: state.enableThinking
     }) as AIResponse
@@ -293,13 +307,13 @@ const sendMessage = async (userMessage: string) => {
 }
 
 const regenerateResponse = async (messageIndex: number) => {
-  if (messageIndex <= 0 || state.isProcessing) return
+  if (messageIndex <= 0 || isProcessing.value) return
 
-  const userMessage = state.messages[messageIndex - 1]
+  const userMessage = messages.value[messageIndex - 1]
   if (userMessage.role !== 'user') return
 
   // Remove the AI response and any subsequent messages
-  state.messages = state.messages.slice(0, messageIndex)
+  messages.value = messages.value.slice(0, messageIndex)
   
   // Add processing indicator
   const aiMsg: ChatMessage = {
@@ -308,13 +322,13 @@ const regenerateResponse = async (messageIndex: number) => {
     timestamp: new Date().toISOString(),
     isProcessing: true
   }
-  state.messages.push(aiMsg)
+  messages.value.push(aiMsg)
 
-  state.isProcessing = true
+  isProcessing.value = true
   await scrollToBottom()
 
   try {
-    const chatHistory = state.messages
+    const chatHistory = messages.value
       .filter(m => !m.isProcessing)
       .map(m => ({
         role: m.role,
@@ -326,13 +340,13 @@ const regenerateResponse = async (messageIndex: number) => {
       message: userMessage.content,
       history: chatHistory.slice(0, -1),
       customInstruction: props.instruction || null,
-      enableThinking: state.enableThinking
-    }) as AIResponse
+      enableThinking: enableThinking.value
+    }) as { answer: string, thoughts?: string }
 
     // Update AI message
-    const aiIndex = state.messages.findIndex(m => m.isProcessing)
+    const aiIndex = messages.value.findIndex(m => m.isProcessing)
     if (aiIndex !== -1) {
-      state.messages[aiIndex] = {
+      messages.value[aiIndex] = {
         role: 'assistant',
         content: response.answer,
         timestamp: new Date().toISOString(),
@@ -343,25 +357,34 @@ const regenerateResponse = async (messageIndex: number) => {
 
   } catch (err) {
     console.error('Failed to regenerate response:', err)
-    state.error = err instanceof Error ? err.message : 'Failed to regenerate response'
+    error.value = err instanceof Error ? err.message : 'Failed to regenerate response'
     
     // Remove processing message
-    const processingIndex = state.messages.findIndex(m => m.isProcessing)
+    const processingIndex = messages.value.findIndex(m => m.isProcessing)
     if (processingIndex !== -1) {
-      state.messages.splice(processingIndex, 1)
+      messages.value.splice(processingIndex, 1)
     }
   } finally {
-    state.isProcessing = false
+    isProcessing.value = false
     await scrollToBottom()
   }
 }
 
+const copyMessage = async (content: string) => {
+  try {
+    await navigator.clipboard.writeText(content)
+    // Could add a toast notification here
+  } catch (err) {
+    console.error('Failed to copy message:', err)
+  }
+}
+
 const saveConversation = async () => {
-  if (state.messages.length === 0) return
+  if (messages.value.length === 0) return
 
   try {
     // Generate a smart default title from first user message
-    const firstUserMessage = state.messages.find(m => m.role === 'user')
+    const firstUserMessage = messages.value.find(m => m.role === 'user')
     const defaultTitle = firstUserMessage ? 
       (firstUserMessage.content.length > 50 ? 
         firstUserMessage.content.substring(0, 50) + '...' : 
@@ -373,8 +396,8 @@ const saveConversation = async () => {
     if (!title) return // User cancelled
 
     // Convert messages to ConversationMessage format
-    const conversationMessages = state.messages
-      .filter(msg => !msg.isProcessing)
+    const conversationMessages = messages.value
+      .filter(msg => !msg.isProcessing) // Exclude any processing messages
       .map(msg => ({
         role: msg.role,
         content: msg.content,
@@ -387,31 +410,35 @@ const saveConversation = async () => {
       title: title.trim(),
       operation: props.operation || 'Chat',
       messages: conversationMessages,
-      thinkingModeEnabled: state.enableThinking
+      thinkingModeEnabled: enableThinking.value
     }) as string
 
     console.log('Conversation saved successfully with ID:', conversationId)
+    
+    // Show success feedback (simple alert for now)
     alert('✅ Conversation saved successfully!')
     
   } catch (err) {
     console.error('Failed to save conversation:', err)
-    state.error = 'Failed to save conversation: ' + (err instanceof Error ? err.message : String(err))
-    alert('❌ Failed to save conversation: ' + state.error)
+    error.value = 'Failed to save conversation: ' + (err instanceof Error ? err.message : String(err))
+    
+    // Show error feedback
+    alert('❌ Failed to save conversation: ' + error.value)
   }
 }
 
 const clearConversation = () => {
-  if (state.messages.length === 0) return
+  if (messages.value.length === 0) return
   
   if (confirm('Are you sure you want to clear this conversation?')) {
-    state.messages = []
-    state.error = null
+    messages.value = []
+    error.value = null
     focusInput()
   }
 }
 
 const clearError = () => {
-  state.error = null
+  error.value = null
 }
 
 const scrollToBottom = async () => {
@@ -427,21 +454,21 @@ const focusInput = async () => {
 }
 
 const zoomIn = () => {
-  if (state.zoomLevel < 200) {
-    state.zoomLevel += 10
+  if (zoomLevel.value < 200) {
+    zoomLevel.value += 10
     applyZoom()
   }
 }
 
 const zoomOut = () => {
-  if (state.zoomLevel > 50) {
-    state.zoomLevel -= 10
+  if (zoomLevel.value > 50) {
+    zoomLevel.value -= 10
     applyZoom()
   }
 }
 
 const applyZoom = () => {
-  document.documentElement.style.fontSize = `${state.zoomLevel}%`
+  document.documentElement.style.fontSize = `${zoomLevel.value}%`
 }
 
 const closeWindow = () => {
@@ -471,6 +498,26 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 }
 
+const handleInputKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+    event.preventDefault()
+    sendMessage()
+  } else if (event.key === 'Enter' && event.ctrlKey) {
+    // Allow new line
+    return
+  }
+  
+  // Auto-resize textarea
+  nextTick(() => {
+    if (messageInput.value) {
+      messageInput.value.style.height = 'auto'
+      messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 120) + 'px'
+    }
+  })
+}
+
+// Use imported markdown renderer from utils
+
 // Load existing conversation
 const loadConversation = async () => {
   if (!props.conversationId) return
@@ -478,6 +525,7 @@ const loadConversation = async () => {
   try {
     console.log('Loading conversation:', props.conversationId)
     
+    // Load the conversation from backend
     const conversation = await invoke('load_conversation_messages', {
       conversationId: props.conversationId
     }) as {
@@ -496,7 +544,7 @@ const loadConversation = async () => {
     }
     
     // Convert and load messages
-    state.messages = conversation.messages.map(msg => ({
+    messages.value = conversation.messages.map(msg => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
       timestamp: msg.timestamp,
@@ -504,9 +552,9 @@ const loadConversation = async () => {
       thoughts: msg.thoughts
     }))
     
-    // Restore thinking mode setting
+    // Restore thinking mode setting from saved conversation
     if (conversation.thinking_mode_enabled !== undefined) {
-      state.enableThinking = conversation.thinking_mode_enabled
+      enableThinking.value = conversation.thinking_mode_enabled
       console.log(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
     }
     
@@ -518,16 +566,17 @@ const loadConversation = async () => {
     
   } catch (err) {
     console.error('Failed to load conversation:', err)
-    state.error = 'Failed to load conversation: ' + (err instanceof Error ? err.message : String(err))
+    error.value = 'Failed to load conversation: ' + (err instanceof Error ? err.message : String(err))
   }
 }
 
-// Watchers
-watch(() => state.messages.length, () => {
+// Auto-scroll on new messages
+watch(() => messages.value.length, () => {
   scrollToBottom()
 })
 
-watch(() => state.isProcessing, (newVal) => {
+// Focus input when not processing
+watch(isProcessing, (newVal) => {
   if (!newVal) {
     focusInput()
   }
@@ -563,7 +612,9 @@ onMounted(async () => {
     // Send initial message if there's initial text and operation (only for new chats)
     if (initialText && operation) {
       console.log(`Auto-sending initial text for operation: ${operation}`)
-      await sendMessage(initialText)
+      // Send the actual selected text as the first message
+      currentMessage.value = initialText
+      await sendMessage()
     } else {
       console.log('No initial text or operation - waiting for user input')
     }
@@ -574,12 +625,12 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  // Cleanup markdown copy function
   cleanupMarkdownCopyFunction()
 })
 </script>
 
 <style scoped>
-/* Import all the existing ChatWindow styles but simplified */
 .chat-window {
   display: flex;
   flex-direction: column;
@@ -588,7 +639,7 @@ onUnmounted(() => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Header Styles */
+/* Header */
 .chat-header {
   display: flex;
   justify-content: space-between;
@@ -611,6 +662,11 @@ onUnmounted(() => {
   font-weight: 600;
   margin: 0;
   color: #333;
+}
+
+.operation-info {
+  display: flex;
+  gap: 8px;
 }
 
 .operation-badge {
@@ -783,6 +839,277 @@ onUnmounted(() => {
   word-break: break-word;
 }
 
+.message-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-bubble {
+  max-width: 80%;
+  padding: 16px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.message-user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-bottom-right-radius: 6px;
+}
+
+.message-assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-processing {
+  opacity: 0.8;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.message-role {
+  font-weight: 600;
+  color: #666;
+}
+
+.message-time {
+  color: #999;
+}
+
+.message-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.copy-btn,
+.regenerate-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.copy-btn:hover,
+.regenerate-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.message-content {
+  line-height: 1.5;
+}
+
+.user-content {
+  color: #333;
+}
+
+.markdown-content {
+  color: #333;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3) {
+  margin: 16px 0 8px 0;
+  color: #333;
+}
+
+.markdown-content :deep(p) {
+  margin: 8px 0;
+}
+
+.markdown-content :deep(pre) {
+  position: relative;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.markdown-content :deep(.copy-code-btn) {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.markdown-content :deep(code) {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+}
+
+.markdown-content :deep(.inline-code) {
+  background: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.markdown-content :deep(ul) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.markdown-content :deep(li) {
+  margin: 4px 0;
+}
+
+.markdown-content :deep(a) {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+.markdown-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+/* Markdown Headings */
+.markdown-content :deep(.markdown-heading) {
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.markdown-content :deep(.markdown-h1) {
+  font-size: 24px;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.markdown-content :deep(.markdown-h2) {
+  font-size: 20px;
+  color: #333;
+}
+
+.markdown-content :deep(.markdown-h3) {
+  font-size: 18px;
+  color: #444;
+}
+
+.markdown-content :deep(.markdown-h4) {
+  font-size: 16px;
+  color: #555;
+}
+
+.markdown-content :deep(.markdown-h5) {
+  font-size: 14px;
+  color: #666;
+}
+
+.markdown-content :deep(.markdown-h6) {
+  font-size: 13px;
+  color: #777;
+}
+
+/* Markdown Tables */
+.markdown-content :deep(.table-wrapper) {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.markdown-content :deep(.markdown-table) {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.markdown-content :deep(.markdown-table th) {
+  background: #f5f5f5;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.markdown-content :deep(.markdown-table th:last-child) {
+  border-right: none;
+}
+
+.markdown-content :deep(.markdown-table td) {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+}
+
+.markdown-content :deep(.markdown-table td:last-child) {
+  border-right: none;
+}
+
+.markdown-content :deep(.markdown-table tr:last-child td) {
+  border-bottom: none;
+}
+
+.markdown-content :deep(.markdown-table tr:nth-child(even)) {
+  background: #fafafa;
+}
+
+/* Markdown Blockquotes */
+.markdown-content :deep(.markdown-blockquote) {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-left: 4px solid #2196f3;
+  background: rgba(33, 150, 243, 0.05);
+  border-radius: 0 6px 6px 0;
+  color: #555;
+  font-style: italic;
+}
+
+.markdown-content :deep(.markdown-blockquote p) {
+  margin: 0;
+}
+
+/* Markdown Lists */
+.markdown-content :deep(.markdown-list) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.markdown-content :deep(.markdown-list li) {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+/* Horizontal Rules */
+.markdown-content :deep(hr) {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+.processing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #666;
+  font-size: 13px;
+}
+
 .typing-indicator {
   align-self: flex-start;
   margin: 8px 0;
@@ -830,6 +1157,99 @@ onUnmounted(() => {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* Input Area */
+.chat-input-area {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.input-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.message-input {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 22px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: none;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.message-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 22px;
+  background: #2196f3;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #1976d2;
+  transform: scale(1.05);
+}
+
+.send-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.input-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.input-hints {
+  display: flex;
+  gap: 16px;
+}
+
+.hint {
+  opacity: 0.7;
 }
 
 /* Error Message */
@@ -906,9 +1326,58 @@ onUnmounted(() => {
     color: #cbd5e0;
   }
 
+  .message-assistant {
+    background: rgba(45, 55, 72, 0.95);
+    color: #e2e8f0;
+  }
+
+  .message-user {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.4) 100%);
+    color: #e2e8f0;
+  }
+
+  .message-role,
+  .message-time {
+    color: #a0aec0;
+  }
+
+  .user-content,
+  .markdown-content {
+    color: #e2e8f0;
+  }
+
+  .markdown-content :deep(pre) {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .markdown-content :deep(.inline-code) {
+    background: #4a5568;
+  }
+
   .typing-bubble {
     background: rgba(45, 55, 72, 0.9);
     color: #cbd5e0;
+  }
+
+  .chat-input-area {
+    background: rgba(45, 55, 72, 0.95);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .message-input {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-color: #2d3748;
+  }
+
+  .message-input:focus {
+    border-color: #3182ce;
+  }
+
+  .character-count,
+  .input-hints {
+    color: #a0aec0;
   }
 
   .initial-text-preview {
@@ -928,6 +1397,150 @@ onUnmounted(() => {
   .welcome-content h2 {
     color: #e2e8f0;
   }
+
+  .thoughts-details {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .thoughts-header {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  .thoughts-header:hover {
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  .thoughts-markdown {
+    color: white;
+  }
+
+  .thoughts-markdown :deep(code) {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  .thoughts-markdown :deep(pre) {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  /* Dark mode markdown headings */
+  .markdown-content :deep(.markdown-h1) {
+    color: #e2e8f0;
+    border-bottom-color: #4a5568;
+  }
+
+  .markdown-content :deep(.markdown-h2) {
+    color: #e2e8f0;
+  }
+
+  .markdown-content :deep(.markdown-h3) {
+    color: #cbd5e0;
+  }
+
+  .markdown-content :deep(.markdown-h4) {
+    color: #a0aec0;
+  }
+
+  .markdown-content :deep(.markdown-h5) {
+    color: #a0aec0;
+  }
+
+  .markdown-content :deep(.markdown-h6) {
+    color: #a0aec0;
+  }
+
+  /* Dark mode tables */
+  .markdown-content :deep(.markdown-table) {
+    border-color: #4a5568;
+  }
+
+  .markdown-content :deep(.markdown-table th) {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-bottom-color: #2d3748;
+    border-right-color: #2d3748;
+  }
+
+  .markdown-content :deep(.markdown-table td) {
+    border-bottom-color: #4a5568;
+    border-right-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .markdown-content :deep(.markdown-table tr:nth-child(even)) {
+    background: rgba(74, 85, 104, 0.3);
+  }
+
+  /* Dark mode blockquotes */
+  .markdown-content :deep(.markdown-blockquote) {
+    border-left-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+    color: #cbd5e0;
+  }
+
+  /* Dark mode horizontal rules */
+  .markdown-content :deep(hr) {
+    border-top-color: #4a5568;
+  }
+}
+
+/* Thoughts Section */
+.thoughts-section {
+  margin-bottom: 12px;
+}
+
+.thoughts-details {
+  background: rgba(173, 216, 230, 0.1); /* Light blue background */
+  border: 1px solid rgba(173, 216, 230, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.thoughts-header {
+  background: rgba(173, 216, 230, 0.2);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4682b4; /* Steel blue color */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  border: none;
+  outline: none;
+}
+
+.thoughts-header:hover {
+  background: rgba(173, 216, 230, 0.3);
+}
+
+.thoughts-content {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.thoughts-markdown {
+  color: white;
+  font-style: italic;
+}
+
+.thoughts-markdown :deep(p) {
+  margin: 6px 0;
+}
+
+.thoughts-markdown :deep(code) {
+  background: rgba(173, 216, 230, 0.2);
+  color: #4682b4;
+}
+
+.thoughts-markdown :deep(pre) {
+  background: rgba(173, 216, 230, 0.15);
+  border-color: rgba(173, 216, 230, 0.3);
 }
 
 /* Responsive */
@@ -943,10 +1556,30 @@ onUnmounted(() => {
     flex-wrap: wrap;
     gap: 8px;
   }
+
+  .message-bubble {
+    max-width: 95%;
+  }
+
+  .input-container {
+    gap: 8px;
+  }
+
+  .input-hints {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
   .chat-messages {
+    padding: 12px;
+  }
+
+  .chat-input-area {
+    padding: 12px;
+  }
+
+  .message-bubble {
     padding: 12px;
   }
 
