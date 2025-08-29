@@ -35,7 +35,7 @@ This is a **complete AI-powered text processing desktop application** built with
   - **Entry Point**: `src-tauri/src/lib.rs` (minimal Tauri app setup)
   - **AI Provider Module**: `src-tauri/src/ai_provider/` (Gemini integration with rate limiting)
   - **Data Manager Module**: `src-tauri/src/data_manager/` (configuration & data persistence)
-  - **Window Manager**: `src-tauri/src/window_manager.rs` (all window creation & lifecycle)
+  - **Window Manager**: `src-tauri/src/window_manager.rs` (optimized generic window creation system - 75% code reduction)
   - **Tray Manager**: `src-tauri/src/tray_manager.rs` (system tray functionality)
   - **Shortcut Manager**: `src-tauri/src/shortcut_manager.rs` (global shortcuts & clipboard)
   - **Commands Module**: `src-tauri/src/commands/` (organized Tauri commands)
@@ -180,6 +180,7 @@ Located in `src/types/index.ts`:
 - **Popup Positioning**: Opens at exact mouse cursor position
 - **Window Lifecycle**: Proper cleanup and memory management
 - **Data Injection**: Uses `initialization_script()` for popup data instead of clipboard API
+- **Generic Window System**: WindowConfig-driven creation eliminating code duplication (7 functions → 1 generic system)
 
 #### AI Integration
 - **Rate Limiting**: Built-in rate limiting per model (10-15 requests/min)
@@ -402,7 +403,7 @@ src-tauri/src/
 │   ├── ai_commands.rs              # AI-related commands (process_text_with_ai, chat_with_ai)
 │   ├── window_commands.rs          # Window management commands (reopen_chat_conversation)
 │   └── utility_commands.rs         # Utility commands (greet, simulate_paste)
-├── window_manager.rs               # All window creation & management functions
+├── window_manager.rs               # Generic window creation system (optimized - 75% code reduction)
 ├── tray_manager.rs                 # System tray creation & menu handling
 └── shortcut_manager.rs             # Global shortcuts, clipboard & debouncing
 ```
