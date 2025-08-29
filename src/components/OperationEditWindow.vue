@@ -166,6 +166,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import type { Operation } from '../types'
 
 // Props
 interface Props {
@@ -182,12 +183,6 @@ interface Emits {
 defineEmits<Emits>()
 
 // Types
-interface Operation {
-  prefix: string
-  instruction: string
-  icon?: string
-  open_in_window: boolean
-}
 
 interface EditForm {
   name: string

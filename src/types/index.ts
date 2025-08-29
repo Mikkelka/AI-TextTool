@@ -22,6 +22,7 @@ export interface Config {
   provider: string
   chat_model: string
   text_model: string
+  shortcut: string
   locale: string
   streaming: boolean
   providers: Record<string, any>

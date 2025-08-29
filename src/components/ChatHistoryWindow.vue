@@ -239,6 +239,7 @@ import { ref, computed, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { renderMarkdown } from '../utils/markdown'
+import type { ConversationMessage, SavedConversation } from '../types'
 
 // Chat Entry Interface
 interface ChatEntry {
@@ -248,21 +249,7 @@ interface ChatEntry {
   processed_text: string
 }
 
-// Conversation Interfaces
-interface ConversationMessage {
-  role: string
-  content: string
-  timestamp: string
-}
-
-interface SavedConversation {
-  id: string
-  title: string
-  operation: string
-  messages: ConversationMessage[]
-  created_at: string
-  updated_at: string
-}
+// Local interfaces (ChatEntry is specific to this component)
 
 // Reactive state
 const currentTab = ref<'conversations' | 'entries'>('conversations')

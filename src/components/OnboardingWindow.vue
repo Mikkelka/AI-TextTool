@@ -248,6 +248,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
+import type { Config } from '../types'
 
 // Props
 interface Props {
@@ -267,18 +268,6 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-// Configuration interface
-interface Config {
-  api_key: string
-  chat_system_instruction: string
-  provider: string
-  chat_model: string
-  text_model: string
-  shortcut: string
-  locale: string
-  streaming: boolean
-  providers: Record<string, any>
-}
 
 // Steps configuration
 const steps = [
