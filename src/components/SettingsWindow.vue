@@ -121,6 +121,7 @@ const saveSettings = async () => {
         provider: 'Gemini',
         chat_model: 'gemini-2.5-flash',
         text_model: 'gemini-2.5-flash-lite',
+        shortcut: 'CommandOrControl+Space',
         locale: 'en',
         streaming: false,
         providers: {}

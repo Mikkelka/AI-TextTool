@@ -239,7 +239,7 @@ import { ref, computed, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { renderMarkdown } from '../utils/markdown'
-import type { ConversationMessage, SavedConversation } from '../types'
+import type { SavedConversation } from '../types'
 
 // Chat Entry Interface
 interface ChatEntry {
