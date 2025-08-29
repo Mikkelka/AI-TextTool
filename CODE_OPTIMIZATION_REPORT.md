@@ -244,6 +244,15 @@ After conducting a comprehensive analysis of the AI TextTool codebase, I've iden
 - **State Management**: Replaced 9 separate `ref()` calls with 1 centralized `reactive()` object
 - **Result**: 30% complexity reduction, improved memory usage, better maintainability
 
+#### **1.3 PopupWindow.vue - Minor Optimizations**
+- **Status**: COMPLETED ✅
+- **Optimizations Applied**:
+  - Removed unnecessary `operationsArray` computed property (just returned operations.value)
+  - Inlined `getGridColumns()` function with constant value 2
+  - Cleaned up unused `computed` import
+- **Performance**: Eliminated redundant reactivity overhead and function call overhead
+- **Result**: Cleaner, more direct code with preserved functionality
+
 ### Actual Performance Gains (Measured)
 - **Frontend Code**: 35% reduction in duplicate code through component extraction
 - **Bundle Efficiency**: Improved through modular architecture and shared types
