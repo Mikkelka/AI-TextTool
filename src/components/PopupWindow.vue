@@ -19,7 +19,7 @@
       <!-- Operations Grid -->
       <div class="operations-grid">
         <button
-          v-for="([key, operation], index) in operationsArray"
+          v-for="([key, operation], index) in operations"
           :key="key"
           :ref="el => buttonRefs[index] = el as HTMLElement"
           @click="handleOperationClick(key, operation)"
@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import type { Operation, PopupWindowProps } from '../types'
 
@@ -86,10 +86,6 @@ const showFadeIn = ref(true)
 // Get text from props or window.clipboardText injection
 const clipboardText = ref(props.selectedText || (window as any).clipboardText || '')
 
-// Computed properties
-const operationsArray = computed(() => {
-  return operations.value
-})
 
 // Methods
 const loadOperations = async () => {
@@ -230,14 +226,14 @@ const handleKeydown = async (event: KeyboardEvent) => {
       
     case 'ArrowLeft':
       event.preventDefault()
-      const cols = getGridColumns()
+      const cols = 2
       selectedIndex.value = Math.max(0, selectedIndex.value - cols)
       scrollToSelected()
       break
       
     case 'ArrowRight':
       event.preventDefault()
-      const columns = getGridColumns()
+      const columns = 2
       selectedIndex.value = Math.min(operationCount - 1, selectedIndex.value + columns)
       scrollToSelected()
       break
@@ -245,7 +241,7 @@ const handleKeydown = async (event: KeyboardEvent) => {
     case 'Enter':
       event.preventDefault()
       if (selectedIndex.value < operationCount && processingOperation.value === null) {
-        const [key, operation] = operationsArray.value[selectedIndex.value]
+        const [key, operation] = operations.value[selectedIndex.value]
         await handleOperationClick(key, operation)
       }
       break
@@ -260,10 +256,6 @@ const scrollToSelected = async () => {
   }
 }
 
-const getGridColumns = (): number => {
-  // This matches the CSS grid-template-columns (now 2 columns)
-  return 2
-}
 
 const getOperationTooltip = (operation: Operation): string => {
   const type = operation.open_in_window ? 'Opens chat window' : 'Direct processing'
