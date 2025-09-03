@@ -1,0 +1,44 @@
+# Clippy configuration for AI-TextTool
+# Enables strict linting to catch common issues and performance problems
+
+# Complexity thresholds
+cognitive-complexity-threshold = 30
+too-many-arguments-threshold = 8
+too-many-lines-threshold = 100
+type-complexity-threshold = 250
+
+# Size thresholds  
+trivial-copy-size-limit = 128
+pass-by-value-size-limit = 256
+large-error-threshold = 128
+
+# Code quality settings  
+check-private-items = true
+avoid-breaking-exported-api = false
+
+# Allow these patterns that are common in Tauri apps
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-panic-in-tests = true
+allow-print-in-tests = true
+
+# Disallowed items for better code quality
+disallowed-methods = [
+    "std::env::set_var",        # Prefer config management
+    # Note: std::process::exit removed as it's used internally by tauri::generate_context macro
+]
+
+disallowed-names = [
+    "foo", "bar", "baz", "test", "tmp"  # Encourage meaningful names
+]
+
+# Tauri-specific security settings
+# Prevent potentially unsafe patterns in Tauri apps
+disallowed-types = [
+    # Encourage proper error handling over unwrap/expect
+    # "Result<T, E>.unwrap",  # Uncomment to be very strict about unwraps
+]
+
+# Stricter settings for production code  
+# (check-private-items already set above)
+# avoid-breaking-exported-api = true  # Maintain API stability (conflicts with setting above)

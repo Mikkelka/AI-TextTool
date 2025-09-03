@@ -53,9 +53,20 @@ This is a **complete AI-powered text processing desktop application** built with
 - `npm run tauri dev` - Start Tauri development mode (launches desktop app)
 - `npm run tauri build` - Build desktop application for distribution
 
+### Code Quality & Linting
+- `npm run lint` - Check ESLint errors/warnings (development mode)
+- `npm run lint:fix` - Auto-fix ESLint issues where possible
+- `npm run lint:prod` - Check production linting (console.log = errors)
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check if code follows Prettier formatting
+- `npm run lint:rust` - Run Clippy linting on Rust code
+- `npm run format:rust` - Format Rust code with rustfmt
+- `npm run check` - Run complete linting check (ESLint + Prettier + Clippy)
+
 ### Full Development Workflow
 - `npm run tauri dev` automatically runs `npm run dev` as the beforeDevCommand
 - `npm run tauri build` automatically runs `npm run build` as the beforeBuildCommand
+- **IMPORTANT**: Always run `npm run check` before committing to ensure code quality
 
 ## Data Files (Located next to executable)
 
@@ -73,6 +84,26 @@ This is a **complete AI-powered text processing desktop application** built with
 - `src-tauri/tauri.conf.json` - Tauri application configuration (window settings, bundle options)
 - `src-tauri/Cargo.toml` - Rust dependencies and build configuration
 - `tsconfig.json` & `tsconfig.node.json` - TypeScript configuration
+
+### Code Quality Configuration
+- `eslint.config.js` - ESLint configuration with Vue 3 + TypeScript support
+- `.prettierrc` - Prettier code formatting configuration
+- `.prettierignore` - Files to ignore for Prettier formatting
+- `src-tauri/clippy.toml` - Clippy linting configuration for Rust
+- `src-tauri/rustfmt.toml` - Rustfmt formatting configuration for Rust
+
+#### Linting Rules Summary:
+- **ESLint**: Vue 3 best practices, TypeScript strict rules, security checks (v-html warnings)
+- **Console logs**: Warnings in development, errors in production (`lint:prod`)
+- **Tauri-specific**: `@typescript-eslint/no-floating-promises` catches unawaited `invoke()` calls
+- **Clippy**: Strict Rust linting with complexity, performance, and correctness checks
+- **Prettier/rustfmt**: Consistent code formatting across both frontend and backend
+
+#### Tauri-Specific Linting Features:
+- **Promise handling**: Enforces proper awaiting of Tauri `invoke()` commands
+- **Security focus**: Enhanced rules for Tauri application security patterns
+- **Error handling**: Stricter checking of Result types and error propagation
+- **API consistency**: Rules to maintain stable Tauri command interfaces
 
 ## Frontend Architecture & Performance Optimizations
 

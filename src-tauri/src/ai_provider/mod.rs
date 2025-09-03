@@ -1,6 +1,6 @@
-pub mod types;
 pub mod gemini;
+pub mod types;
 
 // Re-export commonly used types and structs
-pub use types::*;
 pub use gemini::GeminiProvider;
+pub use types::*;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Minimal App.vue - This window is hidden and serves as the main Tauri entry point
-// The actual UI is handled by popup windows, chat windows, and tray interactions
+  // Minimal App.vue - This window is hidden and serves as the main Tauri entry point
+  // The actual UI is handled by popup windows, chat windows, and tray interactions
 </script>
 
 <template>
@@ -15,20 +15,20 @@
 </template>
 
 <style scoped>
-.hidden-main {
-  padding: 20px;
-  text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #666;
-}
+  .hidden-main {
+    padding: 20px;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #666;
+  }
 
-.hidden-main ul {
-  text-align: left;
-  display: inline-block;
-  margin-top: 16px;
-}
+  .hidden-main ul {
+    text-align: left;
+    display: inline-block;
+    margin-top: 16px;
+  }
 
-.hidden-main li {
-  margin: 8px 0;
-}
+  .hidden-main li {
+    margin: 8px 0;
+  }
 </style>

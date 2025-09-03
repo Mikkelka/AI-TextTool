@@ -6,33 +6,28 @@ use thiserror::Error;
 pub enum GeminiError {
     #[error("HTTP request failed: {0}")]
     HttpError(#[from] reqwest::Error),
-    
+
     #[error("JSON serialization/deserialization error: {0}")]
     JsonError(#[from] serde_json::Error),
-    
+
     #[error("API error: {status} - {message}")]
-    ApiError {
-        status: u16,
-        message: String,
-    },
-    
+    ApiError { status: u16, message: String },
+
     #[error("Rate limit exceeded. Retry after {retry_after_seconds} seconds")]
-    RateLimitExceeded {
-        retry_after_seconds: u64,
-    },
-    
+    RateLimitExceeded { retry_after_seconds: u64 },
+
     #[error("Invalid API key")]
     InvalidApiKey,
-    
+
     #[error("Model not found: {model}")]
     ModelNotFound { model: String },
-    
+
     #[error("Invalid request: {message}")]
     InvalidRequest { message: String },
-    
+
     #[error("Network timeout")]
     Timeout,
-    
+
     #[error("Service unavailable")]
     ServiceUnavailable,
 }
@@ -57,11 +52,14 @@ impl Content {
     /// Create new content from text with optional role
     pub fn new(text: impl Into<String>, role: Option<String>) -> Self {
         Self {
-            parts: vec![Part { text: text.into(), thought: None }],
+            parts: vec![Part {
+                text: text.into(),
+                thought: None,
+            }],
             role,
         }
     }
-    
+
     /// Create user content
     pub fn user(text: impl Into<String>) -> Self {
         Self::new(text, Some("user".to_string()))

@@ -4,28 +4,26 @@
       <textarea
         ref="messageInput"
         v-model="currentMessage"
-        @keydown="handleInputKeydown"
         placeholder="Type your message here... (Press Enter to send, Ctrl+Enter for new line)"
         class="message-input"
         :disabled="isProcessing"
         rows="1"
+        @keydown="handleInputKeydown"
       ></textarea>
-      <button 
-        @click="handleSendClick"
+      <button
         :disabled="!canSend"
         class="send-button"
         title="Send message (Enter)"
+        @click="handleSendClick"
       >
         <span v-if="!isProcessing">📤</span>
         <span v-else class="spinner">⏳</span>
       </button>
     </div>
-    
+
     <!-- Input Status -->
     <div class="input-status">
-      <div class="character-count">
-        {{ currentMessage.length }} characters
-      </div>
+      <div class="character-count">{{ currentMessage.length }} characters</div>
       <div class="input-hints">
         <span class="hint">Enter to send</span>
         <span class="hint">Ctrl+Enter for new line</span>
@@ -36,33 +34,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+  import { ref, computed, nextTick, onMounted } from 'vue'
 
-// Props
-interface Props {
-  isProcessing: boolean
-}
+  // Props
+  interface Props {
+    isProcessing: boolean
+  }
 
-const props = defineProps<Props>()
+  const props = defineProps<Props>()
 
-// Emits
-const emit = defineEmits<{
-  send: []
-}>()
+  // Emits
+  const emit = defineEmits<{
+    send: []
+  }>()
 
-// State
-const currentMessage = ref('')
-const messageInput = ref<HTMLTextAreaElement>()
+  // State
+  const currentMessage = ref('')
+  const messageInput = ref<HTMLTextAreaElement>()
 
-// Computed
-const canSend = computed(() => {
-  return currentMessage.value.trim().length > 0 && !props.isProcessing
-})
+  // Computed
+  const canSend = computed(() => {
+    return currentMessage.value.trim().length > 0 && !props.isProcessing
+  })
 
-// Methods
-const handleInputKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
-    event.preventDefault()
+  // Methods
+  const handleInputKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+      event.preventDefault()
+      if (canSend.value) {
+        const message = currentMessage.value.trim()
+        if (message) {
+          // Emit the send event (parent will handle clearing)
+          emit('send')
+        }
+      }
+    } else if (event.key === 'Enter' && event.ctrlKey) {
+      // Allow new line
+      return
+    }
+
+    // Auto-resize textarea
+    nextTick(() => {
+      if (messageInput.value) {
+        messageInput.value.style.height = 'auto'
+        messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 120) + 'px'
+      }
+    })
+  }
+
+  const handleSendClick = () => {
     if (canSend.value) {
       const message = currentMessage.value.trim()
       if (message) {
@@ -70,191 +90,173 @@ const handleInputKeydown = (event: KeyboardEvent) => {
         emit('send')
       }
     }
-  } else if (event.key === 'Enter' && event.ctrlKey) {
-    // Allow new line
-    return
   }
-  
-  // Auto-resize textarea
-  nextTick(() => {
-    if (messageInput.value) {
-      messageInput.value.style.height = 'auto'
-      messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 120) + 'px'
-    }
-  })
-}
 
-const handleSendClick = () => {
-  if (canSend.value) {
-    const message = currentMessage.value.trim()
-    if (message) {
-      // Emit the send event (parent will handle clearing)
-      emit('send')
-    }
+  const focusInput = async () => {
+    await nextTick()
+    messageInput.value?.focus()
   }
-}
 
-const focusInput = async () => {
-  await nextTick()
-  messageInput.value?.focus()
-}
+  const clearInput = () => {
+    currentMessage.value = ''
+    nextTick(() => {
+      if (messageInput.value) {
+        messageInput.value.style.height = 'auto'
+      }
+    })
+  }
 
-const clearInput = () => {
-  currentMessage.value = ''
-  nextTick(() => {
-    if (messageInput.value) {
-      messageInput.value.style.height = 'auto'
-    }
+  const getCurrentMessage = () => {
+    return currentMessage.value.trim()
+  }
+
+  // Expose methods for parent component
+  defineExpose({
+    focusInput,
+    clearInput,
+    getCurrentMessage
   })
-}
 
-const getCurrentMessage = () => {
-  return currentMessage.value.trim()
-}
-
-// Expose methods for parent component
-defineExpose({
-  focusInput,
-  clearInput,
-  getCurrentMessage
-})
-
-// Auto-focus on mount
-onMounted(() => {
-  focusInput()
-})
+  // Auto-focus on mount
+  onMounted(() => {
+    focusInput()
+  })
 </script>
 
 <style scoped>
-.chat-input-area {
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-}
-
-.input-container {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.message-input {
-  flex: 1;
-  min-height: 44px;
-  max-height: 120px;
-  padding: 10px 14px;
-  border: 2px solid #e0e0e0;
-  border-radius: 22px;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.4;
-  resize: none;
-  background: white;
-  transition: border-color 0.2s;
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: #2196f3;
-}
-
-.message-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.send-button {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 22px;
-  background: #2196f3;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.send-button:hover:not(:disabled) {
-  background: #1976d2;
-  transform: scale(1.05);
-}
-
-.send-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.input-status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  font-size: 12px;
-  color: #666;
-}
-
-.input-hints {
-  display: flex;
-  gap: 16px;
-}
-
-.hint {
-  opacity: 0.7;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
   .chat-input-area {
-    background: rgba(45, 55, 72, 0.95);
-    border-top-color: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .input-container {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
   }
 
   .message-input {
-    background: #4a5568;
-    color: #e2e8f0;
-    border-color: #2d3748;
+    flex: 1;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 10px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 22px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    resize: none;
+    background: white;
+    transition: border-color 0.2s;
   }
 
   .message-input:focus {
-    border-color: #3182ce;
+    outline: none;
+    border-color: #2196f3;
   }
 
-  .character-count,
+  .message-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .send-button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 22px;
+    background: #2196f3;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-button:hover:not(:disabled) {
+    background: #1976d2;
+    transform: scale(1.05);
+  }
+
+  .send-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .input-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+  }
+
   .input-hints {
-    color: #a0aec0;
-  }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .input-container {
-    gap: 8px;
+    display: flex;
+    gap: 16px;
   }
 
-  .input-hints {
-    display: none;
+  .hint {
+    opacity: 0.7;
   }
-}
 
-@media (max-width: 480px) {
-  .chat-input-area {
-    padding: 12px;
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .chat-input-area {
+      background: rgba(45, 55, 72, 0.95);
+      border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .message-input {
+      background: #4a5568;
+      color: #e2e8f0;
+      border-color: #2d3748;
+    }
+
+    .message-input:focus {
+      border-color: #3182ce;
+    }
+
+    .character-count,
+    .input-hints {
+      color: #a0aec0;
+    }
   }
-}
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .input-container {
+      gap: 8px;
+    }
+
+    .input-hints {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .chat-input-area {
+      padding: 12px;
+    }
+  }
 </style>

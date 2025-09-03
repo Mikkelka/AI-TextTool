@@ -1,9 +1,9 @@
+use chrono::Utc;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::AppHandle;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
-use chrono::Utc;
 
 use super::types::*;
 
@@ -21,18 +21,19 @@ impl DataManager {
             file_path: PathBuf::new(),
         }
     }
-    
+
     /// Initialize the data manager (load or migrate data)
     pub async fn initialize(&mut self) -> Result<(), DataError> {
         // Determine file path (next to exe)
         self.file_path = if let Ok(exe_path) = std::env::current_exe() {
-            exe_path.parent()
+            exe_path
+                .parent()
                 .map(|p| p.join("app_data.json"))
                 .unwrap_or_else(|| PathBuf::from("app_data.json"))
         } else {
             PathBuf::from("app_data.json")
         };
-        
+
         // Try to load existing app_data.json
         if self.file_path.exists() {
             println!("Loading app_data.json from: {:?}", self.file_path);
@@ -42,41 +43,41 @@ impl DataManager {
             self.migrate_from_old_files().await?;
             self.save_data().await?;
         }
-        
+
         Ok(())
     }
-    
+
     /// Load data from app_data.json
     async fn load_data(&mut self) -> Result<(), DataError> {
         let content = fs::read_to_string(&self.file_path).await?;
         self.data = serde_json::from_str(&content)?;
         Ok(())
     }
-    
+
     /// Save data to app_data.json
     pub async fn save_data(&self) -> Result<(), DataError> {
         // Update metadata
         let mut data = self.data.clone();
         data.metadata.last_updated = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-        
+
         // Serialize to JSON
         let json_content = serde_json::to_string_pretty(&data)?;
-        
+
         // Write to file
         let mut file = fs::File::create(&self.file_path).await?;
         file.write_all(json_content.as_bytes()).await?;
         file.flush().await?;
-        
+
         Ok(())
     }
-    
+
     /// Migrate from old file structure
     async fn migrate_from_old_files(&mut self) -> Result<(), DataError> {
         let exe_dir = std::env::current_exe()
             .ok()
             .and_then(|exe| exe.parent().map(|p| p.to_path_buf()))
             .unwrap_or_else(|| PathBuf::from("."));
-        
+
         // Load config.json if exists
         let config_path = exe_dir.join("config.json");
         if config_path.exists() {
@@ -87,7 +88,7 @@ impl DataManager {
                 }
             }
         }
-        
+
         // Load options.json if exists
         let options_path = exe_dir.join("options.json");
         if options_path.exists() {
@@ -98,7 +99,7 @@ impl DataManager {
                 }
             }
         }
-        
+
         // Load chat_history.json if exists
         let history_path = exe_dir.join("chat_history.json");
         if history_path.exists() {
@@ -109,7 +110,7 @@ impl DataManager {
                 }
             }
         }
-        
+
         // Load saved_conversations.json if exists
         let conversations_path = exe_dir.join("saved_conversations.json");
         if conversations_path.exists() {
@@ -120,9 +121,9 @@ impl DataManager {
                 }
             }
         }
-        
+
         println!("Migration complete - data consolidated into app_data.json");
-        
+
         // Optional: Archive old files instead of deleting
         // This is safer for users
         if config_path.exists() {
@@ -135,82 +136,105 @@ impl DataManager {
             let _ = fs::rename(&history_path, exe_dir.join("chat_history.json.old")).await;
         }
         if conversations_path.exists() {
-            let _ = fs::rename(&conversations_path, exe_dir.join("saved_conversations.json.old")).await;
+            let _ = fs::rename(
+                &conversations_path,
+                exe_dir.join("saved_conversations.json.old"),
+            )
+            .await;
         }
-        
+
         Ok(())
     }
-    
+
     // Getter methods
     pub fn get_config(&self) -> &Config {
         &self.data.config
     }
-    
+
     pub fn get_operations(&self) -> &HashMap<String, Operation> {
         &self.data.operations
     }
-    
+
     pub fn get_chat_history(&self) -> &Vec<ChatEntry> {
         &self.data.chat_history
     }
-    
+
     pub fn get_saved_conversations(&self) -> &Vec<SavedConversation> {
         &self.data.saved_conversations
     }
-    
+
     // Update methods
     pub async fn update_config(&mut self, config: Config) -> Result<(), DataError> {
         self.data.config = config;
         self.save_data().await
     }
-    
-    pub async fn update_operations(&mut self, operations: HashMap<String, Operation>) -> Result<(), DataError> {
+
+    pub async fn update_operations(
+        &mut self,
+        operations: HashMap<String, Operation>,
+    ) -> Result<(), DataError> {
         self.data.operations = operations;
         self.save_data().await
     }
-    
+
     pub async fn add_chat_entry(&mut self, entry: ChatEntry) -> Result<(), DataError> {
         self.data.chat_history.push(entry);
-        
+
         // Keep only last 100 entries
         if self.data.chat_history.len() > 100 {
-            self.data.chat_history.drain(0..self.data.chat_history.len()-100);
+            self.data
+                .chat_history
+                .drain(0..self.data.chat_history.len() - 100);
         }
-        
+
         self.save_data().await
     }
-    
-    pub async fn add_saved_conversation(&mut self, conversation: SavedConversation) -> Result<(), DataError> {
+
+    pub async fn add_saved_conversation(
+        &mut self,
+        conversation: SavedConversation,
+    ) -> Result<(), DataError> {
         self.data.saved_conversations.push(conversation);
-        
+
         // Keep only last 100 conversations
         if self.data.saved_conversations.len() > 100 {
-            self.data.saved_conversations.drain(0..self.data.saved_conversations.len()-100);
+            self.data
+                .saved_conversations
+                .drain(0..self.data.saved_conversations.len() - 100);
         }
-        
+
         self.save_data().await
     }
-    
-    pub async fn delete_saved_conversation(&mut self, conversation_id: &str) -> Result<(), DataError> {
-        self.data.saved_conversations.retain(|c| c.id != conversation_id);
+
+    pub async fn delete_saved_conversation(
+        &mut self,
+        conversation_id: &str,
+    ) -> Result<(), DataError> {
+        self.data
+            .saved_conversations
+            .retain(|c| c.id != conversation_id);
         self.save_data().await
     }
-    
+
     pub async fn clear_chat_history(&mut self) -> Result<(), DataError> {
         self.data.chat_history.clear();
         self.data.saved_conversations.clear();
         self.save_data().await
     }
-    
+
     pub fn get_operation(&self, name: &str) -> Option<&Operation> {
         self.data.operations.get(name)
     }
-    
-    pub async fn update_operation(&mut self, name: String, operation: Operation) -> Result<(), DataError> {
+
+    pub async fn update_operation(
+        &mut self,
+        name: String,
+        operation: Operation,
+    ) -> Result<(), DataError> {
         self.data.operations.insert(name, operation);
         self.save_data().await
     }
-    
+
     pub async fn remove_operation(&mut self, name: &str) -> Result<bool, DataError> {
         let removed = self.data.operations.remove(name).is_some();
         if removed {
@@ -218,17 +242,20 @@ impl DataManager {
         }
         Ok(removed)
     }
-    
+
     pub async fn reset_operations(&mut self) -> Result<(), DataError> {
         self.data.operations = AppData::create_default_operations();
         self.save_data().await
     }
-    
+
     pub fn get_operations_sorted(&self) -> Vec<(String, Operation)> {
-        let mut operations_list: Vec<(String, Operation)> = self.data.operations.iter()
+        let mut operations_list: Vec<(String, Operation)> = self
+            .data
+            .operations
+            .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
-        
+
         operations_list.sort_by(|a, b| {
             let order_cmp = a.1.order.cmp(&b.1.order);
             if order_cmp == std::cmp::Ordering::Equal {
@@ -237,7 +264,7 @@ impl DataManager {
                 order_cmp
             }
         });
-        
+
         operations_list
     }
 }

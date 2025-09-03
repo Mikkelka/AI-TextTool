@@ -10,23 +10,23 @@ pub fn greet(name: &str) -> String {
 #[tauri::command]
 pub fn process_text(text: String, option: String, app: tauri::AppHandle) -> Result<String, String> {
     println!("Processing text: '{}' with option: '{}'", text, option);
-    
+
     let processed_text = match option.as_str() {
         "add_word" => format!("{} [PROCESSED]", text),
         "fix_grammar" => format!("{} [GRAMMAR FIXED]", text), // Placeholder
-        "translate" => format!("{} [TRANSLATED]", text), // Placeholder
-        _ => text, // Return original if unknown option
+        "translate" => format!("{} [TRANSLATED]", text),      // Placeholder
+        _ => text,                                            // Return original if unknown option
     };
-    
+
     println!("Processed result: '{}'", processed_text);
-    
+
     // Put processed text in clipboard
     if let Err(e) = app.clipboard().write_text(processed_text.clone()) {
         return Err(format!("Failed to write to clipboard: {:?}", e));
     }
-    
+
     println!("Text put in clipboard, will auto-paste after popup closes");
-    
+
     Ok(processed_text)
 }
 
