@@ -46,7 +46,7 @@ impl Default for WindowConfig {
             closable: true,
             always_on_top: false,
             skip_taskbar: false,
-            decorations: true,
+            decorations: false,
             close_existing: vec![],
             initialization_script: None,
         }
@@ -138,6 +138,7 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
     .closable(true)
     .always_on_top(false)
     .skip_taskbar(false)
+    .decorations(false)
     .build()?;
 
     println!("Onboarding window created successfully");
@@ -188,7 +189,7 @@ pub fn create_popup_window<R: Runtime>(
         url: format!("popup.html?t={}", timestamp),
         title: "AI TextTool - Operations".to_string(),
         width: 300.0,
-        height: 270.0,
+        height: 290.0,
         min_width: None,
         min_height: None,
         position: WindowPosition::Coordinates {
@@ -201,7 +202,7 @@ pub fn create_popup_window<R: Runtime>(
         closable: true,
         always_on_top: true,
         skip_taskbar: true,
-        decorations: true,
+        decorations: false,
         close_existing: vec!["popup".to_string()],
         initialization_script: Some(format!(
             "window.clipboardText = '{}';",
@@ -251,7 +252,7 @@ fn create_chat_window<R: Runtime>(
         closable: true,
         always_on_top: false,
         skip_taskbar: false,
-        decorations: true,
+        decorations: false,
         close_existing: vec!["chat".to_string(), "chat_direct".to_string()],
         initialization_script: None,
     };
@@ -301,7 +302,7 @@ pub fn create_settings_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
         closable: true,
         always_on_top: false,
         skip_taskbar: false,
-        decorations: true,
+        decorations: false,
         close_existing: vec!["settings".to_string()],
         initialization_script: None,
     };
@@ -328,7 +329,7 @@ pub fn create_chat_history_window<R: Runtime>(app: &tauri::AppHandle<R>) -> taur
         closable: true,
         always_on_top: false,
         skip_taskbar: false,
-        decorations: true,
+        decorations: false,
         close_existing: vec!["chat_history".to_string()],
         initialization_script: None,
     };
@@ -355,7 +356,7 @@ pub fn create_edit_operations_window<R: Runtime>(app: &tauri::AppHandle<R>) -> t
         closable: true,
         always_on_top: false,
         skip_taskbar: false,
-        decorations: true,
+        decorations: false,
         close_existing: vec!["edit_operations".to_string()],
         initialization_script: None,
     };

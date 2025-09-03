@@ -1,11 +1,11 @@
 <template>
   <div class="chat-window" @keydown="handleGlobalKeydown">
     <!-- Header -->
-    <div class="chat-header">
-      <div class="header-left">
-        <h1 class="chat-title">{{ windowTitle }}</h1>
-        <div v-if="operation" class="operation-info">
-          <span class="operation-badge">{{ operation }}</span>
+    <div class="chat-header" data-tauri-drag-region>
+      <div class="header-left" data-tauri-drag-region>
+        <h1 class="chat-title" data-tauri-drag-region>{{ windowTitle }}</h1>
+        <div v-if="operation" class="operation-info" data-tauri-drag-region>
+          <span class="operation-badge" data-tauri-drag-region>{{ operation }}</span>
         </div>
       </div>
 
@@ -18,6 +18,7 @@
             v-model="state.selectedModel"
             class="model-dropdown"
             :disabled="state.isProcessing"
+            data-tauri-drag-region="false"
           >
             <option v-for="model in state.availableModels" :key="model" :value="model">
               {{ formatModelName(model) }}
@@ -28,7 +29,7 @@
         <!-- Thinking Toggle -->
         <div v-if="supportsThinking" class="thinking-toggle">
           <label class="toggle-label">
-            <input v-model="state.enableThinking" type="checkbox" :disabled="state.isProcessing" />
+            <input v-model="state.enableThinking" type="checkbox" :disabled="state.isProcessing" data-tauri-drag-region="false" />
             <span class="toggle-slider"></span>
             Thinking Mode
           </label>
@@ -41,6 +42,7 @@
             :disabled="state.messages.length === 0"
             title="Save conversation to history"
             @click="saveConversation"
+            data-tauri-drag-region="false"
           >
             💾
           </button>
@@ -49,16 +51,17 @@
             :disabled="state.messages.length === 0"
             title="Clear conversation (Ctrl+L)"
             @click="clearConversation"
+            data-tauri-drag-region="false"
           >
             🗑️
           </button>
-          <button class="action-btn zoom-btn" title="Zoom in (Ctrl+Plus)" @click="zoomIn">
+          <button class="action-btn zoom-btn" title="Zoom in (Ctrl+Plus)" @click="zoomIn" data-tauri-drag-region="false">
             🔍+
           </button>
-          <button class="action-btn zoom-btn" title="Zoom out (Ctrl+Minus)" @click="zoomOut">
+          <button class="action-btn zoom-btn" title="Zoom out (Ctrl+Minus)" @click="zoomOut" data-tauri-drag-region="false">
             🔍-
           </button>
-          <button class="action-btn close-btn" title="Close window (Escape)" @click="closeWindow">
+          <button class="action-btn close-btn" title="Close window (Escape)" @click="closeWindow" data-tauri-drag-region="false">
             ✕
           </button>
         </div>

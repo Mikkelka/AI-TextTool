@@ -14,16 +14,17 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="edit-window-content">
+    <div v-else>
       <!-- Header -->
-      <div class="header">
-        <h1 class="title">Edit AI Text Operations</h1>
-        <p class="instructions">Click edit/delete icons to modify operations</p>
-        <div class="header-buttons">
-          <button class="header-button add-button" @click="addNewOperation">+ Add New</button>
-          <button class="header-button reset-button" @click="resetToDefaults">
-            Reset to Defaults
-          </button>
+      <div class="header" data-tauri-drag-region>
+        <div class="header-left" data-tauri-drag-region>
+          <h1 class="title" data-tauri-drag-region>Edit AI Text Operations</h1>
+          <p class="subtitle" data-tauri-drag-region>Click edit/delete icons to modify operations</p>
+        </div>
+        <div class="header-controls">
+          <button class="control-btn add-btn" @click="addNewOperation" data-tauri-drag-region="false">+ Add New</button>
+          <button class="control-btn reset-btn" @click="resetToDefaults" data-tauri-drag-region="false">Reset to Defaults</button>
+          <button class="control-btn close-btn" @click="closeWindow" data-tauri-drag-region="false">✕</button>
         </div>
       </div>
 
@@ -485,11 +486,12 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding: 20px;
+    background: #ffffff;
     box-sizing: border-box;
     outline: none;
     overflow: auto;
+    display: flex;
+    flex-direction: column;
   }
 
   .loading-container,
@@ -547,21 +549,23 @@
     background: #1976d2;
   }
 
-  .edit-window-content {
-    max-width: min(90vw, 1000px);
-    width: 100%;
-    margin: 0 auto;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-
   .header {
-    text-align: center;
-    padding: 24px 20px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+  }
+
+  .header-left {
+    flex: 1;
+  }
+
+  .header-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 
   .title {
@@ -570,48 +574,59 @@
     margin: 0 0 8px 0;
   }
 
-  .instructions {
+  .subtitle {
     font-size: 14px;
-    margin: 0 0 16px 0;
+    margin: 0;
     opacity: 0.9;
   }
 
-  .header-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
-
-  .header-button {
-    padding: 10px 20px;
+  .control-btn {
+    padding: 8px 12px;
     border: none;
-    border-radius: 6px;
-    font-size: 14px;
+    border-radius: 4px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     color: white;
+    min-height: 32px;
   }
 
-  .header-button:hover {
+  .control-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
-  .header-button.add-button {
+  .add-btn {
     background: #4caf50;
   }
 
-  .header-button.add-button:hover {
+  .add-btn:hover {
     background: #45a049;
   }
 
-  .header-button.reset-button {
+  .reset-btn {
     background: #f44336;
   }
 
-  .header-button.reset-button:hover {
+  .reset-btn:hover {
     background: #da190b;
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 
   .operations-grid-container {
@@ -920,11 +935,7 @@
   /* Dark mode support */
   @media (prefers-color-scheme: dark) {
     .edit-window-container {
-      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    }
-
-    .edit-window-content {
-      background: rgba(45, 55, 72, 0.9);
+      background: #2d3748;
     }
 
     .header {
@@ -932,7 +943,7 @@
     }
 
     .title,
-    .instructions {
+    .subtitle {
       color: #e2e8f0;
     }
 
@@ -993,10 +1004,6 @@
 
   /* Responsive adjustments */
   @media (max-width: 800px) {
-    .edit-window-content {
-      max-width: 95vw;
-    }
-
     .operations-grid-container {
       padding: 15px;
     }
@@ -1012,13 +1019,14 @@
       width: 90vw;
     }
 
-    .header-buttons {
+    .header-controls {
       flex-direction: column;
-      align-items: center;
+      gap: 4px;
+      align-items: stretch;
     }
 
-    .header-button {
-      min-width: 150px;
+    .control-btn {
+      min-width: 100px;
     }
 
     .operation-content {

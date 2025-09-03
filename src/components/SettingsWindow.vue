@@ -1,6 +1,9 @@
 <template>
   <div class="settings-window">
-    <h1>Settings</h1>
+    <div class="header" data-tauri-drag-region>
+      <h1 data-tauri-drag-region>Settings</h1>
+      <button class="close-btn" title="Close window" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+    </div>
 
     <div class="form-section">
       <h2>Gemini AI</h2>
@@ -177,6 +180,15 @@
     }
   }
 
+  const closeWindow = async () => {
+    try {
+      const currentWindow = getCurrentWindow()
+      await currentWindow.close()
+    } catch (error) {
+      console.error('Failed to close window:', error)
+    }
+  }
+
   onMounted(() => {
     console.log('SettingsWindow mounted successfully')
     loadConfig()
@@ -195,11 +207,40 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
   h1 {
     text-align: center;
-    margin-bottom: 30px;
+    margin: 0;
     font-size: 24px;
     font-weight: 600;
+    flex: 1;
   }
 
   h2 {

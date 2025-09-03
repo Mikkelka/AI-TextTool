@@ -15,6 +15,12 @@
 
     <!-- Main Content -->
     <div v-else class="popup-content">
+      <!-- Minimal Header -->
+      <div class="popup-header" data-tauri-drag-region>
+        <span class="popup-title" data-tauri-drag-region>AI Operations</span>
+        <button class="popup-close-btn" title="Close (ESC)" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+      </div>
+      
       <!-- Operations Grid -->
       <div class="operations-grid">
         <button
@@ -209,7 +215,10 @@
     const operationCount = operations.value.length
 
     switch (event.key) {
-      // Note: ESC is handled globally in popup.html, so we don't handle it here
+      case 'Escape':
+        event.preventDefault()
+        closeWindow()
+        break
 
       case 'ArrowUp':
         event.preventDefault()
@@ -265,8 +274,17 @@
     return `${type}${instruction}`
   }
 
-  const closeWindow = () => {
-    emit('close')
+  const closeWindow = async () => {
+    try {
+      console.log('Closing popup window...')
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const currentWindow = getCurrentWindow()
+      await currentWindow.close()
+    } catch (error) {
+      console.error('Failed to close popup window:', error)
+      // Fallback: emit close event
+      emit('close')
+    }
   }
 
   // Lifecycle
@@ -293,7 +311,8 @@
     width: 100%;
     height: 100vh;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding: 8px;
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
     outline: none;
     overflow-y: auto;
@@ -357,8 +376,44 @@
   }
 
   .popup-content {
-    max-height: calc(100vh - 40px);
+    max-height: 100vh;
     overflow-y: auto;
+  }
+
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: transparent;
+    color: white;
+    font-size: 12px;
+    min-height: 28px;
+  }
+
+  .popup-title {
+    font-weight: 500;
+    user-select: none;
+  }
+
+  .popup-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+  }
+
+  .popup-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 
   .operations-grid {
@@ -368,7 +423,7 @@
     max-width: 300px;
     max-height: 400px;
     overflow-y: auto;
-    padding: 2px;
+    padding: 8px;
   }
 
   .operation-button {

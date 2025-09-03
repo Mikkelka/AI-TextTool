@@ -1,10 +1,11 @@
 <template>
   <div class="onboarding-window" tabindex="0" @keydown="handleKeydown">
     <!-- Header -->
-    <div class="onboarding-header">
-      <div class="welcome-icon">🚀</div>
-      <h1 class="welcome-title">Welcome to AI Text Tools</h1>
-      <p class="welcome-subtitle">Let's get you set up in just a few minutes</p>
+    <div class="onboarding-header" data-tauri-drag-region>
+      <button class="close-btn" title="Close window" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+      <div class="welcome-icon" data-tauri-drag-region>🚀</div>
+      <h1 class="welcome-title" data-tauri-drag-region>Welcome to AI Text Tools</h1>
+      <p class="welcome-subtitle" data-tauri-drag-region>Let's get you set up in just a few minutes</p>
     </div>
 
     <!-- Progress Indicator -->
@@ -364,6 +365,16 @@
     error.value = null
   }
 
+  const closeWindow = async () => {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const currentWindow = getCurrentWindow()
+      await currentWindow.close()
+    } catch (error) {
+      console.error('Failed to close onboarding window:', error)
+    }
+  }
+
   const openApiKeyUrl = async () => {
     try {
       await openUrl('https://aistudio.google.com/app/apikey')
@@ -604,6 +615,31 @@
   .onboarding-header {
     text-align: center;
     margin-bottom: 40px;
+    position: relative;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .close-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
   }
 
   .welcome-icon {

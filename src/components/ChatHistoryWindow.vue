@@ -1,10 +1,10 @@
 <template>
   <div class="chat-history-window">
     <!-- Header -->
-    <div class="history-header">
-      <div class="header-left">
-        <h1 class="history-title">💬 Chat History</h1>
-        <p class="history-subtitle">Your AI text processing history</p>
+    <div class="history-header" data-tauri-drag-region>
+      <div class="header-left" data-tauri-drag-region>
+        <h1 class="history-title" data-tauri-drag-region>💬 Chat History</h1>
+        <p class="history-subtitle" data-tauri-drag-region>Your AI text processing history</p>
       </div>
       <div class="header-controls">
         <button
@@ -12,6 +12,7 @@
           class="refresh-btn"
           title="Refresh history"
           @click="refreshHistory"
+          data-tauri-drag-region="false"
         >
           🔄
         </button>
@@ -20,10 +21,11 @@
           class="clear-btn"
           title="Clear all history"
           @click="clearAllHistory"
+          data-tauri-drag-region="false"
         >
           🗑️
         </button>
-        <button class="close-btn" title="Close window" @click="closeWindow">✕</button>
+        <button class="close-btn" title="Close window" @click="closeWindow" data-tauri-drag-region="false">✕</button>
       </div>
     </div>
 
