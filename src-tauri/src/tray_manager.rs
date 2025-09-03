@@ -11,19 +11,35 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     let chat_i = MenuItem::with_id(app, "chat", "Chat", true, None::<&str>)?;
     let separator1 = tauri::menu::PredefinedMenuItem::separator(app)?;
     let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
-    let edit_operations_i = MenuItem::with_id(app, "edit_operations", "Edit Operations", true, None::<&str>)?;
-    let chat_history_i = MenuItem::with_id(app, "chat_history", "Chat History", true, None::<&str>)?;
+    let edit_operations_i = MenuItem::with_id(
+        app,
+        "edit_operations",
+        "Edit Operations",
+        true,
+        None::<&str>,
+    )?;
+    let chat_history_i =
+        MenuItem::with_id(app, "chat_history", "Chat History", true, None::<&str>)?;
     let separator2 = tauri::menu::PredefinedMenuItem::separator(app)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&chat_i, &separator1, &settings_i, &edit_operations_i, &chat_history_i, &separator2, &quit_i])?;
+    let menu = Menu::with_items(
+        app,
+        &[
+            &chat_i,
+            &separator1,
+            &settings_i,
+            &edit_operations_i,
+            &chat_history_i,
+            &separator2,
+            &quit_i,
+        ],
+    )?;
 
     // Use the default app icon from the bundle
     let _ = TrayIconBuilder::with_id("main-tray")
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
-        .on_menu_event(move |app, event| {
-            handle_tray_menu_event(app, event.id.as_ref())
-        })
+        .on_menu_event(move |app, event| handle_tray_menu_event(app, event.id.as_ref()))
         .on_tray_icon_event(|_tray, event| {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,

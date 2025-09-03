@@ -3,8 +3,8 @@ import DOMPurify from 'dompurify'
 
 // Configure marked for GitHub Flavored Markdown
 marked.setOptions({
-  breaks: true,        // Convert '\n' to <br>
-  gfm: true,          // Enable GitHub Flavored Markdown
+  breaks: true, // Convert '\n' to <br>
+  gfm: true // Enable GitHub Flavored Markdown
 })
 
 function escapeHtml(text: string): string {
@@ -22,32 +22,51 @@ export function renderMarkdown(markdown: string): string {
   try {
     // Convert markdown to HTML
     let html = marked.parse(markdown) as string
-    
+
     // Add custom CSS classes to elements
     html = addCustomClasses(html)
-    
+
     // Sanitize HTML to prevent XSS attacks
     const sanitized = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: [
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'p', 'br', 'hr',
-        'strong', 'em', 'b', 'i', 'u', 's', 'del',
-        'ul', 'ol', 'li',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'p',
+        'br',
+        'hr',
+        'strong',
+        'em',
+        'b',
+        'i',
+        'u',
+        's',
+        'del',
+        'ul',
+        'ol',
+        'li',
         'blockquote',
-        'pre', 'code',
-        'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'pre',
+        'code',
+        'table',
+        'thead',
+        'tbody',
+        'tr',
+        'th',
+        'td',
         'a',
-        'div', 'span',
+        'div',
+        'span',
         'button'
       ],
-      ALLOWED_ATTR: [
-        'href', 'target', 'rel',
-        'class', 'onclick',
-        'colspan', 'rowspan'
-      ],
-      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'onclick', 'colspan', 'rowspan'],
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
     })
-    
+
     return sanitized
   } catch (error) {
     console.error('Error rendering markdown:', error)
@@ -64,12 +83,12 @@ function addCustomClasses(html: string): string {
   html = html.replace(/<blockquote>/g, '<blockquote class="markdown-blockquote">')
   html = html.replace(/<ul>/g, '<ul class="markdown-list">')
   html = html.replace(/<ol>/g, '<ol class="markdown-list">')
-  
+
   // Add copy button to code blocks
   html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_match, attrs, content) => {
     return `<pre class="code-block"><code${attrs}>${content}</code><button class="copy-code-btn" onclick="copyCode(this)">📋</button></pre>`
   })
-  
+
   return html
 }
 
@@ -81,7 +100,8 @@ export function setupMarkdownCopyFunction() {
   ;(window as any).copyCode = (button: HTMLButtonElement) => {
     const codeBlock = button.parentElement?.querySelector('code')
     if (codeBlock) {
-      navigator.clipboard.writeText(codeBlock.textContent || '')
+      navigator.clipboard
+        .writeText(codeBlock.textContent || '')
         .then(() => {
           // Brief visual feedback
           const originalText = button.textContent

@@ -1,0 +1,24 @@
+# Rustfmt configuration for AI-TextTool (stable features only)
+# Ensures consistent formatting across the Rust codebase
+
+# Basic formatting  
+edition = "2021"
+hard_tabs = false
+tab_spaces = 4
+max_width = 100
+use_small_heuristics = "Default"
+
+# Basic line and expression handling
+newline_style = "Unix"
+remove_nested_parens = true
+
+# Function parameter handling (updated option name)
+fn_params_layout = "Tall"
+force_explicit_abi = true
+
+# Basic formatting options that are stable
+use_field_init_shorthand = true
+use_try_shorthand = true
+reorder_imports = true
+reorder_modules = true
+merge_derives = true

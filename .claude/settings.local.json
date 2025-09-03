@@ -24,7 +24,12 @@
       "WebSearch",
       "Bash(npm install:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(cmd /c:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:rust:*)",
+      "Bash(npm run check:*)"
     ],
     "deny": []
   }

@@ -2,13 +2,11 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 mod ai_provider;
-mod data_manager;
-mod window_manager;
-mod tray_manager;
-mod shortcut_manager;
 mod commands;
-
-
+mod data_manager;
+mod shortcut_manager;
+mod tray_manager;
+mod window_manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,31 +21,32 @@ pub fn run() {
                 window.hide().unwrap();
                 println!("Main window hidden on startup");
             }
-            
+
             // Check if app_data.json exists - if not, show onboarding
             // Same logic as DataManager uses
             let config_path = if let Ok(exe_path) = std::env::current_exe() {
-                exe_path.parent()
+                exe_path
+                    .parent()
                     .map(|parent| parent.join("app_data.json"))
                     .unwrap_or_else(|| std::env::current_dir().unwrap().join("app_data.json"))
             } else {
                 std::env::current_dir().unwrap().join("app_data.json")
             };
-            
+
             if !config_path.exists() {
                 println!("No app_data.json found - showing onboarding window");
                 window_manager::show_onboarding_window(app.handle())?;
             } else {
                 println!("app_data.json found - setting up tray and global shortcut");
                 tray_manager::create_tray(app.handle())?;
-                
+
                 // Register global shortcut (hardcoded to ctrl+space)
                 match app.handle().global_shortcut().register("CmdOrCtrl+Space") {
                     Ok(()) => println!("Global shortcut 'Ctrl+Space' registered successfully!"),
                     Err(e) => println!("Failed to register global shortcut: {:?}", e),
                 }
             }
-            
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -64,9 +63,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             // Utility commands
-            commands::greet, 
+            commands::greet,
             commands::process_text,
-            commands::simulate_paste, 
+            commands::simulate_paste,
             // AI commands
             commands::process_text_with_ai,
             commands::chat_with_ai,
@@ -87,7 +86,7 @@ pub fn run() {
             data_manager::dm_reset_operations,
             data_manager::dm_update_api_key,
             data_manager::dm_switch_provider,
-            data_manager::save_chat_entry, 
+            data_manager::save_chat_entry,
             data_manager::load_chat_history,
             data_manager::clear_chat_history,
             data_manager::save_conversation,

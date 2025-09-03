@@ -1,13 +1,13 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::Utc;
 
 /// Custom error types for data management
 #[derive(Debug, thiserror::Error)]
 pub enum DataError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("JSON serialization/deserialization error: {0}")]
     Json(#[from] serde_json::Error),
 }
@@ -49,7 +49,7 @@ impl Default for Config {
     fn default() -> Self {
         let mut providers = HashMap::new();
         providers.insert("Gemini".to_string(), ProviderConfig::default());
-        
+
         Self {
             providers,
             locale: "en".to_string(),
@@ -146,7 +146,7 @@ impl AppData {
     /// Create default operations
     pub fn create_default_operations() -> HashMap<String, Operation> {
         let mut operations = HashMap::new();
-        
+
         operations.insert("Proofread".to_string(), Operation {
             prefix: "Proofread the following text:\n\n".to_string(),
             instruction: "You are a professional proofreader. Correct any spelling, grammar, and punctuation errors. Maintain the original tone and style. IMPORTANT: Return ONLY the corrected text without any markdown formatting, headers, explanations, or additional content.".to_string(),
@@ -154,7 +154,7 @@ impl AppData {
             open_in_window: false,
             order: 1,
         });
-        
+
         operations.insert("Rewrite".to_string(), Operation {
             prefix: "Rewrite the following text to improve clarity:\n\n".to_string(),
             instruction: "You are a professional editor. Rewrite the text to be clearer and more engaging while maintaining the original meaning. IMPORTANT: Return ONLY the rewritten text without any markdown formatting, headers, explanations, or additional content.".to_string(),
@@ -162,7 +162,7 @@ impl AppData {
             open_in_window: false,
             order: 2,
         });
-        
+
         operations.insert("Dansk".to_string(), Operation {
             prefix: "Oversæt følgende tekst til dansk:\n\n".to_string(),
             instruction: "Du er en professionel oversætter med speciale i dansk. Oversæt teksten til naturligt og korrekt dansk. Bevar den oprindelige tone og stil. VIGTIGT: Returner KUN den oversatte tekst uden markdown formatering, overskrifter, forklaringer eller ekstra indhold.".to_string(),
@@ -170,7 +170,7 @@ impl AppData {
             open_in_window: false,
             order: 3,
         });
-        
+
         operations.insert("Concise".to_string(), Operation {
             prefix: "Make the following text more concise:\n\n".to_string(),
             instruction: "You are a professional editor. Make the text shorter and more direct while keeping all important information. IMPORTANT: Return ONLY the concise text without any markdown formatting, headers, explanations, or additional content.".to_string(),
@@ -178,7 +178,7 @@ impl AppData {
             open_in_window: false,
             order: 4,
         });
-        
+
         operations.insert("Friendly".to_string(), Operation {
             prefix: "Make the following text sound more friendly:\n\n".to_string(),
             instruction: "You are a communication expert. Rewrite the text to sound warmer and more approachable while maintaining professionalism. IMPORTANT: Return ONLY the friendly text without any markdown formatting, headers, explanations, or additional content.".to_string(),
@@ -186,7 +186,7 @@ impl AppData {
             open_in_window: false,
             order: 5,
         });
-        
+
         operations.insert("Professional".to_string(), Operation {
             prefix: "Make the following text more professional:\n\n".to_string(),
             instruction: "You are a business communication expert. Rewrite the text to be more formal and professional. IMPORTANT: Return ONLY the professional text without any markdown formatting, headers, explanations, or additional content.".to_string(),
@@ -194,7 +194,7 @@ impl AppData {
             open_in_window: false,
             order: 6,
         });
-        
+
         operations.insert("Key Points".to_string(), Operation {
             prefix: "Extract key points from the following text:\n\n".to_string(),
             instruction: "You are an expert at analyzing and summarizing information. Extract the main points and present them as a clear, well-organized response.".to_string(),
@@ -202,7 +202,7 @@ impl AppData {
             open_in_window: true,
             order: 7,
         });
-        
+
         operations.insert("Summary".to_string(), Operation {
             prefix: "Summarize the following text:\n\n".to_string(),
             instruction: "You are an expert at creating comprehensive summaries. Create a well-structured summary that captures all important information.".to_string(),
@@ -210,7 +210,7 @@ impl AppData {
             open_in_window: true,
             order: 8,
         });
-        
+
         operations.insert("Chat".to_string(), Operation {
             prefix: "".to_string(),
             instruction: "You are a helpful AI assistant. Engage in natural conversation and help with any questions or tasks.".to_string(),
@@ -218,15 +218,20 @@ impl AppData {
             open_in_window: true,
             order: 9,
         });
-        
-        operations.insert("Custom".to_string(), Operation {
-            prefix: "".to_string(),
-            instruction: "You are a helpful AI assistant. Follow the user's instructions precisely.".to_string(),
-            icon: Some("wand".to_string()),
-            open_in_window: true,
-            order: 10,
-        });
-        
+
+        operations.insert(
+            "Custom".to_string(),
+            Operation {
+                prefix: "".to_string(),
+                instruction:
+                    "You are a helpful AI assistant. Follow the user's instructions precisely."
+                        .to_string(),
+                icon: Some("wand".to_string()),
+                open_in_window: true,
+                order: 10,
+            },
+        );
+
         operations
     }
 }

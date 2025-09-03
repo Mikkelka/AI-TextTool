@@ -7,7 +7,15 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "lint": "eslint src --ext .vue,.js,.ts",
+    "lint:fix": "eslint src --ext .vue,.js,.ts --fix",
+    "format": "prettier --write src/**/*.{vue,js,ts,html,css,json}",
+    "format:check": "prettier --check src/**/*.{vue,js,ts,html,css,json}",
+    "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
+    "format:rust": "cd src-tauri && cargo fmt",
+    "check": "npm run lint && npm run format:check && npm run lint:rust",
+    "lint:prod": "cross-env NODE_ENV=production eslint src --ext .vue,.js,.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -20,8 +28,18 @@
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@eslint/js": "^9.34.0",
     "@tauri-apps/cli": "^2",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "cross-env": "^10.0.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-vue": "^10.4.0",
+    "prettier": "^3.6.2",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
     "vue-tsc": "^2.1.10"
