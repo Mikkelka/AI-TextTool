@@ -129,8 +129,8 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
         tauri::WebviewUrl::App("onboarding.html".into()),
     )
     .title("AI TextTool - Setup")
-    .inner_size(700.0, 600.0)
-    .min_inner_size(600.0, 500.0)
+    .inner_size(700.0, 900.0)
+    .min_inner_size(600.0, 650.0)
     .center()
     .resizable(true)
     .maximizable(false)
@@ -193,8 +193,8 @@ pub fn create_popup_window<R: Runtime>(
         min_width: None,
         min_height: None,
         position: WindowPosition::Coordinates {
-            x: mouse_x as f64,
-            y: mouse_y as f64,
+            x: mouse_x as f64 - 150.0,  // Center horizontally (width / 2)
+            y: mouse_y as f64 - 300.0,  // Position above mouse (height + margin)
         },
         resizable: false,
         maximizable: false,

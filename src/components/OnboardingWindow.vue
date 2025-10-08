@@ -2,10 +2,21 @@
   <div class="onboarding-window" tabindex="0" @keydown="handleKeydown">
     <!-- Header -->
     <div class="onboarding-header" data-tauri-drag-region>
-      <button class="close-btn" title="Close window" @click="closeWindow" data-tauri-drag-region="false">✕</button>
-      <div class="welcome-icon" data-tauri-drag-region>🚀</div>
-      <h1 class="welcome-title" data-tauri-drag-region>Welcome to AI Text Tools</h1>
-      <p class="welcome-subtitle" data-tauri-drag-region>Let's get you set up in just a few minutes</p>
+      <button
+        class="close-btn"
+        title="Close window"
+        @click="closeWindow"
+        data-tauri-drag-region="false"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <div class="welcome-icon">🚀</div>
+      <h2 class="welcome-title">Welcome to AI Text Tools</h2>
+      <p class="welcome-subtitle">Let's get you set up in just a few minutes</p>
     </div>
 
     <!-- Progress Indicator -->
@@ -613,15 +624,19 @@
 
   /* Header */
   .onboarding-header {
-    text-align: center;
-    margin-bottom: 40px;
-    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
   }
 
   .close-btn {
-    position: absolute;
-    top: 0;
-    right: 0;
     background: none;
     border: none;
     color: #666;
@@ -640,6 +655,13 @@
   .close-btn:hover {
     background: rgba(0, 0, 0, 0.1);
     color: #333;
+  }
+
+  /* Welcome Section */
+  .welcome-section {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 0 20px;
   }
 
   .welcome-icon {
@@ -1144,6 +1166,20 @@
       background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
     }
 
+    .onboarding-header {
+      background: rgba(45, 55, 72, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .close-btn {
+      color: #a0aec0;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
     .welcome-title {
       color: #e2e8f0;
     }
@@ -1261,7 +1297,7 @@
   /* Responsive */
   @media (max-width: 768px) {
     .onboarding-window {
-      padding: 20px 16px;
+      padding: 0;
     }
 
     .welcome-icon {

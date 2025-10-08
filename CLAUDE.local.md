@@ -1,0 +1,2 @@
+- når du har lavet noget skal du ikke starte appen op, det skal jeg nok gøre
+- kør ikke dev eller build command
