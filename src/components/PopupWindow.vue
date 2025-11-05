@@ -18,9 +18,16 @@
       <!-- Minimal Header -->
       <div class="popup-header" data-tauri-drag-region>
         <span class="popup-title" data-tauri-drag-region>AI Operations</span>
-        <button class="popup-close-btn" title="Close (ESC)" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+        <button
+          class="popup-close-btn"
+          title="Close (ESC)"
+          data-tauri-drag-region="false"
+          @click="closeWindow"
+        >
+          ✕
+        </button>
       </div>
-      
+
       <!-- Operations Grid -->
       <div class="operations-grid">
         <button
@@ -167,7 +174,7 @@
       })
 
       // Close window first
-      closeWindow()
+      void closeWindow()
 
       // Small delay then simulate paste to replace original text
       setTimeout(async () => {
@@ -204,7 +211,7 @@
       console.log('Chat window opened successfully via backend command')
 
       // Close popup after opening chat
-      closeWindow()
+      void closeWindow()
     } catch (err) {
       console.error('Failed to open chat window:', err)
       throw new Error(`Failed to open chat window: ${err}`)
@@ -217,26 +224,26 @@
     switch (event.key) {
       case 'Escape':
         event.preventDefault()
-        closeWindow()
+        void closeWindow()
         break
 
       case 'ArrowUp':
         event.preventDefault()
         selectedIndex.value = selectedIndex.value > 0 ? selectedIndex.value - 1 : operationCount - 1
-        scrollToSelected()
+        void scrollToSelected()
         break
 
       case 'ArrowDown':
         event.preventDefault()
         selectedIndex.value = selectedIndex.value < operationCount - 1 ? selectedIndex.value + 1 : 0
-        scrollToSelected()
+        void scrollToSelected()
         break
 
       case 'ArrowLeft': {
         event.preventDefault()
         const cols = 2
         selectedIndex.value = Math.max(0, selectedIndex.value - cols)
-        scrollToSelected()
+        void scrollToSelected()
         break
       }
 
@@ -244,7 +251,7 @@
         event.preventDefault()
         const columns = 2
         selectedIndex.value = Math.min(operationCount - 1, selectedIndex.value + columns)
-        scrollToSelected()
+        void scrollToSelected()
         break
       }
 
@@ -289,7 +296,7 @@
 
   // Lifecycle
   onMounted(() => {
-    loadOperations()
+    void loadOperations()
 
     // Set up keyboard event listener for arrow key navigation
     document.addEventListener('keydown', handleKeydown)

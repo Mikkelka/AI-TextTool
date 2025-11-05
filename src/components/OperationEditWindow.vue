@@ -19,12 +19,28 @@
       <div class="header" data-tauri-drag-region>
         <div class="header-left" data-tauri-drag-region>
           <h1 class="title" data-tauri-drag-region>Edit AI Text Operations</h1>
-          <p class="subtitle" data-tauri-drag-region>Click edit/delete icons to modify operations</p>
+          <p class="subtitle" data-tauri-drag-region>
+            Click edit/delete icons to modify operations
+          </p>
         </div>
         <div class="header-controls">
-          <button class="control-btn add-btn" @click="addNewOperation" data-tauri-drag-region="false">+ Add New</button>
-          <button class="control-btn reset-btn" @click="resetToDefaults" data-tauri-drag-region="false">Reset to Defaults</button>
-          <button class="control-btn close-btn" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+          <button
+            class="control-btn add-btn"
+            data-tauri-drag-region="false"
+            @click="addNewOperation"
+          >
+            + Add New
+          </button>
+          <button
+            class="control-btn reset-btn"
+            data-tauri-drag-region="false"
+            @click="resetToDefaults"
+          >
+            Reset to Defaults
+          </button>
+          <button class="control-btn close-btn" data-tauri-drag-region="false" @click="closeWindow">
+            ✕
+          </button>
         </div>
       </div>
 
@@ -279,7 +295,7 @@
     confirmTitle.value = 'Confirm Delete'
     confirmMessage.value = `Are you sure you want to delete the '${operationKey}' operation?`
     confirmButtonText.value = 'Delete'
-    confirmCallback.value = () => performDelete(operationKey)
+    confirmCallback.value = () => void performDelete(operationKey)
     showConfirmDialog.value = true
   }
 
@@ -318,7 +334,7 @@
     confirmMessage.value =
       'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.'
     confirmButtonText.value = 'Reset'
-    confirmCallback.value = () => performReset()
+    confirmCallback.value = () => void performReset()
     showConfirmDialog.value = true
   }
 
@@ -421,7 +437,7 @@
       } else if (showConfirmDialog.value) {
         cancelConfirm()
       } else {
-        closeWindow()
+        void closeWindow()
       }
     }
   }
@@ -473,7 +489,7 @@
 
   // Lifecycle
   onMounted(() => {
-    loadOperations()
+    void loadOperations()
   })
 
   onUnmounted(() => {

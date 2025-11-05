@@ -2,7 +2,14 @@
   <div class="settings-window">
     <div class="header" data-tauri-drag-region>
       <h1 data-tauri-drag-region>Settings</h1>
-      <button class="close-btn" title="Close window" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+      <button
+        class="close-btn"
+        title="Close window"
+        data-tauri-drag-region="false"
+        @click="closeWindow"
+      >
+        ✕
+      </button>
     </div>
 
     <div class="form-section">
@@ -191,7 +198,7 @@
 
   onMounted(() => {
     console.log('SettingsWindow mounted successfully')
-    loadConfig()
+    void loadConfig()
   })
 </script>
 

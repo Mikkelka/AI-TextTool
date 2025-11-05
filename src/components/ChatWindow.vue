@@ -29,7 +29,12 @@
         <!-- Thinking Toggle -->
         <div v-if="supportsThinking" class="thinking-toggle">
           <label class="toggle-label">
-            <input v-model="state.enableThinking" type="checkbox" :disabled="state.isProcessing" data-tauri-drag-region="false" />
+            <input
+              v-model="state.enableThinking"
+              type="checkbox"
+              :disabled="state.isProcessing"
+              data-tauri-drag-region="false"
+            />
             <span class="toggle-slider"></span>
             Thinking Mode
           </label>
@@ -41,8 +46,8 @@
             class="action-btn save-btn"
             :disabled="state.messages.length === 0"
             title="Save conversation to history"
-            @click="saveConversation"
             data-tauri-drag-region="false"
+            @click="saveConversation"
           >
             💾
           </button>
@@ -50,18 +55,33 @@
             class="action-btn clear-btn"
             :disabled="state.messages.length === 0"
             title="Clear conversation (Ctrl+L)"
-            @click="clearConversation"
             data-tauri-drag-region="false"
+            @click="clearConversation"
           >
             🗑️
           </button>
-          <button class="action-btn zoom-btn" title="Zoom in (Ctrl+Plus)" @click="zoomIn" data-tauri-drag-region="false">
+          <button
+            class="action-btn zoom-btn"
+            title="Zoom in (Ctrl+Plus)"
+            data-tauri-drag-region="false"
+            @click="zoomIn"
+          >
             🔍+
           </button>
-          <button class="action-btn zoom-btn" title="Zoom out (Ctrl+Minus)" @click="zoomOut" data-tauri-drag-region="false">
+          <button
+            class="action-btn zoom-btn"
+            title="Zoom out (Ctrl+Minus)"
+            data-tauri-drag-region="false"
+            @click="zoomOut"
+          >
             🔍-
           </button>
-          <button class="action-btn close-btn" title="Close window (Escape)" @click="closeWindow" data-tauri-drag-region="false">
+          <button
+            class="action-btn close-btn"
+            title="Close window (Escape)"
+            data-tauri-drag-region="false"
+            @click="closeWindow"
+          >
             ✕
           </button>
         </div>
@@ -273,7 +293,7 @@
     } finally {
       state.isProcessing = false
       await scrollToBottom()
-      focusInput()
+      void focusInput()
     }
   }
 
@@ -390,7 +410,7 @@
     if (confirm('Are you sure you want to clear this conversation?')) {
       state.messages = []
       state.error = null
-      focusInput()
+      void focusInput()
     }
   }
 
@@ -429,7 +449,7 @@
   }
 
   const closeWindow = () => {
-    getCurrentWindow().close()
+    void getCurrentWindow().close()
   }
 
   const handleGlobalKeydown = (event: KeyboardEvent) => {
@@ -500,7 +520,7 @@
 
       // Scroll to bottom after messages are loaded
       await nextTick()
-      scrollToBottom()
+      void scrollToBottom()
     } catch (err) {
       console.error('Failed to load conversation:', err)
       state.error =
@@ -512,7 +532,7 @@
   watch(
     () => state.messages.length,
     () => {
-      scrollToBottom()
+      void scrollToBottom()
     }
   )
 
@@ -520,7 +540,7 @@
     () => state.isProcessing,
     newVal => {
       if (!newVal) {
-        focusInput()
+        void focusInput()
       }
     }
   )
@@ -535,7 +555,7 @@
     })
 
     await loadAvailableModels()
-    focusInput()
+    void focusInput()
 
     // Parse URL parameters if not provided as props (fallback)
     const urlParams = new URLSearchParams(window.location.search)

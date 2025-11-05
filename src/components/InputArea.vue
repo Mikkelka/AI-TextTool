@@ -74,7 +74,7 @@
     }
 
     // Auto-resize textarea
-    nextTick(() => {
+    void nextTick(() => {
       if (messageInput.value) {
         messageInput.value.style.height = 'auto'
         messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 120) + 'px'
@@ -99,7 +99,7 @@
 
   const clearInput = () => {
     currentMessage.value = ''
-    nextTick(() => {
+    void nextTick(() => {
       if (messageInput.value) {
         messageInput.value.style.height = 'auto'
       }
@@ -119,7 +119,7 @@
 
   // Auto-focus on mount
   onMounted(() => {
-    focusInput()
+    void focusInput()
   })
 </script>
 
