@@ -131,14 +131,13 @@ npm install
 
 ### Development Commands
 ```bash
-# Start development environment
-npm run tauri dev
+# Main development (most used)
+npm run dev          # Start Tauri development mode
+npm run build        # Build desktop application
 
-# Build for production
-npm run tauri build
-
-# Frontend only development
-npm run dev
+# Frontend only
+npm run dev:web      # Start Vite dev server only
+npm run build:web    # Build frontend only
 ```
 
 ### Data Storage
@@ -154,13 +153,18 @@ All application data is stored in a **single JSON file** next to the executable:
 
 ### Code Quality
 ```bash
-# Lint and format checks
-npm run check              # Run all linting (ESLint + Prettier + Clippy)
-npm run lint               # Check ESLint errors/warnings
-npm run lint:fix           # Auto-fix ESLint issues
-npm run format             # Format code with Prettier
-npm run lint:rust          # Run Clippy on Rust code
-npm run format:rust        # Format Rust code with rustfmt
+# Quick fixes (use this most!)
+npm run fix              # Auto-fix all issues (Vue + Rust)
+npm run check            # Check all linting (Vue + Rust)
+
+# Specific linting
+npm run lint             # Check all linting
+npm run lint:vue         # Check Vue/TypeScript linting
+npm run lint:rust        # Check Rust linting (Clippy)
+
+# Specific fixes
+npm run fix:vue          # Fix Vue + format with Prettier
+npm run fix:rust         # Format Rust code
 ```
 
 **Important**: Always run `npm run check` before committing to ensure code quality!

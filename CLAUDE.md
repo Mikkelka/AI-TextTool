@@ -44,28 +44,26 @@ This is a **complete AI-powered text processing desktop application** built with
 
 ## Development Commands
 
-### Frontend Development
-- `npm run dev` - Start Vite development server (runs on port 1420)
-- `npm run build` - Build frontend for production (includes TypeScript compilation)
-- `npm run preview` - Preview production build
+### Main Development (Most Used)
+- `npm run dev` - Start Tauri development mode (launches desktop app)
+- `npm run build` - Build desktop application for distribution
 
-### Tauri Development
-- `npm run tauri dev` - Start Tauri development mode (launches desktop app)
-- `npm run tauri build` - Build desktop application for distribution
+### Frontend Only Development
+- `npm run dev:web` - Start Vite development server (runs on port 1420)
+- `npm run build:web` - Build frontend for production (includes TypeScript compilation)
 
-### Code Quality & Linting
-- `npm run lint` - Check ESLint errors/warnings (development mode)
-- `npm run lint:fix` - Auto-fix ESLint issues where possible
-- `npm run lint:prod` - Check production linting (console.log = errors)
-- `npm run format` - Format code with Prettier
-- `npm run format:check` - Check if code follows Prettier formatting
+### Code Quality
+- `npm run lint` - Check all linting (Vue + Rust)
+- `npm run lint:vue` - Check ESLint errors/warnings
 - `npm run lint:rust` - Run Clippy linting on Rust code
-- `npm run format:rust` - Format Rust code with rustfmt
-- `npm run check` - Run complete linting check (ESLint + Prettier + Clippy)
+- `npm run fix` - Auto-fix all issues (Vue + Rust)
+- `npm run fix:vue` - Auto-fix ESLint issues and format with Prettier
+- `npm run fix:rust` - Format Rust code with rustfmt
+- `npm run check` - Run complete linting check (use before committing)
 
-### Full Development Workflow
-- `npm run tauri dev` automatically runs `npm run dev` as the beforeDevCommand
-- `npm run tauri build` automatically runs `npm run build` as the beforeBuildCommand
+### Development Workflow
+- `npm run dev` automatically runs Vite dev server as the beforeDevCommand
+- `npm run build` automatically builds frontend as the beforeBuildCommand
 - **IMPORTANT**: Always run `npm run check` before committing to ensure code quality
 
 ## Data Storage (Single JSON File)
