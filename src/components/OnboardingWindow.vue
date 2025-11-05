@@ -5,8 +5,8 @@
       <button
         class="close-btn"
         title="Close window"
-        @click="closeWindow"
         data-tauri-drag-region="false"
+        @click="closeWindow"
       >
         ✕
       </button>
@@ -554,14 +554,14 @@
   const handleKeydown = (event: KeyboardEvent) => {
     switch (event.key) {
       case 'Escape':
-        skipSetup()
+        void skipSetup()
         break
       case 'Enter':
         if (event.ctrlKey || event.metaKey) {
           if (currentStep.value < steps.length && canProceed.value) {
-            nextStep()
+            void nextStep()
           } else if (currentStep.value === steps.length && canComplete.value) {
-            completeSetup()
+            void completeSetup()
           }
         }
         break
@@ -574,7 +574,7 @@
       case 'ArrowRight':
         if (event.altKey && currentStep.value < steps.length && canProceed.value) {
           event.preventDefault()
-          nextStep()
+          void nextStep()
         }
         break
     }

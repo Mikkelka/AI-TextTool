@@ -11,8 +11,8 @@
           :disabled="isLoading"
           class="refresh-btn"
           title="Refresh history"
-          @click="refreshHistory"
           data-tauri-drag-region="false"
+          @click="refreshHistory"
         >
           🔄
         </button>
@@ -20,12 +20,19 @@
           :disabled="entries.length === 0 && conversations.length === 0"
           class="clear-btn"
           title="Clear all history"
-          @click="clearAllHistory"
           data-tauri-drag-region="false"
+          @click="clearAllHistory"
         >
           🗑️
         </button>
-        <button class="close-btn" title="Close window" @click="closeWindow" data-tauri-drag-region="false">✕</button>
+        <button
+          class="close-btn"
+          title="Close window"
+          data-tauri-drag-region="false"
+          @click="closeWindow"
+        >
+          ✕
+        </button>
       </div>
     </div>
 
