@@ -4,10 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run tauri dev",
+    "dev": "npm run dev",
     "build": "npm run tauri build",
-    "dev:web": "vite",
-    "build:web": "vue-tsc --noEmit && vite build",
     "lint": "npm run lint:vue && npm run lint:rust",
     "lint:vue": "eslint src --ext .vue,.js,.ts",
     "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
