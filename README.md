@@ -64,7 +64,16 @@ AI TextTool uses **Tauri's hybrid architecture** - a Vue.js frontend communicate
 ```
 AI-TextTool/
 ├── src/                     # 🌐 Vue 3 Frontend (runs in webview)
-│   ├── components/          # Vue components (PopupWindow, ChatWindow, etc.)
+│   ├── components/          # Vue components
+│   │   ├── PopupWindow.vue      # Operation selector (Ctrl+Space popup)
+│   │   ├── ChatWindow.vue       # AI conversation windows
+│   │   ├── MessageBubble.vue    # Reusable message display
+│   │   ├── InputArea.vue        # Reusable chat input
+│   │   ├── SettingsWindow.vue   # Settings configuration
+│   │   ├── ChatHistoryWindow.vue # History management
+│   │   └── OnboardingWindow.vue # First-time setup
+│   ├── types/               # Shared TypeScript interfaces
+│   ├── utils/               # Utility functions (markdown rendering)
 │   ├── assets/              # CSS, images, static files
 │   └── main.ts              # Vue app entry point
 ├── src-tauri/              # 🦀 Rust Backend (native desktop app)
@@ -77,8 +86,8 @@ AI-TextTool/
 │   │   ├── window_manager.rs # Window creation & management
 │   │   ├── tray_manager.rs  # System tray functionality
 │   │   └── shortcut_manager.rs # Global hotkeys & clipboard
-│   ├── target/debug/        # 📁 Development build + data files
-│   ├── target/release/      # 📁 Production build + data files
+│   ├── target/debug/        # 📁 Development build + app_data.json
+│   ├── target/release/      # 📁 Production build + app_data.json
 │   ├── Cargo.toml           # Rust dependencies
 │   └── tauri.conf.json      # Tauri configuration
 ├── *.html                   # 📄 Separate window templates
@@ -132,12 +141,40 @@ npm run tauri build
 npm run dev
 ```
 
-### Data Files
-Configuration and history files are stored next to the executable:
-- `config.json` - App settings and API keys
-- `options.json` - Text operations configuration
-- `chat_history.json` - Individual operation history
-- `saved_conversations.json` - Complete chat conversations
+### Data Storage
+All application data is stored in a **single JSON file** next to the executable:
+- **`app_data.json`** - Unified data file containing:
+  - App settings and API keys
+  - Text operations configuration
+  - Individual operation history
+  - Complete chat conversations
+  - Version metadata
+
+**Migration**: If you're upgrading from an older version, the app automatically migrates your old files (`config.json`, `options.json`, `chat_history.json`, `saved_conversations.json`) to the new format on first launch. Old files are safely renamed to `.old`.
+
+### Code Quality
+```bash
+# Lint and format checks
+npm run check              # Run all linting (ESLint + Prettier + Clippy)
+npm run lint               # Check ESLint errors/warnings
+npm run lint:fix           # Auto-fix ESLint issues
+npm run format             # Format code with Prettier
+npm run lint:rust          # Run Clippy on Rust code
+npm run format:rust        # Format Rust code with rustfmt
+```
+
+**Important**: Always run `npm run check` before committing to ensure code quality!
+
+## 📚 Documentation
+
+- **[CLAUDE.md](CLAUDE.md)** - Complete project documentation for developers
+- **[Tauri2.0-docs.md](Tauri2.0-docs.md)** - Comprehensive Tauri 2.0 plugin usage guide with real-world solutions
+
+The Tauri 2.0 documentation covers:
+- Clipboard Manager, Global Shortcut, File System, Opener plugins
+- Window Management patterns and solutions
+- Common issues and their fixes
+- All code examples are battle-tested from this project
 
 ## 🤝 Contributing
 
