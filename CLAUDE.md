@@ -68,15 +68,19 @@ This is a **complete AI-powered text processing desktop application** built with
 - `npm run tauri build` automatically runs `npm run build` as the beforeBuildCommand
 - **IMPORTANT**: Always run `npm run check` before committing to ensure code quality
 
-## Data Files (Located next to executable)
+## Data Storage (Single JSON File)
 
-**Development**: `src-tauri/target/debug/`  
+**Development**: `src-tauri/target/debug/`
 **Production**: `src-tauri/target/release/`
 
-- **`options.json`** - Text operations configuration (10 operations including Danish)
-- **`chat_history.json`** - Individual operation history (auto-saved, max 100 entries)
-- **`saved_conversations.json`** - Complete chat conversations with custom titles
-- **`config.json`** - App settings (API keys, models, system instructions)
+- **`app_data.json`** - Single consolidated file containing all application data:
+  - `config` - App settings (API keys, models, system instructions)
+  - `operations` - Text operations configuration (10 operations including Danish)
+  - `chat_history` - Individual operation history (auto-saved, max 100 entries)
+  - `saved_conversations` - Complete chat conversations with custom titles
+  - `metadata` - Version and last updated timestamp
+
+**Migration**: On first run, automatically migrates from old separate files (`config.json`, `options.json`, `chat_history.json`, `saved_conversations.json`) to the new unified structure. Old files are renamed to `.old` for safety.
 
 ## Configuration Files
 
@@ -159,7 +163,7 @@ Located in `src/types/index.ts`:
 ### 🎯 System Tray Application
 - **Startup**: Starts minimized, no main window shown
 - **Tray Menu**: Settings, Chat History, Quit
-- **Onboarding**: Shows setup wizard on first run (if no config.json exists)
+- **Onboarding**: Shows setup wizard on first run (if no app_data.json exists)
 
 ### ⌨️ Global Hotkey (Ctrl+Space)
 - **Text Capture**: Automatically simulates Ctrl+C to copy selected text
@@ -220,10 +224,13 @@ Located in `src/types/index.ts`:
 - **Custom Instructions**: Per-operation system instructions in Danish and English
 
 #### Data Management
-- **File Location**: All data files stored next to executable (not hidden in AppData)
-- **Backup Friendly**: Easy to backup entire application folder
-- **JSON Format**: Human-readable configuration files
+- **Single File Structure**: All data consolidated in `app_data.json` (config, operations, history, conversations)
+- **File Location**: Stored next to executable (not hidden in AppData)
+- **Automatic Migration**: Seamlessly migrates from old multi-file structure (renames old files to `.old`)
+- **Backup Friendly**: Easy to backup entire application folder - just copy one JSON file
+- **JSON Format**: Human-readable configuration with pretty-printing
 - **Live Reload**: Configuration changes take effect immediately
+- **Versioning**: Metadata tracks version and last updated timestamp
 
 ## Tauri-Specific Solutions & Learnings
 
@@ -327,42 +334,59 @@ await invoke('reopen_chat_conversation', {
 - Consistent with proven tray chat pattern
 - More reliable window creation in Tauri v2
 
-### 📁 File Location Strategy We Learned
+### 📁 Data Storage Strategy
 
-#### Problem: Hidden AppData Files
-**Issue**: Users couldn't find configuration files in hidden AppData folder  
-**Better Solution**: Store user-editable files next to executable
+#### Single JSON File Approach
+**Evolution**: Migrated from 4 separate JSON files to unified `app_data.json`
+**Benefits**:
+- Simpler backup (one file to copy)
+- Atomic saves (no partial state corruption)
+- Easier data consistency
+- Single source of truth
+
+**Implementation**:
 ```rust
-let exe_dir = std::env::current_exe()
-    .ok()
-    .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
-
-let history_file = if let Some(exe_path) = exe_dir {
-    exe_path.join("chat_history.json")  // Next to .exe
+// Determine file path - next to executable
+let file_path = if let Ok(exe_path) = std::env::current_exe() {
+    exe_path
+        .parent()
+        .map(|p| p.join("app_data.json"))
+        .unwrap_or_else(|| PathBuf::from("app_data.json"))
 } else {
-    app_data_dir.join("chat_history.json")  // Fallback to AppData
-}
+    PathBuf::from("app_data.json")
+};
 ```
 
-**Priority Order**:
+**File Location Priority**:
 1. Same directory as executable (easy to find/backup)
-2. AppData directory (fallback for permissions)
+2. Current directory (fallback for permissions)
+
+**Automatic Migration**:
+- Detects old files (`config.json`, `options.json`, `chat_history.json`, `saved_conversations.json`)
+- Consolidates into single `app_data.json`
+- Renames old files to `.old` extension (safe, non-destructive)
 
 ### 🔧 Configuration Management Pattern
 
-#### Hardcoded Defaults + Runtime Files
-**Problem**: Missing operations when only runtime files exist  
-**Solution**: Always create hardcoded defaults first, then load runtime overrides
+#### Hardcoded Defaults + Runtime Override
+**Pattern**: Always have fallback defaults, allow runtime customization
+**Implementation**: Default values defined in `AppData::default()` in `data_manager/types.rs`
+
 ```rust
-// In config.rs - create_default_operations()
+// In data_manager/types.rs - AppData::create_default_operations()
 default_operations.insert("Dansk".to_string(), Operation {
     prefix: "Oversæt følgende tekst til dansk:\n\n".to_string(),
     instruction: "Du er en professionel oversætter...",
+    order: 3,
+    open_in_window: false,
     // ... other fields
 });
 ```
 
-**File Priority**: `exe_dir/options.json` > `app_data/options.json` > hardcoded defaults
+**Data Loading Priority**:
+1. Load from `app_data.json` if exists
+2. Migrate from old files if found (config.json, options.json, etc.)
+3. Use hardcoded defaults if no files exist
 
 ### 🎨 UI/UX Lessons
 
