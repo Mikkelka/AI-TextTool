@@ -1,10 +1,49 @@
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use super::super::ai_provider::{
-    ChatMessage, ChatResponse, GeminiProvider, GenerationConfig, ThinkingConfig,
+    ChatMessage, ChatResponse, GeminiError, GeminiProvider, GenerationConfig, ThinkingConfig,
 };
 use super::super::data_manager::DataManager;
 use super::super::utils::validation;
+
+/// Convert GeminiError to user-friendly error message
+fn gemini_error_to_user_message(error: GeminiError) -> String {
+    match error {
+        GeminiError::InvalidApiKey => {
+            "Invalid API key. Please check your Gemini API key in settings.".to_string()
+        }
+        GeminiError::Timeout => {
+            "Connection timed out. Please check your internet connection and try again.".to_string()
+        }
+        GeminiError::ServiceUnavailable => {
+            "Gemini service is currently unavailable. Please try again later.".to_string()
+        }
+        GeminiError::RateLimitExceeded { retry_after_seconds } => {
+            format!(
+                "Rate limit exceeded. Please try again in {} seconds.",
+                retry_after_seconds
+            )
+        }
+        GeminiError::ModelNotFound { model } => {
+            format!(
+                "Model '{}' not found. Please select a different model in settings.",
+                model
+            )
+        }
+        GeminiError::ApiError { status, message } => {
+            format!("API error ({}): {}", status, message)
+        }
+        GeminiError::HttpError(e) => {
+            format!("Network error: {}. Please check your connection.", e)
+        }
+        GeminiError::JsonError(e) => {
+            format!("Invalid response format: {}. Please try again.", e)
+        }
+        GeminiError::InvalidRequest { message } => {
+            format!("Invalid request: {}", message)
+        }
+    }
+}
 
 /// Helper function to load and initialize DataManager
 /// Reduces code duplication across all AI commands
@@ -44,10 +83,8 @@ pub async fn process_text_with_ai(
     }
 
     // Create Gemini provider
-    let provider = match GeminiProvider::new(config.api_key) {
-        Ok(provider) => provider,
-        Err(e) => return Err(format!("Failed to create AI provider: {}", e)),
-    };
+    let provider = GeminiProvider::new(config.api_key)
+        .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
     let operation_details = manager
@@ -107,10 +144,8 @@ pub async fn chat_with_ai(
     }
 
     // Create provider
-    let provider = match GeminiProvider::new(config.api_key) {
-        Ok(provider) => provider,
-        Err(e) => return Err(format!("Failed to create AI provider: {}", e)),
-    };
+    let provider = GeminiProvider::new(config.api_key)
+        .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
     let mut messages = history;
