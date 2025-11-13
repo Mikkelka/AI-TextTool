@@ -223,6 +223,17 @@
     await sendMessage(userMessage)
   }
 
+  // Helper function to prepare chat history for API calls
+  const prepareChatHistory = () => {
+    return state.messages
+      .filter(m => !m.isProcessing)
+      .map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp
+      }))
+  }
+
   const sendMessage = async (userMessage: string) => {
     state.error = null
 
@@ -248,13 +259,7 @@
 
     try {
       // Prepare message history (exclude processing message)
-      const chatHistory = state.messages
-        .filter(m => !m.isProcessing)
-        .map(m => ({
-          role: m.role,
-          content: m.content,
-          timestamp: m.timestamp
-        }))
+      const chatHistory = prepareChatHistory()
 
       // Include initial text in first user message if this is the first interaction
       let messageToSend = userMessage
@@ -319,13 +324,7 @@
     await scrollToBottom()
 
     try {
-      const chatHistory = state.messages
-        .filter(m => !m.isProcessing)
-        .map(m => ({
-          role: m.role,
-          content: m.content,
-          timestamp: m.timestamp
-        }))
+      const chatHistory = prepareChatHistory()
 
       const response = (await invoke('chat_with_ai', {
         message: userMessage.content,
