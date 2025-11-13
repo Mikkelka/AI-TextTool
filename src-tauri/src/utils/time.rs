@@ -29,6 +29,7 @@ pub fn get_current_timestamp_millis() -> u128 {
 ///
 /// # Returns
 /// * `u64` - Current timestamp in seconds, or 0 if system time is before UNIX_EPOCH
+#[allow(dead_code)]
 pub fn get_current_timestamp_secs() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
