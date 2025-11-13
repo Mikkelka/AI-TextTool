@@ -5,7 +5,7 @@ use tauri::{AppHandle, Runtime};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tokio::time::sleep;
 
-use super::window_manager;
+use super::{utils::time, window_manager};
 
 /// Create and configure the global shortcut handler with debouncing
 pub fn create_shortcut_handler<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
@@ -58,10 +58,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Clear clipboard with a unique marker to ensure we can detect any change
     let unique_marker = format!(
         "AI_TOOL_MARKER_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
+        time::get_current_timestamp_millis()
     );
 
     if let Err(e) = app_handle.clipboard().write_text(&unique_marker) {

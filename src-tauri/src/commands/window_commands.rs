@@ -1,5 +1,7 @@
 use tauri::{AppHandle, WebviewWindowBuilder};
 
+use super::super::utils::time;
+
 #[tauri::command]
 pub async fn reopen_chat_conversation(
     app: AppHandle,
@@ -9,11 +11,7 @@ pub async fn reopen_chat_conversation(
 ) -> Result<(), String> {
     println!("Reopening conversation: {}", title);
 
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-
+    let timestamp = time::get_current_timestamp_millis();
     let window_id = format!("chat_reopen_{}", timestamp);
 
     // Create the chat URL with conversation data
@@ -65,11 +63,7 @@ pub async fn open_chat_window(
     );
 
     // Create timestamp for unique window ID
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-
+    let timestamp = time::get_current_timestamp_millis();
     let window_id = format!("chat_{}_{}", operation.to_lowercase(), timestamp);
 
     // Create the chat URL with operation data

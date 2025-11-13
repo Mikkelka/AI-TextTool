@@ -1,5 +1,7 @@
 use tauri::{Emitter, Manager, Runtime, WebviewWindowBuilder};
 
+use crate::utils::time;
+
 /// Configuration for creating a window
 #[derive(Clone)]
 pub struct WindowConfig {
@@ -174,10 +176,7 @@ pub fn create_popup_window<R: Runtime>(
     clipboard_text: String,
 ) -> tauri::Result<()> {
     // Create timestamp for unique URL
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
+    let timestamp = time::get_current_timestamp_millis();
 
     println!(
         "Creating popup window at mouse position: ({}, {})",
@@ -232,10 +231,7 @@ fn create_chat_window<R: Runtime>(
     println!("{}", context);
 
     // Create timestamp for unique window ID
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
+    let timestamp = time::get_current_timestamp_millis();
 
     let config = WindowConfig {
         window_id: format!("chat_{}_{}", prefix, timestamp),
