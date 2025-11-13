@@ -192,7 +192,29 @@
     return ['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(state.selectedModel)
   })
 
+  // Validation constants
+  const MAX_MESSAGE_LENGTH = 10000 // 10KB limit, matching backend
+  const MIN_MESSAGE_LENGTH = 1
+
   // Methods
+  const isValidRole = (role: unknown): role is 'user' | 'assistant' => {
+    return role === 'user' || role === 'assistant'
+  }
+
+  const validateMessage = (message: string): string | null => {
+    const trimmed = message.trim()
+
+    if (trimmed.length < MIN_MESSAGE_LENGTH) {
+      return 'Message cannot be empty'
+    }
+
+    if (trimmed.length > MAX_MESSAGE_LENGTH) {
+      return `Message cannot exceed ${MAX_MESSAGE_LENGTH} characters (${(MAX_MESSAGE_LENGTH / 1024).toFixed(1)} KB)`
+    }
+
+    return null // Valid message
+  }
+
   const loadAvailableModels = async () => {
     try {
       const models = (await invoke('get_ai_models')) as string[]
@@ -217,10 +239,27 @@
     if (!inputArea.value) return
 
     const userMessage = inputArea.value.getCurrentMessage()
-    if (!userMessage) return
+
+    // Validate message
+    const validationError = validateMessage(userMessage)
+    if (validationError) {
+      state.error = validationError
+      return
+    }
 
     inputArea.value.clearInput()
     await sendMessage(userMessage)
+  }
+
+  // Helper function to prepare chat history for API calls
+  const prepareChatHistory = () => {
+    return state.messages
+      .filter(m => !m.isProcessing)
+      .map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp
+      }))
   }
 
   const sendMessage = async (userMessage: string) => {
@@ -248,13 +287,7 @@
 
     try {
       // Prepare message history (exclude processing message)
-      const chatHistory = state.messages
-        .filter(m => !m.isProcessing)
-        .map(m => ({
-          role: m.role,
-          content: m.content,
-          timestamp: m.timestamp
-        }))
+      const chatHistory = prepareChatHistory()
 
       // Include initial text in first user message if this is the first interaction
       let messageToSend = userMessage
@@ -319,13 +352,7 @@
     await scrollToBottom()
 
     try {
-      const chatHistory = state.messages
-        .filter(m => !m.isProcessing)
-        .map(m => ({
-          role: m.role,
-          content: m.content,
-          timestamp: m.timestamp
-        }))
+      const chatHistory = prepareChatHistory()
 
       const response = (await invoke('chat_with_ai', {
         message: userMessage.content,
@@ -500,13 +527,27 @@
       }
 
       // Convert and load messages
-      state.messages = conversation.messages.map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-        timestamp: msg.timestamp,
-        isProcessing: false,
-        thoughts: msg.thoughts
-      }))
+      state.messages = conversation.messages
+        .map(msg => {
+          // Validate role before using it
+          if (!isValidRole(msg.role)) {
+            console.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
+            return {
+              role: 'assistant' as const,
+              content: msg.content,
+              timestamp: msg.timestamp,
+              isProcessing: false,
+              thoughts: msg.thoughts
+            }
+          }
+          return {
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            isProcessing: false,
+            thoughts: msg.thoughts
+          }
+        })
 
       // Restore thinking mode setting
       if (conversation.thinking_mode_enabled !== undefined) {

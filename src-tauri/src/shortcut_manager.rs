@@ -3,8 +3,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tauri::{AppHandle, Runtime};
 use tauri_plugin_clipboard_manager::ClipboardExt;
+use tokio::time::sleep;
 
-use super::window_manager;
+use super::{utils::time, window_manager};
 
 /// Create and configure the global shortcut handler with debouncing
 pub fn create_shortcut_handler<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
@@ -41,7 +42,7 @@ fn handle_global_shortcut<R: Runtime>(app: AppHandle<R>, last_trigger: Arc<Mutex
 /// Process the shortcut trigger: copy text, analyze clipboard, and show appropriate window
 async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Small initial delay to let any ongoing operations (like Ctrl+A) complete
-    std::thread::sleep(std::time::Duration::from_millis(50));
+    sleep(std::time::Duration::from_millis(50)).await;
 
     // First, get current clipboard content to compare later
     let original_clipboard = app_handle
@@ -57,10 +58,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Clear clipboard with a unique marker to ensure we can detect any change
     let unique_marker = format!(
         "AI_TOOL_MARKER_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
+        time::get_current_timestamp_millis()
     );
 
     if let Err(e) = app_handle.clipboard().write_text(&unique_marker) {
@@ -71,7 +69,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     } else {
         println!("Clipboard cleared with marker: {}", unique_marker);
         // Small delay to ensure clipboard write completes
-        std::thread::sleep(std::time::Duration::from_millis(50));
+        sleep(std::time::Duration::from_millis(50)).await;
     }
 
     // Simulate Ctrl+C to copy any selected text
@@ -85,14 +83,14 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     }
 
     // Longer delay to ensure copy operation completes reliably
-    std::thread::sleep(std::time::Duration::from_millis(250));
+    sleep(std::time::Duration::from_millis(250)).await;
 
     // Get clipboard content after Ctrl+C - with retry logic
     let new_clipboard = match app_handle.clipboard().read_text() {
         Ok(content) => content,
         Err(_) => {
             // First retry after additional delay
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            sleep(std::time::Duration::from_millis(100)).await;
             match app_handle.clipboard().read_text() {
                 Ok(content) => content,
                 Err(_) => {
@@ -175,6 +173,8 @@ async fn show_popup_with_text<R: Runtime>(app_handle: &AppHandle<R>, clipboard_t
 }
 
 /// Simulate Ctrl+C to copy selected text
+/// Note: Uses thread::sleep instead of tokio::sleep for hardware timing
+/// These are very short delays (10ms) for keyboard input registration
 fn simulate_copy() -> Result<(), String> {
     println!("Starting Ctrl+C simulation...");
 
@@ -185,7 +185,7 @@ fn simulate_copy() -> Result<(), String> {
                 return Err(format!("Failed to press Ctrl: {:?}", e));
             }
 
-            // Small delay to ensure key is registered
+            // Small delay to ensure key is registered (hardware timing)
             std::thread::sleep(std::time::Duration::from_millis(10));
 
             // Click C key
@@ -211,10 +211,12 @@ fn simulate_copy() -> Result<(), String> {
 }
 
 /// Simulate Ctrl+V to paste text (used by the simulate_paste command)
+/// Note: Uses thread::sleep instead of tokio::sleep for hardware timing
+/// The 100ms delay ensures focus has returned to the original application
 pub fn simulate_paste() -> Result<String, String> {
     println!("Simulating Ctrl+V after popup closed...");
 
-    // Small delay to ensure focus has returned to original application
+    // Small delay to ensure focus has returned to original application (hardware timing)
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     // Use enigo to simulate Ctrl+V

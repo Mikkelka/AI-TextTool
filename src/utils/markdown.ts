@@ -62,7 +62,7 @@ export function renderMarkdown(markdown: string): string {
         'span',
         'button'
       ],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'onclick', 'colspan', 'rowspan'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'data-copy-code', 'colspan', 'rowspan'],
       ALLOWED_URI_REGEXP:
         /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
     })
@@ -86,28 +86,26 @@ function addCustomClasses(html: string): string {
 
   // Add copy button to code blocks
   html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_match, attrs, content) => {
-    return `<pre class="code-block"><code${attrs}>${content}</code><button class="copy-code-btn" onclick="copyCode(this)">📋</button></pre>`
+    return `<pre class="code-block"><code${attrs}>${content}</code><button class="copy-code-btn" data-copy-code>📋</button></pre>`
   })
 
   return html
 }
 
-/**
- * Setup global copy code function for code blocks
- * Should be called when component mounts
- */
-export function setupMarkdownCopyFunction() {
-  ;(window as any).copyCode = (button: HTMLButtonElement) => {
-    const codeBlock = button.parentElement?.querySelector('code')
+// Event handler for copy code buttons
+const handleCopyCodeClick = (event: Event) => {
+  const target = event.target as HTMLElement
+  if (target.classList.contains('copy-code-btn') || target.hasAttribute('data-copy-code')) {
+    const codeBlock = target.parentElement?.querySelector('code')
     if (codeBlock) {
       navigator.clipboard
         .writeText(codeBlock.textContent || '')
         .then(() => {
           // Brief visual feedback
-          const originalText = button.textContent
-          button.textContent = '✅'
+          const originalText = target.textContent
+          target.textContent = '✅'
           setTimeout(() => {
-            button.textContent = originalText
+            target.textContent = originalText
           }, 1000)
         })
         .catch(err => {
@@ -118,9 +116,17 @@ export function setupMarkdownCopyFunction() {
 }
 
 /**
- * Cleanup global copy code function
+ * Setup event delegation for copy code buttons
+ * Should be called when component mounts
+ */
+export function setupMarkdownCopyFunction() {
+  document.addEventListener('click', handleCopyCodeClick)
+}
+
+/**
+ * Cleanup event delegation for copy code buttons
  * Should be called when component unmounts
  */
 export function cleanupMarkdownCopyFunction() {
-  ;(window as any).copyCode = undefined
+  document.removeEventListener('click', handleCopyCodeClick)
 }

@@ -1,9 +1,60 @@
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use super::super::ai_provider::{
-    ChatMessage, ChatResponse, GeminiProvider, GenerationConfig, ThinkingConfig,
+    ChatMessage, ChatResponse, GeminiError, GeminiProvider, GenerationConfig, ThinkingConfig,
 };
 use super::super::data_manager::DataManager;
+use super::super::utils::validation;
+
+/// Convert GeminiError to user-friendly error message
+fn gemini_error_to_user_message(error: GeminiError) -> String {
+    match error {
+        GeminiError::InvalidApiKey => {
+            "Invalid API key. Please check your Gemini API key in settings.".to_string()
+        }
+        GeminiError::Timeout => {
+            "Connection timed out. Please check your internet connection and try again.".to_string()
+        }
+        GeminiError::ServiceUnavailable => {
+            "Gemini service is currently unavailable. Please try again later.".to_string()
+        }
+        GeminiError::RateLimitExceeded { retry_after_seconds } => {
+            format!(
+                "Rate limit exceeded. Please try again in {} seconds.",
+                retry_after_seconds
+            )
+        }
+        GeminiError::ModelNotFound { model } => {
+            format!(
+                "Model '{}' not found. Please select a different model in settings.",
+                model
+            )
+        }
+        GeminiError::ApiError { status, message } => {
+            format!("API error ({}): {}", status, message)
+        }
+        GeminiError::HttpError(e) => {
+            format!("Network error: {}. Please check your connection.", e)
+        }
+        GeminiError::JsonError(e) => {
+            format!("Invalid response format: {}. Please try again.", e)
+        }
+        GeminiError::InvalidRequest { message } => {
+            format!("Invalid request: {}", message)
+        }
+    }
+}
+
+/// Helper function to load and initialize DataManager
+/// Reduces code duplication across all AI commands
+async fn load_data_manager(app: tauri::AppHandle) -> Result<DataManager, String> {
+    let mut manager = DataManager::new(app);
+    manager
+        .initialize()
+        .await
+        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    Ok(manager)
+}
 
 #[tauri::command]
 pub async fn process_text_with_ai(
@@ -16,12 +67,12 @@ pub async fn process_text_with_ai(
         text, operation
     );
 
+    // Validate input
+    validation::validate_text_input(&text)?;
+    validation::validate_operation_name(&operation)?;
+
     // Load configuration to get API key and model settings
-    let mut manager = DataManager::new(app.clone());
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let manager = load_data_manager(app.clone()).await?;
     let config = manager.get_config().clone();
 
     // Check if API key is configured
@@ -32,10 +83,8 @@ pub async fn process_text_with_ai(
     }
 
     // Create Gemini provider
-    let provider = match GeminiProvider::new(config.api_key) {
-        Ok(provider) => provider,
-        Err(e) => return Err(format!("Failed to create AI provider: {}", e)),
-    };
+    let provider = GeminiProvider::new(config.api_key)
+        .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
     let operation_details = manager
@@ -83,12 +132,11 @@ pub async fn chat_with_ai(
 ) -> Result<ChatResponse, String> {
     println!("Chat with AI: '{}'", message);
 
+    // Validate input
+    validation::validate_message_input(&message)?;
+
     // Load configuration
-    let mut manager = DataManager::new(app);
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let manager = load_data_manager(app).await?;
     let config = manager.get_config().clone();
 
     if config.api_key.trim().is_empty() {
@@ -96,10 +144,8 @@ pub async fn chat_with_ai(
     }
 
     // Create provider
-    let provider = match GeminiProvider::new(config.api_key) {
-        Ok(provider) => provider,
-        Err(e) => return Err(format!("Failed to create AI provider: {}", e)),
-    };
+    let provider = GeminiProvider::new(config.api_key)
+        .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
     let mut messages = history;
@@ -146,11 +192,7 @@ pub async fn chat_with_ai(
 pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     println!("Testing AI connection...");
 
-    let mut manager = DataManager::new(app);
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let manager = load_data_manager(app).await?;
     let config = manager.get_config().clone();
 
     if config.api_key.trim().is_empty() {

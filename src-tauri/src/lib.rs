@@ -6,6 +6,7 @@ mod commands;
 mod data_manager;
 mod shortcut_manager;
 mod tray_manager;
+mod utils;
 mod window_manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -23,15 +24,7 @@ pub fn run() {
             }
 
             // Check if app_data.json exists - if not, show onboarding
-            // Same logic as DataManager uses
-            let config_path = if let Ok(exe_path) = std::env::current_exe() {
-                exe_path
-                    .parent()
-                    .map(|parent| parent.join("app_data.json"))
-                    .unwrap_or_else(|| std::env::current_dir().unwrap().join("app_data.json"))
-            } else {
-                std::env::current_dir().unwrap().join("app_data.json")
-            };
+            let config_path = utils::file_paths::get_app_data_path();
 
             if !config_path.exists() {
                 println!("No app_data.json found - showing onboarding window");

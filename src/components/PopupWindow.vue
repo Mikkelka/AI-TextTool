@@ -86,6 +86,9 @@
 
   const emit = defineEmits<Emits>()
 
+  // Layout constants
+  const GRID_COLUMNS = 2 // Number of columns in the operations grid
+
   // Reactive state
   const operations = ref<[string, Operation][]>([])
   const isLoading = ref(true)
@@ -96,7 +99,7 @@
   const showFadeIn = ref(true)
 
   // Get text from props or window.clipboardText injection
-  const clipboardText = ref(props.selectedText || (window as any).clipboardText || '')
+  const clipboardText = ref(props.selectedText || window.clipboardText || '')
 
   // Methods
   const loadOperations = async () => {
@@ -241,16 +244,14 @@
 
       case 'ArrowLeft': {
         event.preventDefault()
-        const cols = 2
-        selectedIndex.value = Math.max(0, selectedIndex.value - cols)
+        selectedIndex.value = Math.max(0, selectedIndex.value - GRID_COLUMNS)
         void scrollToSelected()
         break
       }
 
       case 'ArrowRight': {
         event.preventDefault()
-        const columns = 2
-        selectedIndex.value = Math.min(operationCount - 1, selectedIndex.value + columns)
+        selectedIndex.value = Math.min(operationCount - 1, selectedIndex.value + GRID_COLUMNS)
         void scrollToSelected()
         break
       }
@@ -308,7 +309,7 @@
 
     // Clear sensitive data
     clipboardText.value = ''
-    ;(window as any).clipboardText = ''
+    delete window.clipboardText
   })
 </script>
 
