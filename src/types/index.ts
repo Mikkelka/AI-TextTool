@@ -16,6 +16,15 @@ export interface Operation {
   order?: number
 }
 
+// Provider configuration settings
+export interface ProviderSettings {
+  api_key?: string
+  chat_model_name?: string
+  text_model_name?: string
+  chat_system_instruction?: string
+  [key: string]: string | undefined  // Allow other string properties for flexibility
+}
+
 export interface Config {
   api_key: string
   chat_system_instruction: string
@@ -25,7 +34,7 @@ export interface Config {
   shortcut: string
   locale: string
   streaming: boolean
-  providers: Record<string, any>
+  providers: Record<string, ProviderSettings>
 }
 
 export interface ChatHistoryEntry {
@@ -77,5 +86,5 @@ export interface AIResponse {
 export interface AppError {
   message: string
   code?: string
-  details?: any
+  details?: Record<string, string | number | boolean | null>
 }
