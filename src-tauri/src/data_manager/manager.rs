@@ -6,6 +6,7 @@ use tokio::fs;
 use tokio::io::AsyncWriteExt;
 
 use super::types::*;
+use crate::utils::file_paths;
 
 /// Data manager for handling all application data
 pub struct DataManager {
@@ -25,14 +26,7 @@ impl DataManager {
     /// Initialize the data manager (load or migrate data)
     pub async fn initialize(&mut self) -> Result<(), DataError> {
         // Determine file path (next to exe)
-        self.file_path = if let Ok(exe_path) = std::env::current_exe() {
-            exe_path
-                .parent()
-                .map(|p| p.join("app_data.json"))
-                .unwrap_or_else(|| PathBuf::from("app_data.json"))
-        } else {
-            PathBuf::from("app_data.json")
-        };
+        self.file_path = file_paths::get_app_data_path();
 
         // Try to load existing app_data.json
         if self.file_path.exists() {
