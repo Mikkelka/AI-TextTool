@@ -57,6 +57,22 @@
     return currentMessage.value.trim().length > 0 && !props.isProcessing
   })
 
+  // Textarea management helpers
+  const resizeTextarea = async () => {
+    await nextTick()
+    if (messageInput.value) {
+      messageInput.value.style.height = 'auto'
+      messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 120) + 'px'
+    }
+  }
+
+  const resetTextareaHeight = async () => {
+    await nextTick()
+    if (messageInput.value) {
+      messageInput.value.style.height = 'auto'
+    }
+  }
+
   // Methods
   const handleInputKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
@@ -74,12 +90,7 @@
     }
 
     // Auto-resize textarea
-    void nextTick(() => {
-      if (messageInput.value) {
-        messageInput.value.style.height = 'auto'
-        messageInput.value.style.height = Math.min(messageInput.value.scrollHeight, 120) + 'px'
-      }
-    })
+    void resizeTextarea()
   }
 
   const handleSendClick = () => {
@@ -99,11 +110,7 @@
 
   const clearInput = () => {
     currentMessage.value = ''
-    void nextTick(() => {
-      if (messageInput.value) {
-        messageInput.value.style.height = 'auto'
-      }
-    })
+    void resetTextareaHeight()
   }
 
   const getCurrentMessage = () => {
