@@ -197,6 +197,10 @@
   const MIN_MESSAGE_LENGTH = 1
 
   // Methods
+  const isValidRole = (role: unknown): role is 'user' | 'assistant' => {
+    return role === 'user' || role === 'assistant'
+  }
+
   const validateMessage = (message: string): string | null => {
     const trimmed = message.trim()
 
@@ -523,13 +527,27 @@
       }
 
       // Convert and load messages
-      state.messages = conversation.messages.map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-        timestamp: msg.timestamp,
-        isProcessing: false,
-        thoughts: msg.thoughts
-      }))
+      state.messages = conversation.messages
+        .map(msg => {
+          // Validate role before using it
+          if (!isValidRole(msg.role)) {
+            console.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
+            return {
+              role: 'assistant' as const,
+              content: msg.content,
+              timestamp: msg.timestamp,
+              isProcessing: false,
+              thoughts: msg.thoughts
+            }
+          }
+          return {
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            isProcessing: false,
+            thoughts: msg.thoughts
+          }
+        })
 
       // Restore thinking mode setting
       if (conversation.thinking_mode_enabled !== undefined) {
