@@ -8,6 +8,9 @@ use tokio::io::AsyncWriteExt;
 use super::types::*;
 use crate::utils::file_paths;
 
+/// Maximum number of entries to keep in history collections
+const MAX_HISTORY_ENTRIES: usize = 100;
+
 /// Data manager for handling all application data
 pub struct DataManager {
     data: AppData,
@@ -174,11 +177,10 @@ impl DataManager {
     pub async fn add_chat_entry(&mut self, entry: ChatEntry) -> Result<(), DataError> {
         self.data.chat_history.push(entry);
 
-        // Keep only last 100 entries
-        if self.data.chat_history.len() > 100 {
-            self.data
-                .chat_history
-                .drain(0..self.data.chat_history.len() - 100);
+        // Keep only last MAX_HISTORY_ENTRIES entries
+        if self.data.chat_history.len() > MAX_HISTORY_ENTRIES {
+            let excess = self.data.chat_history.len() - MAX_HISTORY_ENTRIES;
+            self.data.chat_history.drain(0..excess);
         }
 
         self.save_data().await
@@ -190,11 +192,10 @@ impl DataManager {
     ) -> Result<(), DataError> {
         self.data.saved_conversations.push(conversation);
 
-        // Keep only last 100 conversations
-        if self.data.saved_conversations.len() > 100 {
-            self.data
-                .saved_conversations
-                .drain(0..self.data.saved_conversations.len() - 100);
+        // Keep only last MAX_HISTORY_ENTRIES conversations
+        if self.data.saved_conversations.len() > MAX_HISTORY_ENTRIES {
+            let excess = self.data.saved_conversations.len() - MAX_HISTORY_ENTRIES;
+            self.data.saved_conversations.drain(0..excess);
         }
 
         self.save_data().await
