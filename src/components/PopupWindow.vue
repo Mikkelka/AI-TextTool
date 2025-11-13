@@ -99,7 +99,7 @@
   const showFadeIn = ref(true)
 
   // Get text from props or window.clipboardText injection
-  const clipboardText = ref(props.selectedText || (window as any).clipboardText || '')
+  const clipboardText = ref(props.selectedText || window.clipboardText || '')
 
   // Methods
   const loadOperations = async () => {
@@ -309,7 +309,7 @@
 
     // Clear sensitive data
     clipboardText.value = ''
-    ;(window as any).clipboardText = ''
+    delete window.clipboardText
   })
 </script>
 
