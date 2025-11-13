@@ -192,7 +192,25 @@
     return ['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(state.selectedModel)
   })
 
+  // Validation constants
+  const MAX_MESSAGE_LENGTH = 10000 // 10KB limit, matching backend
+  const MIN_MESSAGE_LENGTH = 1
+
   // Methods
+  const validateMessage = (message: string): string | null => {
+    const trimmed = message.trim()
+
+    if (trimmed.length < MIN_MESSAGE_LENGTH) {
+      return 'Message cannot be empty'
+    }
+
+    if (trimmed.length > MAX_MESSAGE_LENGTH) {
+      return `Message cannot exceed ${MAX_MESSAGE_LENGTH} characters (${(MAX_MESSAGE_LENGTH / 1024).toFixed(1)} KB)`
+    }
+
+    return null // Valid message
+  }
+
   const loadAvailableModels = async () => {
     try {
       const models = (await invoke('get_ai_models')) as string[]
@@ -217,7 +235,13 @@
     if (!inputArea.value) return
 
     const userMessage = inputArea.value.getCurrentMessage()
-    if (!userMessage) return
+
+    // Validate message
+    const validationError = validateMessage(userMessage)
+    if (validationError) {
+      state.error = validationError
+      return
+    }
 
     inputArea.value.clearInput()
     await sendMessage(userMessage)
