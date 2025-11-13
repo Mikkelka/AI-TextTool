@@ -4,6 +4,7 @@ use super::super::ai_provider::{
     ChatMessage, ChatResponse, GeminiProvider, GenerationConfig, ThinkingConfig,
 };
 use super::super::data_manager::DataManager;
+use super::super::utils::validation;
 
 /// Helper function to load and initialize DataManager
 /// Reduces code duplication across all AI commands
@@ -26,6 +27,10 @@ pub async fn process_text_with_ai(
         "Processing text with AI: '{}' using operation: '{}'",
         text, operation
     );
+
+    // Validate input
+    validation::validate_text_input(&text)?;
+    validation::validate_operation_name(&operation)?;
 
     // Load configuration to get API key and model settings
     let manager = load_data_manager(app.clone()).await?;
@@ -89,6 +94,9 @@ pub async fn chat_with_ai(
     app: tauri::AppHandle,
 ) -> Result<ChatResponse, String> {
     println!("Chat with AI: '{}'", message);
+
+    // Validate input
+    validation::validate_message_input(&message)?;
 
     // Load configuration
     let manager = load_data_manager(app).await?;
