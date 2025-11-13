@@ -5,6 +5,17 @@ use super::super::ai_provider::{
 };
 use super::super::data_manager::DataManager;
 
+/// Helper function to load and initialize DataManager
+/// Reduces code duplication across all AI commands
+async fn load_data_manager(app: tauri::AppHandle) -> Result<DataManager, String> {
+    let mut manager = DataManager::new(app);
+    manager
+        .initialize()
+        .await
+        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    Ok(manager)
+}
+
 #[tauri::command]
 pub async fn process_text_with_ai(
     text: String,
@@ -17,11 +28,7 @@ pub async fn process_text_with_ai(
     );
 
     // Load configuration to get API key and model settings
-    let mut manager = DataManager::new(app.clone());
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let manager = load_data_manager(app.clone()).await?;
     let config = manager.get_config().clone();
 
     // Check if API key is configured
@@ -84,11 +91,7 @@ pub async fn chat_with_ai(
     println!("Chat with AI: '{}'", message);
 
     // Load configuration
-    let mut manager = DataManager::new(app);
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let manager = load_data_manager(app).await?;
     let config = manager.get_config().clone();
 
     if config.api_key.trim().is_empty() {
@@ -146,11 +149,7 @@ pub async fn chat_with_ai(
 pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     println!("Testing AI connection...");
 
-    let mut manager = DataManager::new(app);
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
+    let manager = load_data_manager(app).await?;
     let config = manager.get_config().clone();
 
     if config.api_key.trim().is_empty() {
