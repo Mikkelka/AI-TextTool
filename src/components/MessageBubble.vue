@@ -241,13 +241,24 @@
     font-size: 13px;
   }
 
-  .markdown-content :deep(ul) {
-    margin: 8px 0;
+  .markdown-content :deep(ul),
+  .markdown-content :deep(ol) {
+    margin: 12px 0;
     padding-left: 24px;
   }
 
   .markdown-content :deep(li) {
-    margin: 4px 0;
+    margin: 6px 0;
+  }
+
+  .markdown-content :deep(blockquote) {
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-left: 4px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.9);
+    font-style: italic;
   }
 
   .markdown-content :deep(a) {
@@ -425,6 +436,12 @@
 
     .markdown-content :deep(.inline-code) {
       background: #4a5568;
+    }
+
+    .markdown-content :deep(blockquote) {
+      border-left-color: rgba(148, 163, 184, 0.5);
+      background: rgba(74, 85, 104, 0.2);
+      color: #cbd5e0;
     }
 
     .markdown-content :deep(table) {
