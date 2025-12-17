@@ -523,7 +523,7 @@ impl GeminiProvider {
 
     /// Get available models (placeholder - would require additional API call)
     pub fn get_available_models() -> Vec<&'static str> {
-        vec!["gemini-2.5-flash", "gemini-2.5-flash-lite"]
+        vec!["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
     }
 
     /// Check if a model supports thinking mode (for advanced reasoning)

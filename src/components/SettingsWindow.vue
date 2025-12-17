@@ -26,6 +26,9 @@
 
       <label>Chat Model</label>
       <select v-model="formData.chatModel" class="form-select">
+        <option value="gemini-3-flash-preview">
+          Gemini 3 Flash Preview (fastest | most efficient | 10 uses/min)
+        </option>
         <option value="gemini-2.5-flash">
           Gemini 2.5 Flash (most intelligent | fast | 10 uses/min)
         </option>
@@ -36,11 +39,14 @@
 
       <label>Text Operations Model</label>
       <select v-model="formData.textModel" class="form-select">
-        <option value="gemini-2.5-flash-lite">
-          Gemini 2.5 Flash Lite (faster | lightweight | 15 uses/min)
+        <option value="gemini-3-flash-preview">
+          Gemini 3 Flash Preview (fastest | most efficient | 10 uses/min)
         </option>
         <option value="gemini-2.5-flash">
           Gemini 2.5 Flash (most intelligent | fast | 10 uses/min)
+        </option>
+        <option value="gemini-2.5-flash-lite">
+          Gemini 2.5 Flash Lite (faster | lightweight | 15 uses/min)
         </option>
       </select>
 
@@ -72,8 +78,8 @@
 
   const formData = ref({
     apiKey: '',
-    chatModel: 'gemini-2.5-flash',
-    textModel: 'gemini-2.5-flash-lite',
+    chatModel: 'gemini-3-flash-preview',
+    textModel: 'gemini-3-flash-preview',
     systemInstruction: 'You are a helpful AI assistant.'
   })
 
@@ -97,8 +103,8 @@
       // Populate form with existing config
       formData.value = {
         apiKey: config.api_key || '',
-        chatModel: config.chat_model || 'gemini-2.5-flash',
-        textModel: config.text_model || 'gemini-2.5-flash-lite',
+        chatModel: config.chat_model || 'gemini-3-flash-preview',
+        textModel: config.text_model || 'gemini-3-flash-preview',
         systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
@@ -140,8 +146,8 @@
           api_key: '',
           chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: 'gemini-2.5-flash',
-          text_model: 'gemini-2.5-flash-lite',
+          chat_model: 'gemini-3-flash-preview',
+          text_model: 'gemini-3-flash-preview',
           shortcut: 'CommandOrControl+Space',
           locale: 'en',
           streaming: false,

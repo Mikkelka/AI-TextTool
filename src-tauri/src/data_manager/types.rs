@@ -25,8 +25,8 @@ impl Default for ProviderConfig {
     fn default() -> Self {
         Self {
             api_key: String::new(),
-            chat_model_name: "gemini-2.5-flash".to_string(),
-            text_model_name: "gemini-2.5-flash-lite".to_string(),
+            chat_model_name: "gemini-3-flash-preview".to_string(),
+            text_model_name: "gemini-3-flash-preview".to_string(),
             chat_system_instruction: "You are a friendly, helpful AI assistant.".to_string(),
         }
     }
@@ -56,8 +56,8 @@ impl Default for Config {
             streaming: false,
             provider: "Gemini".to_string(),
             api_key: String::new(),
-            chat_model: "gemini-2.5-flash".to_string(),
-            text_model: "gemini-2.5-flash-lite".to_string(),
+            chat_model: "gemini-3-flash-preview".to_string(),
+            text_model: "gemini-3-flash-preview".to_string(),
             chat_system_instruction: ProviderConfig::default().chat_system_instruction,
         }
     }

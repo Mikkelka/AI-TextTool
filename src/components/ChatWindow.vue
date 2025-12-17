@@ -164,7 +164,7 @@
     messages: [] as ChatMessage[],
     isProcessing: false,
     error: null as string | null,
-    selectedModel: 'gemini-2.5-flash' as string,
+    selectedModel: 'gemini-3-flash-preview' as string,
     enableThinking: false,
     availableModels: [] as string[],
     zoomLevel: 100
@@ -189,7 +189,7 @@
   })
 
   const supportsThinking = computed(() => {
-    return ['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(state.selectedModel)
+    return ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(state.selectedModel)
   })
 
   // Validation constants
@@ -221,7 +221,7 @@
       state.availableModels = models
     } catch (err) {
       console.error('Failed to load models:', err)
-      state.availableModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
+      state.availableModels = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
     }
   }
 

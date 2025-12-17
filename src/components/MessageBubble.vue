@@ -191,15 +191,16 @@
   }
 
   .markdown-content {
-    color: #333;
+    color: #ffffff;
   }
 
   /* Markdown Content Styles */
   .markdown-content :deep(h1),
   .markdown-content :deep(h2),
-  .markdown-content :deep(h3) {
+  .markdown-content :deep(h3),
+  .markdown-content :deep(h4) {
     margin: 16px 0 8px 0;
-    color: #333;
+    color: #ffffff;
   }
 
   .markdown-content :deep(p) {
