@@ -295,11 +295,17 @@
         messageToSend = `${props.initialText}\n\n${userMessage}`
       }
 
+      // Build instruction with model info
+      let instruction = props.instruction || ''
+      if (state.selectedModel) {
+        instruction += `${instruction ? '\n\n' : ''}Note: You are using ${formatModelName(state.selectedModel)}.`
+      }
+
       // Call backend AI service
       const response = (await invoke('chat_with_ai', {
         message: messageToSend,
         history: chatHistory.slice(0, -1),
-        customInstruction: props.instruction || null,
+        customInstruction: instruction || null,
         enableThinking: state.enableThinking
       })) as AIResponse
 
@@ -354,10 +360,16 @@
     try {
       const chatHistory = prepareChatHistory()
 
+      // Build instruction with model info
+      let instruction = props.instruction || ''
+      if (state.selectedModel) {
+        instruction += `${instruction ? '\n\n' : ''}Note: You are using ${formatModelName(state.selectedModel)}.`
+      }
+
       const response = (await invoke('chat_with_ai', {
         message: userMessage.content,
         history: chatHistory.slice(0, -1),
-        customInstruction: props.instruction || null,
+        customInstruction: instruction || null,
         enableThinking: state.enableThinking
       })) as AIResponse
 

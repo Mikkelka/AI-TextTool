@@ -259,6 +259,44 @@
     text-decoration: underline;
   }
 
+  .markdown-content :deep(table) {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .markdown-content :deep(thead) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .markdown-content :deep(th),
+  .markdown-content :deep(td) {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .markdown-content :deep(th) {
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .markdown-content :deep(tbody tr:hover) {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .markdown-content :deep(hr) {
+    margin: 20px 0;
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
   .processing-indicator {
     display: flex;
     align-items: center;
@@ -387,6 +425,28 @@
 
     .markdown-content :deep(.inline-code) {
       background: #4a5568;
+    }
+
+    .markdown-content :deep(table) {
+      background: rgba(74, 85, 104, 0.3);
+      border-color: rgba(74, 85, 104, 0.5);
+    }
+
+    .markdown-content :deep(thead) {
+      background: rgba(74, 85, 104, 0.5);
+    }
+
+    .markdown-content :deep(th),
+    .markdown-content :deep(td) {
+      border-bottom-color: rgba(74, 85, 104, 0.3);
+    }
+
+    .markdown-content :deep(tbody tr:hover) {
+      background: rgba(74, 85, 104, 0.4);
+    }
+
+    .markdown-content :deep(hr) {
+      background: rgba(148, 163, 184, 0.3);
     }
 
     .thoughts-details {
