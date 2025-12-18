@@ -189,7 +189,9 @@
   })
 
   const supportsThinking = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(state.selectedModel)
+    return ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(
+      state.selectedModel
+    )
   })
 
   // Validation constants
@@ -221,7 +223,11 @@
       state.availableModels = models
     } catch (err) {
       console.error('Failed to load models:', err)
-      state.availableModels = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+      state.availableModels = [
+        'gemini-3-flash-preview',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
+      ]
     }
   }
 
@@ -539,27 +545,26 @@
       }
 
       // Convert and load messages
-      state.messages = conversation.messages
-        .map(msg => {
-          // Validate role before using it
-          if (!isValidRole(msg.role)) {
-            console.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
-            return {
-              role: 'assistant' as const,
-              content: msg.content,
-              timestamp: msg.timestamp,
-              isProcessing: false,
-              thoughts: msg.thoughts
-            }
-          }
+      state.messages = conversation.messages.map(msg => {
+        // Validate role before using it
+        if (!isValidRole(msg.role)) {
+          console.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
           return {
-            role: msg.role,
+            role: 'assistant' as const,
             content: msg.content,
             timestamp: msg.timestamp,
             isProcessing: false,
             thoughts: msg.thoughts
           }
-        })
+        }
+        return {
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          isProcessing: false,
+          thoughts: msg.thoughts
+        }
+      })
 
       // Restore thinking mode setting
       if (conversation.thinking_mode_enabled !== undefined) {

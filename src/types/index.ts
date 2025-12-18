@@ -22,7 +22,7 @@ export interface ProviderSettings {
   chat_model_name?: string
   text_model_name?: string
   chat_system_instruction?: string
-  [key: string]: string | undefined  // Allow other string properties for flexibility
+  [key: string]: string | undefined // Allow other string properties for flexibility
 }
 
 export interface Config {
