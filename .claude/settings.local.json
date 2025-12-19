@@ -1,36 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run tauri:*)",
-      "Bash(taskkill:*)",
-      "Bash(npm add:*)",
-      "WebFetch(domain:docs.anthropic.com)",
-      "Bash(cargo check:*)",
-      "Bash(cargo:*)",
-      "Bash(npm run dev:*)",
-      "Bash(npx vue-tsc:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npm run build:*)",
-      "Bash(echo $USERPROFILE)",
-      "Bash(find:*)",
-      "Bash(cp:*)",
-      "Bash(rm:*)",
-      "Bash(dir \"%APPDATA%\\com.mikke.ai-tool\"\")",
-      "Bash(dir:*)",
-      "Bash(cmd /c \"copy \"\"%APPDATA%\\com.mikke.ai-tool\\config.json\"\" \"\"C:\\Users\\mikke\\Desktop\\AI-Tool\\src-tauri\\target\\debug\\config.json\"\"\")",
-      "Bash(powershell:*)",
-      "Bash(del:*)",
-      "Bash(mkdir:*)",
-      "WebSearch",
-      "Bash(npm install:*)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "Bash(cmd /c:*)",
-      "Bash(npm run lint)",
-      "Bash(npm run lint:*)",
-      "Bash(npm run format:rust:*)",
-      "Bash(npm run check:*)"
-    ],
-    "deny": []
+      "Bash(mkdir:*)"
+    ]
   }
 }

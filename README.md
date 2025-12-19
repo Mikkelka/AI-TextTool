@@ -172,9 +172,11 @@ npm run fix:rust         # Format Rust code
 ## 📚 Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** - Complete project documentation for developers
-- **[Tauri2.0-docs.md](Tauri2.0-docs.md)** - Comprehensive Tauri 2.0 plugin usage guide with real-world solutions
+- **[docs/TAURI_REFERENCE.md](docs/TAURI_REFERENCE.md)** - Comprehensive Tauri 2.0 plugin usage guide with real-world solutions
+- **[docs/CODE_REVIEW.md](docs/CODE_REVIEW.md)** - Code review report and optimization opportunities
+- **[docs/INDEX.md](docs/INDEX.md)** - Documentation index and navigation guide
 
-The Tauri 2.0 documentation covers:
+The Tauri reference covers:
 - Clipboard Manager, Global Shortcut, File System, Opener plugins
 - Window Management patterns and solutions
 - Common issues and their fixes
