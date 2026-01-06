@@ -35,7 +35,7 @@ impl Default for WindowConfig {
     fn default() -> Self {
         Self {
             window_id: "default".to_string(),
-            url: "index.html".to_string(),
+            url: "windows/index.html".to_string(),
             title: "AI TextTool".to_string(),
             width: 800.0,
             height: 600.0,
@@ -128,7 +128,7 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
     let onboarding_window = WebviewWindowBuilder::new(
         app,
         "onboarding",
-        tauri::WebviewUrl::App("onboarding.html".into()),
+        tauri::WebviewUrl::App("windows/onboarding.html".into()),
     )
     .title("AI TextTool - Setup")
     .inner_size(700.0, 900.0)
@@ -185,7 +185,7 @@ pub fn create_popup_window<R: Runtime>(
 
     let config = WindowConfig {
         window_id: "popup".to_string(),
-        url: format!("popup.html?t={}", timestamp),
+        url: format!("windows/popup.html?t={}", timestamp),
         title: "AI TextTool - Operations".to_string(),
         width: 300.0,
         height: 290.0,
@@ -235,7 +235,7 @@ fn create_chat_window<R: Runtime>(
 
     let config = WindowConfig {
         window_id: format!("chat_{}_{}", prefix, timestamp),
-        url: format!("chat.html?operation=Chat&title=AI Chat&t={}", timestamp),
+        url: format!("windows/chat.html?operation=Chat&title=AI Chat&t={}", timestamp),
         title: "AI TextTool - Chat".to_string(),
         width: 900.0,
         height: 700.0,
@@ -285,7 +285,7 @@ pub fn create_settings_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
 
     let config = WindowConfig {
         window_id: "settings".to_string(),
-        url: "settings.html".to_string(),
+        url: "windows/settings.html".to_string(),
         title: "Settings - AI TextTool".to_string(),
         width: 600.0,
         height: 700.0,
@@ -312,7 +312,7 @@ pub fn create_chat_history_window<R: Runtime>(app: &tauri::AppHandle<R>) -> taur
 
     let config = WindowConfig {
         window_id: "chat_history".to_string(),
-        url: "history.html".to_string(),
+        url: "windows/history.html".to_string(),
         title: "Chat History - AI TextTool".to_string(),
         width: 1000.0,
         height: 700.0,
@@ -339,7 +339,7 @@ pub fn create_edit_operations_window<R: Runtime>(app: &tauri::AppHandle<R>) -> t
 
     let config = WindowConfig {
         window_id: "edit_operations".to_string(),
-        url: "operation-edit.html".to_string(),
+        url: "windows/operation-edit.html".to_string(),
         title: "Edit Operations - AI TextTool".to_string(),
         width: 900.0,
         height: 700.0,

@@ -16,7 +16,7 @@ pub async fn reopen_chat_conversation(
 
     // Create the chat URL with conversation data
     let chat_url = format!(
-        "chat.html?operation={}&title={}&conversationId={}&t={}",
+        "windows/chat.html?operation={}&title={}&conversationId={}&t={}",
         urlencoding::encode(&operation),
         urlencoding::encode(&title),
         urlencoding::encode(&conversation_id),
@@ -68,7 +68,7 @@ pub async fn open_chat_window(
 
     // Create the chat URL with operation data
     let chat_url = format!(
-        "chat.html?operation={}&text={}&title={}&instruction={}&t={}",
+        "windows/chat.html?operation={}&text={}&title={}&instruction={}&t={}",
         urlencoding::encode(&operation),
         urlencoding::encode(&text),
         urlencoding::encode(&format!("{} - AI TextTool", operation)),
