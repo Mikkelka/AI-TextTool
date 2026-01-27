@@ -90,13 +90,14 @@ AI-TextTool/
 │   ├── target/release/      # 📁 Production build + app_data.json
 │   ├── Cargo.toml           # Rust dependencies
 │   └── tauri.conf.json      # Tauri configuration
-├── *.html                   # 📄 Separate window templates
-│   ├── index.html           # Main app window (hidden, tray only)
-│   ├── popup.html           # Operation selector (Ctrl+Space popup)
+├── windows/                 # 🪟 Window HTML templates
+│   ├── index.html           # Main app window
+│   ├── popup.html           # Operation selector popup
 │   ├── chat.html            # Chat windows
 │   ├── settings.html        # Settings window
 │   ├── history.html         # Chat history window
-│   └── onboarding.html      # First-time setup wizard
+│   ├── onboarding.html      # First-time setup wizard
+│   └── operation-edit.html  # Edit operations window
 ├── public/                  # 📄 Static assets (icons, etc.)
 └── dist/                    # 📦 Built Vue frontend (served to webview)
 ```

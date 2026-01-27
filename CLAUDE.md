@@ -140,12 +140,19 @@ Located in `src/types/index.ts`:
 
 ### Adding New Features
 
-1. **Frontend components**: 
-   - Add main components in `src/components/` 
+1. **Frontend components**:
+   - Add main components in `src/components/`
    - Use shared types from `src/types/index.ts`
    - Consider component composition for reusability
-   
-2. **Rust commands**: Add functions with `#[tauri::command]` in appropriate module:
+
+2. **Window HTML files** (if adding a new window):
+   - Create new `.html` file in `windows/` folder
+   - Import Vue component with relative path: `../src/components/YourComponent.vue`
+   - Register entry point in `vite.config.ts` under `build.rollupOptions.input`
+   - **Important**: Use `../src/` paths for relative imports (files are in `windows/` subfolder)
+   - Example: `import MyWindow from '../src/components/MyWindow.vue';`
+
+3. **Rust commands**: Add functions with `#[tauri::command]` in appropriate module:
    - **AI commands**: `src-tauri/src/commands/ai_commands.rs`
    - **Window commands**: `src-tauri/src/commands/window_commands.rs`
    - **Utility commands**: `src-tauri/src/commands/utility_commands.rs`
@@ -435,6 +442,32 @@ urlencoding = "2.1"                  # URL encoding for window creation
 3. **Avoid**: Direct plugin access in popup windows (context issues)
 
 ## Project Structure Notes
+
+### 🪟 Frontend Window HTML Files
+
+```
+windows/                           # All application window HTML files
+├── index.html                    # Main hidden window
+├── popup.html                    # Ctrl+Space operation selector popup
+├── chat.html                     # Chat conversation windows
+├── settings.html                 # Settings configuration window
+├── history.html                  # Chat history & conversation management
+├── onboarding.html               # First-time setup wizard
+└── operation-edit.html           # Edit operations window
+```
+
+**Key Points**:
+- All HTML files are in `windows/` folder for organization
+- Each HTML file is a **separate Vite entry point** (configured in `vite.config.ts`)
+- **Import paths must use `../src/`** since files are in a subfolder (e.g., `import MyWindow from '../src/components/MyWindow.vue';`)
+- Absolute paths with `/src/...` work for TypeScript/JavaScript imports
+- Entry points are built separately and served by Tauri to different windows
+
+**When adding a new window**:
+1. Create HTML file in `windows/` folder
+2. Use relative imports: `../src/components/YourComponent.vue`
+3. Add entry point to `vite.config.ts` under `build.rollupOptions.input`
+4. Create window creation function in `src-tauri/src/window_manager.rs`
 
 ### 🗂️ Rust Backend File Structure
 

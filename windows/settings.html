@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Text Tools - Setup</title>
+    <title>Settings - AI Text Tools</title>
     <style>
         * {
             margin: 0;
@@ -13,21 +13,14 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #ffffff;
+            background: #1a1a1a;
+            color: #ffffff;
             overflow: hidden;
         }
         
         #app {
             width: 100vw;
             height: 100vh;
-        }
-        
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: #1a1a1a;
-                color-scheme: dark;
-            }
         }
     </style>
 </head>
@@ -36,31 +29,23 @@
     
     <script type="module">
         import { createApp } from 'vue';
-        import OnboardingWindow from './src/components/OnboardingWindow.vue';
+        import SettingsWindow from '../src/components/SettingsWindow.vue';
         
         // Create Vue app instance
-        const app = createApp(OnboardingWindow);
+        const app = createApp(SettingsWindow);
         
-        // Handle setup completion
-        app.config.globalProperties.$onSetupComplete = () => {
-            console.log('Setup completed - closing onboarding window');
-            // Close onboarding window and show tray
-            if (window.__TAURI__?.window?.getCurrent) {
-                window.__TAURI__.window.getCurrent().then(win => {
-                    win.close();
-                }).catch(e => {
-                    console.error('Failed to close onboarding window:', e);
-                });
-            }
+        // Handle settings save event
+        app.config.globalProperties.$onSettingsSaved = () => {
+            console.log('Settings saved successfully');
         };
         
         // Make close function available
-        window.closeOnboarding = () => {
+        window.closeSettings = () => {
             if (window.__TAURI__?.window?.getCurrent) {
                 window.__TAURI__.window.getCurrent().then(win => {
                     win.close();
                 }).catch(e => {
-                    console.error('Failed to close:', e);
+                    console.error('Failed to close settings window:', e);
                 });
             }
         };
@@ -68,9 +53,9 @@
         // Mount the app
         app.mount('#app');
         
-        // Auto-focus for keyboard navigation
+        // Auto-focus first input
         setTimeout(() => {
-            const firstInput = document.querySelector('input, textarea, button');
+            const firstInput = document.querySelector('input');
             if (firstInput) {
                 firstInput.focus();
             }

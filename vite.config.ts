@@ -13,13 +13,13 @@ export default defineConfig(async () => ({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        popup: resolve(__dirname, 'popup.html'),
-        chat: resolve(__dirname, 'chat.html'),
-        settings: resolve(__dirname, 'settings.html'),
-        history: resolve(__dirname, 'history.html'),
-        onboarding: resolve(__dirname, 'onboarding.html'),
-        'operation-edit': resolve(__dirname, 'operation-edit.html')
+        main: resolve(__dirname, 'windows/index.html'),
+        popup: resolve(__dirname, 'windows/popup.html'),
+        chat: resolve(__dirname, 'windows/chat.html'),
+        settings: resolve(__dirname, 'windows/settings.html'),
+        history: resolve(__dirname, 'windows/history.html'),
+        onboarding: resolve(__dirname, 'windows/onboarding.html'),
+        'operation-edit': resolve(__dirname, 'windows/operation-edit.html')
       }
     }
   },
