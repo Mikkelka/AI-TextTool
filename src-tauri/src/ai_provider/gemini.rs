@@ -36,7 +36,7 @@ impl RateLimiter {
 
     /// Check if we can make a request, and wait if necessary
     async fn check_rate_limit(&mut self) -> Result<(), GeminiError> {
-        let now = Instant::now();
+        let mut now = Instant::now();
 
         // Remove calls older than 1 minute
         while let Some(&front_time) = self.calls.front() {
@@ -55,6 +55,7 @@ impl RateLimiter {
                 if !wait_time.is_zero() {
                     println!("Rate limit reached, waiting {:?}", wait_time);
                     sleep(wait_time).await;
+                    now = Instant::now();
                 }
             }
         }
@@ -461,43 +462,6 @@ impl GeminiProvider {
                 }
             }
         })
-    }
-
-    /// Process text with a specific operation
-    pub async fn process_text_operation(
-        &self,
-        text: &str,
-        operation: &str,
-        instruction: Option<&str>,
-        model: &str,
-    ) -> Result<String, GeminiError> {
-        let prompt = match operation {
-            "proofread" => format!("Please proofread and correct the following text, maintaining its original style and structure:\n\n{}", text),
-            "rewrite" => format!("Please rewrite the following text to improve clarity and flow while maintaining the original meaning:\n\n{}", text),
-            "summarize" => format!("Please provide a concise summary of the following text:\n\n{}", text),
-            "translate" => format!("Please translate the following text to English (or if it's already in English, improve the translation):\n\n{}", text),
-            "expand" => format!("Please expand on the following text, adding more detail and context:\n\n{}", text),
-            "simplify" => format!("Please simplify the following text to make it easier to understand:\n\n{}", text),
-            "custom" => {
-                if let Some(custom_instruction) = instruction {
-                    format!("{}\n\n{}", custom_instruction, text)
-                } else {
-                    format!("Please process the following text:\n\n{}", text)
-                }
-            }
-            _ => format!("Please process the following text:\n\n{}", text),
-        };
-
-        let contents = vec![Content::user(prompt)];
-
-        self.generate_content_with_formatting(
-            model,
-            contents,
-            instruction,
-            None,
-            false, // Disable formatting for direct text operations
-        )
-        .await
     }
 
     /// Handle chat completion with conversation history and thought summaries

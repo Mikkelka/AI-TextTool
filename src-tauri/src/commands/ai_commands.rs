@@ -1,7 +1,8 @@
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use super::super::ai_provider::{
-    ChatMessage, ChatResponse, GeminiError, GeminiProvider, GenerationConfig, ThinkingConfig,
+    ChatMessage, ChatResponse, Content, GeminiError, GeminiProvider, GenerationConfig,
+    ThinkingConfig,
 };
 use super::super::data_manager::DataManager;
 use super::super::utils::validation;
@@ -63,8 +64,9 @@ pub async fn process_text_with_ai(
     app: tauri::AppHandle,
 ) -> Result<String, String> {
     println!(
-        "Processing text with AI: '{}' using operation: '{}'",
-        text, operation
+        "Processing text with AI (length: {} chars) using operation: '{}'",
+        text.len(),
+        operation
     );
 
     // Validate input
@@ -100,12 +102,14 @@ pub async fn process_text_with_ai(
     };
 
     // Process with AI
+    let contents = vec![Content::user(full_prompt)];
     let result = match provider
-        .process_text_operation(
-            &full_prompt,
-            &operation.to_lowercase(),
-            Some(&operation_details.instruction),
+        .generate_content_with_formatting(
             &config.text_model,
+            contents,
+            Some(&operation_details.instruction),
+            None,
+            false, // Disable formatting for direct text operations
         )
         .await
     {
@@ -130,7 +134,7 @@ pub async fn chat_with_ai(
     enable_thinking: Option<bool>,
     app: tauri::AppHandle,
 ) -> Result<ChatResponse, String> {
-    println!("Chat with AI: '{}'", message);
+    println!("Chat with AI (length: {} chars)", message.len());
 
     // Validate input
     validation::validate_message_input(&message)?;

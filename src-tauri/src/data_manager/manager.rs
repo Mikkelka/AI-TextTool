@@ -60,10 +60,17 @@ impl DataManager {
         // Serialize to JSON
         let json_content = serde_json::to_string_pretty(&data)?;
 
-        // Write to file
-        let mut file = fs::File::create(&self.file_path).await?;
+        // Write to temp file, then replace the original (best-effort atomic)
+        let temp_path = self.file_path.with_extension("json.tmp");
+        let mut file = fs::File::create(&temp_path).await?;
         file.write_all(json_content.as_bytes()).await?;
         file.flush().await?;
+        file.sync_all().await?;
+
+        if self.file_path.exists() {
+            let _ = fs::remove_file(&self.file_path).await;
+        }
+        fs::rename(&temp_path, &self.file_path).await?;
 
         Ok(())
     }

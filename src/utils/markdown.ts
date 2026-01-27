@@ -83,10 +83,29 @@ function addCustomClasses(html: string): string {
   html = html.replace(/<blockquote>/g, '<blockquote class="markdown-blockquote">')
   html = html.replace(/<ul>/g, '<ul class="markdown-list">')
   html = html.replace(/<ol>/g, '<ol class="markdown-list">')
+  html = html.replace(/<a([^>]*?)>/g, (_match, attrs) => {
+    const hasTargetBlank = /target\s*=\s*["']?_blank["']?/i.test(attrs)
+    if (!hasTargetBlank) return `<a${attrs}>`
+
+    const relMatch = attrs.match(/rel\s*=\s*["']([^"']*)["']/i)
+    if (relMatch) {
+      const relParts = new Set(relMatch[1].split(/\s+/).filter(Boolean))
+      relParts.add('noopener')
+      relParts.add('noreferrer')
+      const newRel = Array.from(relParts).join(' ')
+      const updatedAttrs = attrs.replace(
+        /rel\s*=\s*["'][^"']*["']/i,
+        `rel="${newRel}"`
+      )
+      return `<a${updatedAttrs}>`
+    }
+
+    return `<a${attrs} rel="noopener noreferrer">`
+  })
 
   // Add copy button to code blocks
   html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_match, attrs, content) => {
-    return `<pre class="code-block"><code${attrs}>${content}</code><button class="copy-code-btn" data-copy-code>📋</button></pre>`
+    return `<pre class="code-block"><code${attrs}>${content}</code><button class="copy-code-btn" data-copy-code>Copy</button></pre>`
   })
 
   return html
@@ -103,7 +122,7 @@ const handleCopyCodeClick = (event: Event) => {
         .then(() => {
           // Brief visual feedback
           const originalText = target.textContent
-          target.textContent = '✅'
+          target.textContent = 'Copied'
           setTimeout(() => {
             target.textContent = originalText
           }, 1000)
@@ -130,3 +149,4 @@ export function setupMarkdownCopyFunction() {
 export function cleanupMarkdownCopyFunction() {
   document.removeEventListener('click', handleCopyCodeClick)
 }
+

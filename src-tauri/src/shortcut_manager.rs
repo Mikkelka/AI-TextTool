@@ -50,8 +50,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
         .read_text()
         .unwrap_or_else(|_| String::new());
     println!(
-        "Original clipboard content: '{}' (length: {})",
-        original_clipboard.chars().take(50).collect::<String>(),
+        "Original clipboard content length: {}",
         original_clipboard.len()
     );
 
@@ -75,6 +74,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Simulate Ctrl+C to copy any selected text
     if let Err(e) = simulate_copy() {
         eprintln!("Failed to simulate Ctrl+C: {}", e);
+        restore_clipboard(&app_handle, &original_clipboard).await;
         // Fallback to opening chat window
         if let Err(e) = window_manager::create_fallback_chat_window(&app_handle) {
             eprintln!("Failed to create fallback chat window: {:?}", e);
@@ -95,6 +95,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
                 Ok(content) => content,
                 Err(_) => {
                     println!("Failed to read clipboard after retries - opening chat window");
+                    restore_clipboard(&app_handle, &original_clipboard).await;
                     if let Err(e) = window_manager::create_fallback_chat_window(&app_handle) {
                         eprintln!("Failed to create fallback chat window: {:?}", e);
                     }
@@ -104,11 +105,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
         }
     };
 
-    println!(
-        "New clipboard content: '{}' (length: {})",
-        new_clipboard.chars().take(50).collect::<String>(),
-        new_clipboard.len()
-    );
+    println!("New clipboard content length: {}", new_clipboard.len());
 
     // Enhanced detection logic with multiple strategies
     let clipboard_changed = new_clipboard != original_clipboard;
@@ -149,10 +146,18 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
         show_popup_with_text(&app_handle, new_clipboard).await;
     } else {
         println!("No text detected - opening chat window directly");
+        restore_clipboard(&app_handle, &original_clipboard).await;
         // No text selected - open chat window directly
         if let Err(e) = window_manager::create_direct_chat_window(&app_handle) {
             eprintln!("Failed to create direct chat window: {:?}", e);
         }
+    }
+}
+
+/// Restore original clipboard content if we replaced it with a marker.
+async fn restore_clipboard<R: Runtime>(app_handle: &AppHandle<R>, original_clipboard: &str) {
+    if let Err(e) = app_handle.clipboard().write_text(original_clipboard) {
+        eprintln!("Failed to restore original clipboard: {}", e);
     }
 }
 
