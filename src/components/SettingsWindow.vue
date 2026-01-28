@@ -79,7 +79,7 @@
   const formData = ref({
     apiKey: '',
     chatModel: 'gemini-3-flash-preview',
-    textModel: 'gemini-3-flash-preview',
+    textModel: 'gemini-2.5-flash-lite',
     systemInstruction: 'You are a helpful AI assistant.'
   })
 
@@ -104,7 +104,7 @@
       formData.value = {
         apiKey: config.api_key || '',
         chatModel: config.chat_model || 'gemini-3-flash-preview',
-        textModel: config.text_model || 'gemini-3-flash-preview',
+        textModel: config.text_model || 'gemini-2.5-flash-lite',
         systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
@@ -147,7 +147,7 @@
           chat_system_instruction: '',
           provider: 'Gemini',
           chat_model: 'gemini-3-flash-preview',
-          text_model: 'gemini-3-flash-preview',
+          text_model: 'gemini-2.5-flash-lite',
           shortcut: 'CommandOrControl+Space',
           locale: 'en',
           streaming: false,

@@ -481,7 +481,7 @@
           api_key: '',
           chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: 'gemini-2.5-flash',
+          chat_model: 'gemini-3-flash-preview',
           text_model: 'gemini-2.5-flash-lite',
           shortcut: 'ctrl+space',
           locale: 'en',
@@ -498,7 +498,7 @@
       if (!config.providers.Gemini) {
         config.providers.Gemini = {
           api_key: formData.value.apiKey,
-          chat_model_name: 'gemini-2.5-flash',
+          chat_model_name: 'gemini-3-flash-preview',
           text_model_name: 'gemini-2.5-flash-lite',
           chat_system_instruction: formData.value.systemInstruction
         }
