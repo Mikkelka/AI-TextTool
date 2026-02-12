@@ -253,13 +253,23 @@
     <div class="skip-setup">
       <button class="skip-button" @click="skipSetup">Skip setup (configure later)</button>
     </div>
+
+    <AppConfirmDialog
+      :visible="skipDialogVisible"
+      title="Skip Setup"
+      message="Are you sure you want to skip setup? You can configure settings later from the system tray menu."
+      confirm-text="Skip"
+      @confirm="handleSkipDialogConfirm"
+      @cancel="handleSkipDialogCancel"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { openUrl } from '@tauri-apps/plugin-opener'
+  import AppConfirmDialog from './AppConfirmDialog.vue'
   import { logger } from '../utils/logger'
   import type { Config } from '../types'
 
@@ -295,6 +305,8 @@
   const error = ref<string | null>(null)
   const showApiKey = ref(false)
   const isTesting = ref(false)
+  const skipDialogVisible = ref(false)
+  let skipDialogResolver: ((confirmed: boolean) => void) | null = null
 
   // Form data
   const formData = ref({
@@ -535,20 +547,36 @@
     }
   }
 
+  const requestSkipConfirmation = (): Promise<boolean> => {
+    skipDialogVisible.value = true
+    return new Promise(resolve => {
+      skipDialogResolver = resolve
+    })
+  }
+
+  const handleSkipDialogConfirm = () => {
+    skipDialogVisible.value = false
+    skipDialogResolver?.(true)
+    skipDialogResolver = null
+  }
+
+  const handleSkipDialogCancel = () => {
+    skipDialogVisible.value = false
+    skipDialogResolver?.(false)
+    skipDialogResolver = null
+  }
+
   const skipSetup = async () => {
-    if (
-      confirm(
-        'Are you sure you want to skip setup? You can configure settings later from the system tray menu.'
-      )
-    ) {
-      try {
-        const { getCurrentWindow } = await import('@tauri-apps/api/window')
-        const currentWindow = getCurrentWindow()
-        await currentWindow.close()
-      } catch (error) {
-        logger.error('Failed to close onboarding window:', error)
-        emit('setup-skipped')
-      }
+    const shouldSkip = await requestSkipConfirmation()
+    if (!shouldSkip) return
+
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const currentWindow = getCurrentWindow()
+      await currentWindow.close()
+    } catch (error) {
+      logger.error('Failed to close onboarding window:', error)
+      emit('setup-skipped')
     }
   }
 
@@ -603,6 +631,13 @@
   onMounted(() => {
     // Focus the component for keyboard navigation
     ;(document.querySelector('.onboarding-window') as HTMLElement)?.focus()
+  })
+
+  onUnmounted(() => {
+    if (skipDialogResolver) {
+      skipDialogResolver(false)
+      skipDialogResolver = null
+    }
   })
 </script>
 

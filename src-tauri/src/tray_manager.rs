@@ -35,9 +35,8 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
         ],
     )?;
 
-    // Use the default app icon from the bundle
-    let _ = TrayIconBuilder::with_id("main-tray")
-        .icon(app.default_window_icon().unwrap().clone())
+    // Use the default app icon from the bundle when available
+    let mut tray_builder = TrayIconBuilder::with_id("main-tray")
         .menu(&menu)
         .on_menu_event(move |app, event| handle_tray_menu_event(app, event.id.as_ref()))
         .on_tray_icon_event(|_tray, event| {
@@ -50,8 +49,18 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
                 // or use the global hotkey to interact with the app
                 log::debug!("Tray icon clicked - use right-click for menu");
             }
-        })
-        .build(app);
+        });
+
+    if let Some(icon) = app.default_window_icon() {
+        tray_builder = tray_builder.icon(icon.clone());
+    } else {
+        log::warn!("No default window icon available for tray");
+    }
+
+    if let Err(e) = tray_builder.build(app) {
+        log::error!("Failed to build tray icon: {e:?}");
+        return Err(e);
+    }
 
     Ok(())
 }

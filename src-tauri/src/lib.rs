@@ -13,7 +13,7 @@ mod window_manager;
 pub fn run() {
     utils::logging::init_logging();
 
-    tauri::Builder::default()
+    let run_result = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(shortcut_manager::create_shortcut_handler())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -21,8 +21,10 @@ pub fn run() {
         .setup(|app| {
             // Hide the main window immediately on startup
             if let Some(window) = app.get_webview_window("main") {
-                window.hide().unwrap();
-                log::info!("Main window hidden on startup");
+                match window.hide() {
+                    Ok(()) => log::info!("Main window hidden on startup"),
+                    Err(e) => log::warn!("Failed to hide main window on startup: {e:?}"),
+                }
             }
 
             // Check if app_data.json exists - if not, show onboarding
@@ -48,8 +50,10 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 // For main window, hide instead of closing
                 if window.label() == "main" {
-                    window.hide().unwrap();
-                    api.prevent_close();
+                    match window.hide() {
+                        Ok(()) => api.prevent_close(),
+                        Err(e) => log::warn!("Failed to hide main window on close: {e:?}"),
+                    }
                 } else {
                     // For popup and chat windows, allow normal closing
                     // They will close normally
@@ -89,6 +93,10 @@ pub fn run() {
             data_manager::delete_saved_conversation,
             data_manager::load_conversation_messages
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .run(tauri::generate_context!());
+
+    if let Err(e) = run_result {
+        log::error!("Error while running tauri application: {e:?}");
+        std::process::exit(1);
+    }
 }

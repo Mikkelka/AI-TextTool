@@ -25,7 +25,13 @@ fn handle_global_shortcut<R: Runtime>(app: AppHandle<R>, last_trigger: Arc<Mutex
     // Debouncing - only handle if 200ms have passed since last trigger
     let now = Instant::now();
     {
-        let mut last_time = last_trigger.lock().unwrap();
+        let mut last_time = match last_trigger.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                log::warn!("Shortcut debounce mutex was poisoned; recovering state");
+                poisoned.into_inner()
+            }
+        };
         if now.duration_since(*last_time).as_millis() < 200 {
             log::debug!("Debouncing - ignoring duplicate trigger");
             return;

@@ -175,6 +175,8 @@
         </div>
       </div>
     </div>
+
+    <AppToast :visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
@@ -182,6 +184,7 @@
   import { ref, onMounted, onUnmounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
+  import AppToast from './AppToast.vue'
   import { logger } from '../utils/logger'
   import type { Operation } from '../types'
 
@@ -224,6 +227,11 @@
   const confirmMessage = ref('')
   const confirmButtonText = ref('Confirm')
   const confirmCallback = ref<(() => void) | null>(null)
+
+  const toastVisible = ref(false)
+  const toastMessage = ref('')
+  const toastType = ref<'success' | 'error' | 'info'>('info')
+  let toastTimer: ReturnType<typeof setTimeout> | null = null
 
   // Edit form state
   const editForm = ref<EditForm>({
@@ -446,9 +454,22 @@
     }
   }
 
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    toastMessage.value = message
+    toastType.value = type
+    toastVisible.value = true
+
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+    }
+
+    toastTimer = setTimeout(() => {
+      toastVisible.value = false
+    }, 3200)
+  }
+
   const showMessage = (title: string, message: string) => {
-    // Simple alert for now - could be replaced with a toast notification
-    alert(`${title}\n\n${message}`)
+    showToast(`${title}: ${message}`, 'success')
   }
 
   // Move operation up or down
@@ -497,7 +518,10 @@
   })
 
   onUnmounted(() => {
-    // Cleanup if needed
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+      toastTimer = null
+    }
   })
 </script>
 

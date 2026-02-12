@@ -236,13 +236,27 @@
         </div>
       </div>
     </div>
+
+    <AppConfirmDialog
+      :visible="confirmDialogVisible"
+      :title="confirmDialogTitle"
+      :message="confirmDialogMessage"
+      :confirm-text="confirmDialogConfirmText"
+      danger
+      @confirm="handleConfirmDialogConfirm"
+      @cancel="handleConfirmDialogCancel"
+    />
+
+    <AppToast :visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
+  import AppConfirmDialog from './AppConfirmDialog.vue'
+  import AppToast from './AppToast.vue'
   import SanitizedMarkdown from './SanitizedMarkdown.vue'
   import { logger } from '../utils/logger'
   import type { SavedConversation } from '../types'
@@ -265,6 +279,17 @@
   const error = ref<string | null>(null)
   const searchQuery = ref('')
   const selectedOperation = ref('')
+
+  const confirmDialogVisible = ref(false)
+  const confirmDialogTitle = ref('Confirm Action')
+  const confirmDialogMessage = ref('')
+  const confirmDialogConfirmText = ref('Confirm')
+  let confirmDialogResolver: ((confirmed: boolean) => void) | null = null
+
+  const toastVisible = ref(false)
+  const toastMessage = ref('')
+  const toastType = ref<'success' | 'error' | 'info'>('info')
+  let toastTimer: ReturnType<typeof setTimeout> | null = null
 
   // Computed properties
   const uniqueOperations = computed(() => {
@@ -322,6 +347,47 @@
     )
   })
 
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    toastMessage.value = message
+    toastType.value = type
+    toastVisible.value = true
+
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+    }
+
+    toastTimer = setTimeout(() => {
+      toastVisible.value = false
+    }, 3200)
+  }
+
+  const requestConfirmation = (
+    title: string,
+    message: string,
+    confirmText = 'Confirm'
+  ): Promise<boolean> => {
+    confirmDialogTitle.value = title
+    confirmDialogMessage.value = message
+    confirmDialogConfirmText.value = confirmText
+    confirmDialogVisible.value = true
+
+    return new Promise(resolve => {
+      confirmDialogResolver = resolve
+    })
+  }
+
+  const handleConfirmDialogConfirm = () => {
+    confirmDialogVisible.value = false
+    confirmDialogResolver?.(true)
+    confirmDialogResolver = null
+  }
+
+  const handleConfirmDialogCancel = () => {
+    confirmDialogVisible.value = false
+    confirmDialogResolver?.(false)
+    confirmDialogResolver = null
+  }
+
   // Methods
   const loadHistory = async () => {
     try {
@@ -349,9 +415,12 @@
   }
 
   const clearAllHistory = async () => {
-    if (
-      !confirm('Are you sure you want to clear all chat history? This action cannot be undone.')
-    ) {
+    const shouldClear = await requestConfirmation(
+      'Clear All History',
+      'Are you sure you want to clear all chat history? This action cannot be undone.',
+      'Clear All'
+    )
+    if (!shouldClear) {
       return
     }
 
@@ -362,9 +431,11 @@
       // Clear local state to show empty state immediately
       entries.value = []
       conversations.value = []
+      showToast('Chat history cleared', 'success')
     } catch (err) {
       logger.error('Failed to clear history:', err)
       error.value = 'Failed to clear history: ' + (err instanceof Error ? err.message : String(err))
+      showToast(error.value, 'error')
     }
   }
 
@@ -474,7 +545,7 @@
       logger.error('Failed to reopen conversation:', err)
       error.value =
         'Failed to reopen conversation: ' + (err instanceof Error ? err.message : String(err))
-      alert('❌ Failed to reopen conversation')
+      showToast('Failed to reopen conversation', 'error')
     }
   }
 
@@ -494,11 +565,11 @@
 
       // Copy to clipboard
       await navigator.clipboard.writeText(markdown)
-      alert('✅ Conversation exported to clipboard as Markdown!')
+      showToast('Conversation exported to clipboard as Markdown', 'success')
     } catch (err) {
       logger.error('Failed to export conversation:', err)
       error.value = 'Failed to export conversation'
-      alert('❌ Failed to export conversation')
+      showToast('Failed to export conversation', 'error')
     }
   }
 
@@ -506,8 +577,10 @@
     const conversation = conversations.value.find(c => c.id === conversationId)
     if (!conversation) return
 
-    const confirmDelete = confirm(
-      `Are you sure you want to delete the conversation "${conversation.title}"?\n\nThis action cannot be undone.`
+    const confirmDelete = await requestConfirmation(
+      'Delete Conversation',
+      `Are you sure you want to delete the conversation "${conversation.title}"?\n\nThis action cannot be undone.`,
+      'Delete'
     )
     if (!confirmDelete) return
 
@@ -522,13 +595,24 @@
       logger.error('Failed to delete conversation:', err)
       error.value =
         'Failed to delete conversation: ' + (err instanceof Error ? err.message : String(err))
-      alert('❌ Failed to delete conversation')
+      showToast('Failed to delete conversation', 'error')
     }
   }
 
   // Lifecycle
   onMounted(async () => {
     await loadHistory()
+  })
+
+  onUnmounted(() => {
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+      toastTimer = null
+    }
+    if (confirmDialogResolver) {
+      confirmDialogResolver(false)
+      confirmDialogResolver = null
+    }
   })
 </script>
 

@@ -57,6 +57,11 @@ P0-status:
 - Backend: `src-tauri/src/utils/logging.rs` + `log/env_logger`; direkte `println!/eprintln!` fjernet fra runtime-kode.
 - Markdown rendering samlet via `src/components/SanitizedMarkdown.vue` med sanitization-kontrakt.
 
+P1-delstatus (tidligt leveret):
+
+1. **P1.1 Lukket:** native `prompt/alert/confirm` fjernet i `ChatWindow`, `ChatHistoryWindow`, `OperationEditWindow` samt onboarding-skipflow via ikke-blokerende dialog/toast-komponenter.
+2. **P1.5 Lukket:** `unwrap/expect` fjernet i kritiske Rust-filer `src-tauri/src/lib.rs`, `src-tauri/src/tray_manager.rs`, `src-tauri/src/shortcut_manager.rs`.
+
 ## 3. Prioriteret roadmap
 
 ## P0 - Stabilisering af kvalitetspipeline
@@ -108,7 +113,7 @@ P0-status:
 ## P1 - Robusthed og vedligeholdbarhed
 
 ### P1.1 Erstat blokerende browser-dialoger
-- **Status:** Aaben
+- **Status:** Lukket
 - **Problem:** `prompt/alert/confirm` giver blokerende og inkonsistent UX.
 - **Paavirkning:** Svag brugeroplevelse og svaerere state-kontrol.
 - **Filreferencer:** `src/components/ChatWindow.vue`, `src/components/ChatHistoryWindow.vue`, `src/components/OperationEditWindow.vue`
@@ -144,7 +149,7 @@ P0-status:
 - **Test/acceptkriterie:** `@typescript-eslint/no-explicit-any` = 0.
 
 ### P1.5 Reducer `unwrap/expect` i kritiske Rust-moduler
-- **Status:** Aaben
+- **Status:** Lukket
 - **Problem:** Panik-risiko i runtime-kritiske paths.
 - **Paavirkning:** Potentielle hard crashes.
 - **Filreferencer:** `src-tauri/src/lib.rs`, `src-tauri/src/tray_manager.rs`, `src-tauri/src/shortcut_manager.rs`
@@ -200,11 +205,9 @@ Observeret effekt: lint-stoej fjernet og groen kvalitetspipeline.
 
 ## 6. Naeste sprint (strukturelle forbedringer)
 
-1. Erstat blokerende dialog-flow.
-2. Reducer `unwrap/expect` i kritiske Rust-moduler.
-3. Saml DataManager-init i kommando-lag.
-4. Paabegynd security-hardening (CSP + capability-scope).
-5. Konsolider bootstrap i `windows/*.html`.
+1. Saml DataManager-init i kommando-lag.
+2. Paabegynd security-hardening (CSP + capability-scope).
+3. Konsolider bootstrap i `windows/*.html`.
 
 ## 7. Risiko og kompatibilitet
 
@@ -235,6 +238,8 @@ Status pr. 12. februar 2026:
 4. Markdown-rendering i chat/historik: verificeret.
 5. Vinduesflows popup/chat/onboarding: verificeret.
 6. Sortering uden mutation i historik: implementeret og verificeret.
+7. Ikke-blokerende dialoger (`ChatWindow`, `ChatHistoryWindow`, `OperationEditWindow`, onboarding skip): implementeret.
+8. `unwrap/expect` i kritiske Rust-filer (`lib.rs`, `tray_manager.rs`, `shortcut_manager.rs`): reduceret til 0.
 
 ## 9. Definition of done
 
@@ -251,8 +256,8 @@ Rapportens roadmap betragtes som implementeret, naar:
 Aktuel status pr. 12. februar 2026:
 
 1. Punkt 1-4: Lukket.
-2. Punkt 5: Delvist lukket (`unwrap/expect` udestaar).
-3. Punkt 6: Delvist lukket (dialog-flow udestaar, polling/sort lukket).
+2. Punkt 5: Lukket.
+3. Punkt 6: Lukket.
 4. Punkt 7: Aaben (P2).
 
 ## 10. Implementeringsraekkefoelge for dokumentationsarbejdet (afsluttet)
