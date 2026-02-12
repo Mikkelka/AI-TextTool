@@ -7,6 +7,13 @@ use super::types::*;
 
 // Tauri commands for chat history and conversation management
 
+/// Helper that initializes DataManager consistently across commands.
+async fn load_data_manager(app: AppHandle) -> Result<DataManager, String> {
+    let mut manager = DataManager::new(app);
+    manager.initialize().await.map_err(|e| e.to_string())?;
+    Ok(manager)
+}
+
 #[tauri::command]
 pub async fn save_chat_entry(
     app: AppHandle,
@@ -14,8 +21,7 @@ pub async fn save_chat_entry(
     ai_option: String,
     processed_text: String,
 ) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
 
     let entry = ChatEntry {
         timestamp: Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string(),
@@ -32,15 +38,13 @@ pub async fn save_chat_entry(
 
 #[tauri::command]
 pub async fn load_chat_history(app: AppHandle) -> Result<Vec<ChatEntry>, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
     Ok(manager.get_chat_history().clone())
 }
 
 #[tauri::command]
 pub async fn clear_chat_history(app: AppHandle) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager
         .clear_chat_history()
         .await
@@ -55,8 +59,7 @@ pub async fn save_conversation(
     messages: Vec<ConversationMessage>,
     thinking_mode_enabled: Option<bool>,
 ) -> Result<String, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
 
     let conversation_id = format!("conv_{}", Utc::now().timestamp_millis());
     let now = Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
@@ -80,8 +83,7 @@ pub async fn save_conversation(
 
 #[tauri::command]
 pub async fn load_saved_conversations(app: AppHandle) -> Result<Vec<SavedConversation>, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
     Ok(manager.get_saved_conversations().clone())
 }
 
@@ -90,8 +92,7 @@ pub async fn delete_saved_conversation(
     app: AppHandle,
     conversation_id: String,
 ) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager
         .delete_saved_conversation(&conversation_id)
         .await
@@ -103,8 +104,7 @@ pub async fn load_conversation_messages(
     app: AppHandle,
     conversation_id: String,
 ) -> Result<SavedConversation, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
 
     manager
         .get_saved_conversations()
@@ -118,15 +118,13 @@ pub async fn load_conversation_messages(
 
 #[tauri::command]
 pub async fn dm_load_config(app: AppHandle) -> Result<Config, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
     Ok(manager.get_config().clone())
 }
 
 #[tauri::command]
 pub async fn dm_save_config(app: AppHandle, config: Config) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager
         .update_config(config)
         .await
@@ -135,15 +133,13 @@ pub async fn dm_save_config(app: AppHandle, config: Config) -> Result<(), String
 
 #[tauri::command]
 pub async fn dm_load_operations(app: AppHandle) -> Result<HashMap<String, Operation>, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
     Ok(manager.get_operations().clone())
 }
 
 #[tauri::command]
 pub async fn dm_load_operations_sorted(app: AppHandle) -> Result<Vec<(String, Operation)>, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
     Ok(manager.get_operations_sorted())
 }
 
@@ -152,8 +148,7 @@ pub async fn dm_save_operations(
     app: AppHandle,
     operations: HashMap<String, Operation>,
 ) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager
         .update_operations(operations)
         .await
@@ -162,8 +157,7 @@ pub async fn dm_save_operations(
 
 #[tauri::command]
 pub async fn dm_get_operation(app: AppHandle, name: String) -> Result<Option<Operation>, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let manager = load_data_manager(app).await?;
     Ok(manager.get_operation(&name).cloned())
 }
 
@@ -173,8 +167,7 @@ pub async fn dm_update_operation(
     name: String,
     operation: Operation,
 ) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager
         .update_operation(name, operation)
         .await
@@ -183,8 +176,7 @@ pub async fn dm_update_operation(
 
 #[tauri::command]
 pub async fn dm_remove_operation(app: AppHandle, name: String) -> Result<bool, String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager
         .remove_operation(&name)
         .await
@@ -193,15 +185,13 @@ pub async fn dm_remove_operation(app: AppHandle, name: String) -> Result<bool, S
 
 #[tauri::command]
 pub async fn dm_reset_operations(app: AppHandle) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
     manager.reset_operations().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn dm_update_api_key(app: AppHandle, api_key: String) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
 
     let mut config = manager.get_config().clone();
     config.api_key = api_key;
@@ -214,8 +204,7 @@ pub async fn dm_update_api_key(app: AppHandle, api_key: String) -> Result<(), St
 
 #[tauri::command]
 pub async fn dm_switch_provider(app: AppHandle, provider_name: String) -> Result<(), String> {
-    let mut manager = DataManager::new(app);
-    manager.initialize().await.map_err(|e| e.to_string())?;
+    let mut manager = load_data_manager(app).await?;
 
     let mut config = manager.get_config().clone();
     if config.providers.contains_key(&provider_name) {
@@ -228,3 +217,4 @@ pub async fn dm_switch_provider(app: AppHandle, provider_name: String) -> Result
         Err(format!("Provider '{}' not found", provider_name))
     }
 }
+

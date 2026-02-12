@@ -3,7 +3,7 @@
 **Projekt:** AI-TextTool  
 **Dato:** 12. februar 2026  
 **Type:** Prioriteret roadmap (ikke fuld audit)  
-**Scope:** Dokumentation af forbedringer og kodeoptimeringer, ingen kodeaendringer i denne leverance
+**Scope:** Roadmap + loebende status for implementerede forbedringer og kodeoptimeringer
 
 ## 1. Scope og metode
 
@@ -61,6 +61,12 @@ P1-delstatus (tidligt leveret):
 
 1. **P1.1 Lukket:** native `prompt/alert/confirm` fjernet i `ChatWindow`, `ChatHistoryWindow`, `OperationEditWindow` samt onboarding-skipflow via ikke-blokerende dialog/toast-komponenter.
 2. **P1.5 Lukket:** `unwrap/expect` fjernet i kritiske Rust-filer `src-tauri/src/lib.rs`, `src-tauri/src/tray_manager.rs`, `src-tauri/src/shortcut_manager.rs`.
+3. **P1.6 Lukket:** DataManager init-moenster samlet via intern helper i `src-tauri/src/data_manager/commands.rs`.
+
+P2-delstatus:
+
+1. **P2.1 Lukket:** CSP (`csp` + `devCsp`) indfoert og capability-scope strammet via opdelte profiler i `src-tauri/capabilities/default.json`.
+2. **P2.2 Lukket:** inline bootstrap i `windows/*.html` konsolideret til delte TS-entrypoints med ens bootstrap-helper.
 
 ## 3. Prioriteret roadmap
 
@@ -158,7 +164,7 @@ P1-delstatus (tidligt leveret):
 - **Test/acceptkriterie:** Farlige `unwrap/expect` i kritiske paths erstattet eller dokumenteret med sikker begrundelse.
 
 ### P1.6 Saml DataManager init-moenster
-- **Status:** Aaben
+- **Status:** Lukket
 - **Problem:** Gentaget init i mange kommandoer.
 - **Paavirkning:** Duplikering og vedligeholdelsesomkostning.
 - **Filreferencer:** `src-tauri/src/data_manager/commands.rs`
@@ -169,7 +175,7 @@ P1-delstatus (tidligt leveret):
 ## P2 - Arkitektur- og sikkerhedshardening
 
 ### P2.1 Security-konfiguration og capability-scope
-- **Status:** Aaben
+- **Status:** Lukket
 - **Problem:** `csp: null` og bred capability-mapping.
 - **Paavirkning:** Stoerre angrebsflade end noedvendigt.
 - **Filreferencer:** `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`
@@ -178,7 +184,7 @@ P1-delstatus (tidligt leveret):
 - **Test/acceptkriterie:** App fungerer med strammere security-profiler uden regression.
 
 ### P2.2 Konsolider bootstrap i `windows/*.html`
-- **Status:** Aaben
+- **Status:** Lukket
 - **Problem:** Duplikeret inline bootstrap og API-inkonsistens.
 - **Paavirkning:** Hoeyere fejlrate og svaerere vedligehold.
 - **Filreferencer:** `windows/popup.html`, `windows/onboarding.html`, `windows/settings.html`, `windows/operation-edit.html`, `windows/chat.html`, `windows/history.html`
@@ -192,7 +198,7 @@ P1-delstatus (tidligt leveret):
 2. **Lukket:** emit typing i popup skiftet fra `details: any` til `details: Operation` i `src/components/PopupWindow.vue`.
 3. **Lukket:** Vue module declaration i `src/vite-env.d.ts` opdateret for at undgaa `any`.
 4. **Lukket:** Rust logging-kontrakt standardiseret paa `log/env_logger` i stedet for direkte `println!/eprintln!` i runtime-kode.
-5. **Aaben:** capability-scope pr. vindue i `src-tauri/capabilities/default.json`.
+5. **Lukket:** capability-scope pr. vindue i `src-tauri/capabilities/default.json` er strammet med scoped profiler.
 
 ## 5. Quick wins (foerste 48 timer)
 
@@ -205,9 +211,7 @@ Observeret effekt: lint-stoej fjernet og groen kvalitetspipeline.
 
 ## 6. Naeste sprint (strukturelle forbedringer)
 
-1. Saml DataManager-init i kommando-lag.
-2. Paabegynd security-hardening (CSP + capability-scope).
-3. Konsolider bootstrap i `windows/*.html`.
+1. Optimeringsroadmap lukket. Naeste fokus er feature-videreudvikling.
 
 ## 7. Risiko og kompatibilitet
 
@@ -240,6 +244,9 @@ Status pr. 12. februar 2026:
 6. Sortering uden mutation i historik: implementeret og verificeret.
 7. Ikke-blokerende dialoger (`ChatWindow`, `ChatHistoryWindow`, `OperationEditWindow`, onboarding skip): implementeret.
 8. `unwrap/expect` i kritiske Rust-filer (`lib.rs`, `tray_manager.rs`, `shortcut_manager.rs`): reduceret til 0.
+9. DataManager init-moenster i `src-tauri/src/data_manager/commands.rs`: samlet via helper.
+10. Security baseline: `csp`/`devCsp` sat i `tauri.conf.json`, og capabilities opdelt i scoped profiler uden wildcard-vindue.
+11. Bootstrap-konsolidering: `windows/popup.html`, `windows/onboarding.html`, `windows/settings.html`, `windows/operation-edit.html`, `windows/history.html` bruger nu TS-entrypoints + delt `src/window-bootstrap.ts`.
 
 ## 9. Definition of done
 
@@ -258,7 +265,7 @@ Aktuel status pr. 12. februar 2026:
 1. Punkt 1-4: Lukket.
 2. Punkt 5: Lukket.
 3. Punkt 6: Lukket.
-4. Punkt 7: Aaben (P2).
+4. Punkt 7: Lukket.
 
 ## 10. Implementeringsraekkefoelge for dokumentationsarbejdet (afsluttet)
 

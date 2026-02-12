@@ -1,96 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Text Operations</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: transparent;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      #app {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: transparent;
-            overflow: hidden;
-            user-select: none;
+          color-scheme: dark;
         }
-        
-        #app {
-            width: 100vw;
-            height: 100vh;
-        }
-        
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            body {
-                color-scheme: dark;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="app"></div>
-    
-    <script type="module">
-        import { createApp } from 'vue';
-        import PopupWindow from '../src/components/PopupWindow.vue';
-        
-        // Debug: Check if Tauri is available
-        console.log('Tauri available:', !!window.__TAURI__);
-        console.log('Window object:', window.__TAURI__?.window ? 'Available' : 'Not available');
-        
-        // Get the selected text from window object (injected by Rust)
-        const selectedText = window.clipboardText || '';
-        
-        // Create Vue app instance
-        const app = createApp(PopupWindow, {
-            selectedText: selectedText
-        });
-        
-        // Simple close function that just closes the window
-        const closeWindow = () => {
-            console.log('Closing popup window...');
-            
-            try {
-                // Use Tauri API to close window immediately
-                if (window.__TAURI__?.window?.getCurrentWindow) {
-                    window.__TAURI__.window.getCurrentWindow().then(win => {
-                        win.close();
-                    }).catch(e => {
-                        console.log('Failed to close:', e);
-                        // Fallback to browser close
-                        window.close();
-                    });
-                } else {
-                    // Fallback for development
-                    window.close();
-                }
-            } catch (e) {
-                console.error('Close error:', e);
-            }
-        };
-        
-        // Handle ESC key globally for easy window closing
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                console.log('ESC pressed - closing window');
-                closeWindow();
-            }
-        });
-        
-        // Make close function globally available
-        window.closePopup = closeWindow;
-        
-        // Mount the app
-        app.mount('#app');
-        
-        // Auto-focus the document for keyboard events
-        setTimeout(() => {
-            document.body.focus();
-        }, 100);
-    </script>
-</body>
+
+    <script type="module" src="/src/popup.ts"></script>
+  </body>
 </html>
