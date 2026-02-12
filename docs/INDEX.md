@@ -1,8 +1,8 @@
 # Documentation Index
 
-Welcome to the AI-TextTool documentation. This folder contains all project documentation organized by topic.
+Welcome to the AI-TextTool documentation. This folder contains project documentation organized by topic.
 
-## 📖 Main Documentation
+## Main Documentation
 
 ### [../CLAUDE.md](../CLAUDE.md)
 **Complete developer guide for the AI-TextTool project**
@@ -14,7 +14,7 @@ Welcome to the AI-TextTool documentation. This folder contains all project docum
 - Tauri-specific solutions and learnings
 - Project structure and module organization
 
-**Best for**: Understanding the project structure, setting up development environment, and making architectural decisions.
+**Best for**: Understanding project structure, setup, and architecture-level decisions.
 
 ---
 
@@ -25,57 +25,69 @@ Welcome to the AI-TextTool documentation. This folder contains all project docum
 - File System plugin for file operations
 - Opener plugin for opening URLs
 - Process and executable path handling
-- Tray Icon configuration and management
-- Window Management patterns and solutions
+- Tray icon configuration and management
+- Window management patterns and solutions
 - Commands for frontend-backend communication
 
-**Best for**: Working with Tauri plugins, solving common Tauri issues, and understanding window management patterns.
+**Best for**: Tauri plugin work, common Tauri issue solving, and window management patterns.
 
 ---
 
 ### [CODE_REVIEW.md](CODE_REVIEW.md)
 **Comprehensive code review with optimization opportunities**
 - Executive summary of code quality assessment
-- Implementation status tracking (65% completion)
-- Frontend issues (Vue 3/TypeScript) - 11 issues
-- Backend issues (Rust) - 15 issues
-- Configuration & build issues - 3 issues
-- Detailed recommendations for each issue
-- Priority and effort assessment
+- Implementation status tracking
+- Frontend and backend issues
+- Configuration/build issues
+- Prioritized recommendations
 
-**Best for**: Understanding code quality issues, tracking optimization progress, and prioritizing improvements.
+**Best for**: Historical code quality findings and optimization tracking.
+
+---
+
+### [CODE_OPTIMIZATION_2026-02-12.md](CODE_OPTIMIZATION_2026-02-12.md)
+**Prioritized optimization roadmap based on current codebase checks (2026-02-12)**
+- Verified baseline from lint/test/build commands
+- Priority buckets: P0, P1, P2
+- Concrete file references and acceptance criteria
+- Quick wins (first 48 hours) and next sprint guidance
+- Risk/compatibility notes and definition of done
+
+**Best for**: Executing focused, stepwise quality improvements with measurable outcomes.
 
 ---
 
 ### [CLAUDE.local.md](CLAUDE.local.md)
-**User's private project instructions (local configuration)**
+**Local/private project instructions**
 - Development workflow preferences
 - Local setup notes
 - Environment-specific configuration
 
-**Best for**: Understanding local development preferences and custom workflows.
+**Best for**: Understanding local development preferences.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-1. **First time setup?** → Read [../CLAUDE.md](../CLAUDE.md)
-2. **Building a feature?** → Check [../CLAUDE.md](../CLAUDE.md) for architecture
-3. **Using Tauri plugins?** → Reference [TAURI_REFERENCE.md](TAURI_REFERENCE.md)
-4. **Code quality focus?** → Review [CODE_REVIEW.md](CODE_REVIEW.md)
+1. **First time setup?** -> Read [../CLAUDE.md](../CLAUDE.md)
+2. **Building a feature?** -> Check [../CLAUDE.md](../CLAUDE.md) for architecture
+3. **Using Tauri plugins?** -> Reference [TAURI_REFERENCE.md](TAURI_REFERENCE.md)
+4. **Code quality focus?** -> Review [CODE_REVIEW.md](CODE_REVIEW.md)
+5. **Current optimization roadmap?** -> Start with [CODE_OPTIMIZATION_2026-02-12.md](CODE_OPTIMIZATION_2026-02-12.md)
 
-## 📚 Organization Strategy
+## Organization Strategy
 
 The documentation is organized to serve different purposes:
 
-- **../CLAUDE.md** (root) - Main project documentation with architecture, design, and implementation guidance
+- **../CLAUDE.md** (root) - Main project documentation with architecture and implementation guidance
 - **TAURI_REFERENCE.md** - Plugin-specific documentation and solutions
-- **CODE_REVIEW.md** - Quality metrics and improvement tracking
-- **../CLAUDE.local.md** (root) - User preferences and local configuration
-- **INDEX.md** - This documentation index and navigation guide
+- **CODE_REVIEW.md** - Historical quality metrics and findings
+- **CODE_OPTIMIZATION_2026-02-12.md** - Current prioritized optimization roadmap
+- **../CLAUDE.local.md** (root) - Local user preferences and configuration
+- **INDEX.md** - Documentation navigation guide
 
-Each document is self-contained and can be read independently based on your current task.
+Each document is self-contained and can be read independently based on current task context.
 
 ---
 
-**Last Updated**: 2025-12-19
+**Last Updated**: 2026-02-12
