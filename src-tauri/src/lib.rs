@@ -11,7 +11,9 @@ mod window_manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    utils::logging::init_logging();
+
+    let run_result = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(shortcut_manager::create_shortcut_handler())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -19,24 +21,26 @@ pub fn run() {
         .setup(|app| {
             // Hide the main window immediately on startup
             if let Some(window) = app.get_webview_window("main") {
-                window.hide().unwrap();
-                println!("Main window hidden on startup");
+                match window.hide() {
+                    Ok(()) => log::info!("Main window hidden on startup"),
+                    Err(e) => log::warn!("Failed to hide main window on startup: {e:?}"),
+                }
             }
 
             // Check if app_data.json exists - if not, show onboarding
             let config_path = utils::file_paths::get_app_data_path();
 
             if !config_path.exists() {
-                println!("No app_data.json found - showing onboarding window");
+                log::info!("No app_data.json found - showing onboarding window");
                 window_manager::show_onboarding_window(app.handle())?;
             } else {
-                println!("app_data.json found - setting up tray and global shortcut");
+                log::info!("app_data.json found - setting up tray and global shortcut");
                 tray_manager::create_tray(app.handle())?;
 
                 // Register global shortcut (hardcoded to ctrl+space)
                 match app.handle().global_shortcut().register("CmdOrCtrl+Space") {
-                    Ok(()) => println!("Global shortcut 'Ctrl+Space' registered successfully!"),
-                    Err(e) => println!("Failed to register global shortcut: {:?}", e),
+                    Ok(()) => log::info!("Global shortcut 'Ctrl+Space' registered successfully"),
+                    Err(e) => log::error!("Failed to register global shortcut: {e:?}"),
                 }
             }
 
@@ -46,8 +50,10 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 // For main window, hide instead of closing
                 if window.label() == "main" {
-                    window.hide().unwrap();
-                    api.prevent_close();
+                    match window.hide() {
+                        Ok(()) => api.prevent_close(),
+                        Err(e) => log::warn!("Failed to hide main window on close: {e:?}"),
+                    }
                 } else {
                     // For popup and chat windows, allow normal closing
                     // They will close normally
@@ -87,6 +93,10 @@ pub fn run() {
             data_manager::delete_saved_conversation,
             data_manager::load_conversation_messages
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .run(tauri::generate_context!());
+
+    if let Err(e) = run_result {
+        log::error!("Error while running tauri application: {e:?}");
+        std::process::exit(1);
+    }
 }

@@ -175,6 +175,8 @@
         </div>
       </div>
     </div>
+
+    <AppToast :visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
@@ -182,6 +184,8 @@
   import { ref, onMounted, onUnmounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
+  import AppToast from './AppToast.vue'
+  import { logger } from '../utils/logger'
   import type { Operation } from '../types'
 
   // Props
@@ -224,6 +228,11 @@
   const confirmButtonText = ref('Confirm')
   const confirmCallback = ref<(() => void) | null>(null)
 
+  const toastVisible = ref(false)
+  const toastMessage = ref('')
+  const toastType = ref<'success' | 'error' | 'info'>('info')
+  let toastTimer: ReturnType<typeof setTimeout> | null = null
+
   // Edit form state
   const editForm = ref<EditForm>({
     name: '',
@@ -251,9 +260,9 @@
         operations.value[key] = operation
       })
 
-      console.log('Loaded operations in order:', sortedResult)
+      logger.debug('Loaded operations in order:', sortedResult)
     } catch (err) {
-      console.error('Failed to load operations:', err)
+      logger.error('Failed to load operations:', err)
       error.value = err instanceof Error ? err.message : 'Failed to load operations'
     } finally {
       isLoading.value = false
@@ -301,9 +310,9 @@
 
   const performDelete = async (operationKey: string) => {
     try {
-      console.log('Attempting to delete operation:', operationKey)
+      logger.debug('Attempting to delete operation:', operationKey)
       const success = (await invoke('dm_remove_operation', { name: operationKey })) as boolean
-      console.log('Delete result:', success)
+      logger.debug('Delete result:', success)
 
       // Remove from operationsArray to maintain order
       const indexToRemove = operationsArray.value.findIndex(([key]) => key === operationKey)
@@ -315,14 +324,14 @@
       delete operations.value[operationKey]
 
       if (success) {
-        console.log('Operation deleted successfully:', operationKey)
+        logger.debug('Operation deleted successfully:', operationKey)
       } else {
-        console.log('Backend reported failure, but updating UI anyway')
+        logger.debug('Backend reported failure, but updating UI anyway')
         // Only reload if backend failed - this preserves order
         await loadOperations()
       }
     } catch (err) {
-      console.error('Failed to delete operation:', err)
+      logger.error('Failed to delete operation:', err)
       error.value = err instanceof Error ? err.message : 'Failed to delete operation'
       // Reload operations to ensure UI is in sync with backend
       await loadOperations()
@@ -345,13 +354,13 @@
       // Reload operations to show the defaults
       await loadOperations()
 
-      console.log('Operations reset to defaults successfully')
+      logger.debug('Operations reset to defaults successfully')
       showMessage(
         'Reset Complete',
         'All operations have been reset to their default configuration!'
       )
     } catch (err) {
-      console.error('Failed to reset operations:', err)
+      logger.error('Failed to reset operations:', err)
       error.value = err instanceof Error ? err.message : 'Failed to reset operations'
     }
   }
@@ -394,12 +403,15 @@
         operationsArray.value.push([editForm.value.name.trim(), operation])
       }
 
-      console.log('Operation saved:', editForm.value.name, operation)
+      logger.debug('Operation saved:', editForm.value.name, operation)
       showEditDialog.value = false
 
-      console.log(`Operation ${editingOperation.value ? 'updated' : 'added'}:`, editForm.value.name)
+      logger.debug(
+        `Operation ${editingOperation.value ? 'updated' : 'added'}:`,
+        editForm.value.name
+      )
     } catch (err) {
-      console.error('Failed to save operation:', err)
+      logger.error('Failed to save operation:', err)
       error.value = err instanceof Error ? err.message : 'Failed to save operation'
     }
   }
@@ -426,7 +438,7 @@
     try {
       await getCurrentWindow().close()
     } catch (error) {
-      console.error('Error closing window:', error)
+      logger.error('Error closing window:', error)
     }
   }
 
@@ -442,9 +454,22 @@
     }
   }
 
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    toastMessage.value = message
+    toastType.value = type
+    toastVisible.value = true
+
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+    }
+
+    toastTimer = setTimeout(() => {
+      toastVisible.value = false
+    }, 3200)
+  }
+
   const showMessage = (title: string, message: string) => {
-    // Simple alert for now - could be replaced with a toast notification
-    alert(`${title}\n\n${message}`)
+    showToast(`${title}: ${message}`, 'success')
   }
 
   // Move operation up or down
@@ -477,9 +502,9 @@
       // Save the new order to backend
       await invoke('dm_save_operations', { operations: newOperations })
 
-      console.log('Operation moved successfully')
+      logger.debug('Operation moved successfully')
     } catch (err) {
-      console.error('Failed to move operation:', err)
+      logger.error('Failed to move operation:', err)
       error.value = err instanceof Error ? err.message : 'Failed to move operation'
 
       // Reload operations on error to reset to server state
@@ -493,7 +518,10 @@
   })
 
   onUnmounted(() => {
-    // Cleanup if needed
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+      toastTimer = null
+    }
   })
 </script>
 

@@ -9,7 +9,7 @@ pub async fn reopen_chat_conversation(
     operation: String,
     title: String,
 ) -> Result<(), String> {
-    println!("Reopening conversation: {}", title);
+    log::info!("Reopening conversation: {}", title);
 
     let timestamp = time::get_current_timestamp_millis();
     let window_id = format!("chat_reopen_{}", timestamp);
@@ -38,12 +38,12 @@ pub async fn reopen_chat_conversation(
         .build()
     {
         Ok(chat_window) => {
-            println!("Chat conversation reopened successfully: {}", title);
+            log::info!("Chat conversation reopened successfully: {}", title);
             let _ = chat_window.set_focus();
             Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to reopen chat conversation: {:?}", e);
+            log::error!("Failed to reopen chat conversation: {e:?}");
             Err(format!("Failed to reopen conversation: {}", e))
         }
     }
@@ -56,7 +56,7 @@ pub async fn open_chat_window(
     text: String,
     instruction: String,
 ) -> Result<(), String> {
-    println!(
+    log::info!(
         "Opening chat window for operation: {} with text length: {}",
         operation,
         text.len()
@@ -76,7 +76,7 @@ pub async fn open_chat_window(
         timestamp
     );
 
-    println!("Creating chat window with URL: {}", chat_url);
+    log::debug!("Creating chat window with URL: {}", chat_url);
 
     // Create chat window using backend WebviewWindowBuilder (same as tray chat)
     match WebviewWindowBuilder::new(&app, &window_id, tauri::WebviewUrl::App(chat_url.into()))
@@ -93,7 +93,7 @@ pub async fn open_chat_window(
         .build()
     {
         Ok(chat_window) => {
-            println!(
+            log::info!(
                 "Chat window opened successfully for operation: {}",
                 operation
             );
@@ -101,7 +101,7 @@ pub async fn open_chat_window(
             Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to open chat window: {:?}", e);
+            log::error!("Failed to open chat window: {e:?}");
             Err(format!("Failed to open chat window: {}", e))
         }
     }

@@ -138,6 +138,28 @@
         <button class="error-close" @click="clearError">✕</button>
       </div>
     </div>
+    <AppPromptDialog
+      :visible="saveDialogVisible"
+      title="Save Conversation"
+      message="Choose a title for this conversation."
+      :initial-value="saveDialogTitle"
+      placeholder="Conversation title"
+      confirm-text="Save"
+      @confirm="handleSaveDialogConfirm"
+      @cancel="handleSaveDialogCancel"
+    />
+
+    <AppConfirmDialog
+      :visible="clearDialogVisible"
+      title="Clear Conversation"
+      message="Are you sure you want to clear this conversation?"
+      confirm-text="Clear"
+      danger
+      @confirm="handleClearDialogConfirm"
+      @cancel="handleClearDialogCancel"
+    />
+
+    <AppToast :visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
@@ -146,6 +168,10 @@
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { setupMarkdownCopyFunction, cleanupMarkdownCopyFunction } from '../utils/markdown'
+  import { logger } from '../utils/logger'
+  import AppConfirmDialog from './AppConfirmDialog.vue'
+  import AppPromptDialog from './AppPromptDialog.vue'
+  import AppToast from './AppToast.vue'
   import MessageBubble from './MessageBubble.vue'
   import InputArea from './InputArea.vue'
   import type { ChatMessage, ChatWindowProps, AIResponse } from '../types'
@@ -173,6 +199,19 @@
   // Refs
   const messagesContainer = ref<HTMLElement>()
   const inputArea = ref<InstanceType<typeof InputArea>>()
+
+  // Dialog/toast state
+  const saveDialogVisible = ref(false)
+  const saveDialogTitle = ref('')
+  const clearDialogVisible = ref(false)
+
+  const toastVisible = ref(false)
+  const toastMessage = ref('')
+  const toastType = ref<'success' | 'error' | 'info'>('info')
+  let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+  let saveDialogResolver: ((value: string | null) => void) | null = null
+  let clearDialogResolver: ((confirmed: boolean) => void) | null = null
 
   // Computed Properties
   const windowTitle = computed(() => {
@@ -222,7 +261,7 @@
       const models = (await invoke('get_ai_models')) as string[]
       state.availableModels = models
     } catch (err) {
-      console.error('Failed to load models:', err)
+      logger.error('Failed to load models:', err)
       state.availableModels = [
         'gemini-3-flash-preview',
         'gemini-2.5-flash',
@@ -238,6 +277,61 @@
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
+  }
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    toastMessage.value = message
+    toastType.value = type
+    toastVisible.value = true
+
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+    }
+
+    toastTimer = setTimeout(() => {
+      toastVisible.value = false
+    }, 3200)
+  }
+
+  const requestConversationTitle = (defaultTitle: string): Promise<string | null> => {
+    saveDialogTitle.value = defaultTitle
+    saveDialogVisible.value = true
+
+    return new Promise(resolve => {
+      saveDialogResolver = resolve
+    })
+  }
+
+  const handleSaveDialogConfirm = (value: string) => {
+    saveDialogVisible.value = false
+    const trimmed = value.trim()
+    saveDialogResolver?.(trimmed.length > 0 ? trimmed : null)
+    saveDialogResolver = null
+  }
+
+  const handleSaveDialogCancel = () => {
+    saveDialogVisible.value = false
+    saveDialogResolver?.(null)
+    saveDialogResolver = null
+  }
+
+  const requestClearConfirmation = (): Promise<boolean> => {
+    clearDialogVisible.value = true
+    return new Promise(resolve => {
+      clearDialogResolver = resolve
+    })
+  }
+
+  const handleClearDialogConfirm = () => {
+    clearDialogVisible.value = false
+    clearDialogResolver?.(true)
+    clearDialogResolver = null
+  }
+
+  const handleClearDialogCancel = () => {
+    clearDialogVisible.value = false
+    clearDialogResolver?.(false)
+    clearDialogResolver = null
   }
 
   // Handle send from InputArea component
@@ -327,7 +421,7 @@
         }
       }
     } catch (err) {
-      console.error('Failed to get AI response:', err)
+      logger.error('Failed to get AI response:', err)
       state.error = err instanceof Error ? err.message : 'Failed to get AI response'
 
       // Remove processing message on error
@@ -391,7 +485,7 @@
         }
       }
     } catch (err) {
-      console.error('Failed to regenerate response:', err)
+      logger.error('Failed to regenerate response:', err)
       state.error = err instanceof Error ? err.message : 'Failed to regenerate response'
 
       // Remove processing message
@@ -418,7 +512,7 @@
         : 'Untitled Conversation'
 
       // Prompt user for conversation title
-      const title = prompt(`Save conversation as:`, defaultTitle)
+      const title = await requestConversationTitle(defaultTitle)
       if (!title) return // User cancelled
 
       // Convert messages to ConversationMessage format
@@ -439,24 +533,26 @@
         thinkingModeEnabled: state.enableThinking
       })) as string
 
-      console.log('Conversation saved successfully with ID:', conversationId)
-      alert('✅ Conversation saved successfully!')
+      logger.debug('Conversation saved successfully with ID:', conversationId)
+      showToast('Conversation saved successfully', 'success')
     } catch (err) {
-      console.error('Failed to save conversation:', err)
+      logger.error('Failed to save conversation:', err)
       state.error =
         'Failed to save conversation: ' + (err instanceof Error ? err.message : String(err))
-      alert('❌ Failed to save conversation: ' + state.error)
+      showToast(state.error, 'error')
     }
   }
 
-  const clearConversation = () => {
+  const clearConversation = async () => {
     if (state.messages.length === 0) return
 
-    if (confirm('Are you sure you want to clear this conversation?')) {
-      state.messages = []
-      state.error = null
-      void focusInput()
-    }
+    const confirmed = await requestClearConfirmation()
+    if (!confirmed) return
+
+    state.messages = []
+    state.error = null
+    void focusInput()
+    showToast('Conversation cleared', 'info')
   }
 
   const clearError = () => {
@@ -503,7 +599,7 @@
         case 'l':
         case 'L':
           event.preventDefault()
-          clearConversation()
+          void clearConversation()
           break
         case '=':
         case '+':
@@ -525,7 +621,7 @@
     if (!props.conversationId) return
 
     try {
-      console.log('Loading conversation:', props.conversationId)
+      logger.debug('Loading conversation:', props.conversationId)
 
       const conversation = (await invoke('load_conversation_messages', {
         conversationId: props.conversationId
@@ -548,7 +644,7 @@
       state.messages = conversation.messages.map(msg => {
         // Validate role before using it
         if (!isValidRole(msg.role)) {
-          console.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
+          logger.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
           return {
             role: 'assistant' as const,
             content: msg.content,
@@ -569,10 +665,10 @@
       // Restore thinking mode setting
       if (conversation.thinking_mode_enabled !== undefined) {
         state.enableThinking = conversation.thinking_mode_enabled
-        console.log(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
+        logger.debug(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
       }
 
-      console.log(
+      logger.debug(
         `Loaded conversation "${conversation.title}" with ${conversation.messages.length} messages`
       )
 
@@ -580,7 +676,7 @@
       await nextTick()
       void scrollToBottom()
     } catch (err) {
-      console.error('Failed to load conversation:', err)
+      logger.error('Failed to load conversation:', err)
       state.error =
         'Failed to load conversation: ' + (err instanceof Error ? err.message : String(err))
     }
@@ -605,7 +701,7 @@
 
   // Lifecycle
   onMounted(async () => {
-    console.log('ChatWindow mounted with props:', {
+    logger.debug('ChatWindow mounted with props:', {
       operation: props.operation,
       initialText: props.initialText ? `${props.initialText.length} chars` : 'none',
       title: props.title,
@@ -620,22 +716,22 @@
     const operation = props.operation || urlParams.get('operation') || ''
     const initialText = props.initialText || urlParams.get('text') || ''
 
-    console.log('Final values after URL parsing:', {
+    logger.debug('Final values after URL parsing:', {
       operation,
       initialText: initialText ? `${initialText.length} chars` : 'none'
     })
 
     // Load existing conversation if conversationId is provided
     if (props.conversationId) {
-      console.log('Loading existing conversation:', props.conversationId)
+      logger.debug('Loading existing conversation:', props.conversationId)
       await loadConversation()
     } else {
       // Send initial message if there's initial text and operation (only for new chats)
       if (initialText && operation) {
-        console.log(`Auto-sending initial text for operation: ${operation}`)
+        logger.debug(`Auto-sending initial text for operation: ${operation}`)
         await sendMessage(initialText)
       } else {
-        console.log('No initial text or operation - waiting for user input')
+        logger.debug('No initial text or operation - waiting for user input')
       }
     }
 
@@ -644,6 +740,18 @@
   })
 
   onUnmounted(() => {
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+      toastTimer = null
+    }
+    if (saveDialogResolver) {
+      saveDialogResolver(null)
+      saveDialogResolver = null
+    }
+    if (clearDialogResolver) {
+      clearDialogResolver(false)
+      clearDialogResolver = null
+    }
     cleanupMarkdownCopyFunction()
   })
 </script>

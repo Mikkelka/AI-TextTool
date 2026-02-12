@@ -1,5 +1,5 @@
-import { createApp } from 'vue'
 import ChatWindow from './components/ChatWindow.vue'
+import { mountWindow } from './window-bootstrap'
 
 // Get parameters from URL
 const urlParams = new URLSearchParams(window.location.search)
@@ -9,14 +9,12 @@ const title = urlParams.get('title') || 'AI Chat'
 const instruction = urlParams.get('instruction') || ''
 const conversationId = urlParams.get('conversationId') || ''
 
-// Create Vue app instance with props
-const app = createApp(ChatWindow, {
-  operation: operation,
-  initialText: initialText,
-  title: title,
-  instruction: instruction,
-  conversationId: conversationId
+mountWindow(ChatWindow, {
+  props: {
+    operation,
+    initialText,
+    title,
+    instruction,
+    conversationId
+  }
 })
-
-// Mount the app
-app.mount('#app')

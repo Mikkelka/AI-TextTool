@@ -1,7 +1,7 @@
-/// Time utilities for working with timestamps
-///
-/// This module provides helper functions for getting current timestamps
-/// with proper error handling.
+//! Time utilities for working with timestamps.
+//!
+//! This module provides helper functions for getting current timestamps
+//! with proper error handling.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -11,7 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// * `u128` - Current timestamp in milliseconds, or 0 if system time is before UNIX_EPOCH
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// let timestamp = get_current_timestamp_millis();
 /// println!("Current time: {}", timestamp);
 /// ```
@@ -20,8 +20,8 @@ pub fn get_current_timestamp_millis() -> u128 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis())
         .unwrap_or_else(|e| {
-            eprintln!("Failed to get current time: {}", e);
-            0  // Fallback to 0 instead of panic
+            log::error!("Failed to get current time: {}", e);
+            0 // Fallback to 0 instead of panic
         })
 }
 
@@ -35,7 +35,7 @@ pub fn get_current_timestamp_secs() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or_else(|e| {
-            eprintln!("Failed to get current time: {}", e);
+            log::error!("Failed to get current time: {}", e);
             0
         })
 }

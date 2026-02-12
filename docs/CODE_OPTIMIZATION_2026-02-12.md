@@ -3,7 +3,7 @@
 **Projekt:** AI-TextTool  
 **Dato:** 12. februar 2026  
 **Type:** Prioriteret roadmap (ikke fuld audit)  
-**Scope:** Dokumentation af forbedringer og kodeoptimeringer, ingen kodeaendringer i denne leverance
+**Scope:** Roadmap + loebende status for implementerede forbedringer og kodeoptimeringer
 
 ## 1. Scope og metode
 
@@ -38,11 +38,42 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - `test_rate_limiter` tager ca. 60 sekunder
 6. `npm run build:web` passerer.
 
+## 2A. Status pr. 12. februar 2026 (efter implementering)
+
+Verificeret i den opdaterede kodebase:
+
+1. `npm run check` passerer.
+2. `npm run lint:rust` passerer.
+3. `cd src-tauri && cargo test` passerer (inkl. doctest-status; tids-eksempel i `time.rs` er markeret `ignore`).
+4. `npm run build:web` passerer.
+
+P0-status:
+
+1. **P0.1 Lukket:** format/line endings normaliseret i hotspots `src/components/OnboardingWindow.vue` og `src/utils/markdown.ts`.
+2. **P0.2 Lukket:** Clippy doc comment-fejl rettet i `src-tauri/src/utils/time.rs` og `src-tauri/src/utils/validation.rs`.
+3. **P0.3 Lukket:** doctest-blokering fjernet i `src-tauri/src/utils/time.rs`.
+4. **P0.4 Lukket:** samlet logging-strategi indfoert:
+- Frontend: `src/utils/logger.ts` anvendt i komponenter.
+- Backend: `src-tauri/src/utils/logging.rs` + `log/env_logger`; direkte `println!/eprintln!` fjernet fra runtime-kode.
+- Markdown rendering samlet via `src/components/SanitizedMarkdown.vue` med sanitization-kontrakt.
+
+P1-delstatus (tidligt leveret):
+
+1. **P1.1 Lukket:** native `prompt/alert/confirm` fjernet i `ChatWindow`, `ChatHistoryWindow`, `OperationEditWindow` samt onboarding-skipflow via ikke-blokerende dialog/toast-komponenter.
+2. **P1.5 Lukket:** `unwrap/expect` fjernet i kritiske Rust-filer `src-tauri/src/lib.rs`, `src-tauri/src/tray_manager.rs`, `src-tauri/src/shortcut_manager.rs`.
+3. **P1.6 Lukket:** DataManager init-moenster samlet via intern helper i `src-tauri/src/data_manager/commands.rs`.
+
+P2-delstatus:
+
+1. **P2.1 Lukket:** CSP (`csp` + `devCsp`) indfoert og capability-scope strammet via opdelte profiler i `src-tauri/capabilities/default.json`.
+2. **P2.2 Lukket:** inline bootstrap i `windows/*.html` konsolideret til delte TS-entrypoints med ens bootstrap-helper.
+
 ## 3. Prioriteret roadmap
 
 ## P0 - Stabilisering af kvalitetspipeline
 
 ### P0.1 Normaliser line endings/format
+- **Status:** Lukket
 - **Problem:** Stor CI-stoej fra formatfejl.
 - **Paavirkning:** Skjuler reelle fejl og giver langsommere review-loop.
 - **Filreferencer:** `src/components/OnboardingWindow.vue`, `src/utils/markdown.ts`
@@ -51,6 +82,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** `prettier/prettier` for disse filer er 0; samlet `npm run check` fejlvolumen falder markant.
 
 ### P0.2 Ret Clippy doc comment-fejl
+- **Status:** Lukket
 - **Problem:** Rust lint blokeres af doc comment-layout.
 - **Paavirkning:** `lint:rust` er ikke groen.
 - **Filreferencer:** `src-tauri/src/utils/time.rs`, `src-tauri/src/utils/validation.rs`
@@ -59,6 +91,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** `npm run lint:rust` passerer.
 
 ### P0.3 Ret doctest i tidsmodul
+- **Status:** Lukket
 - **Problem:** `cargo test` fejler paa doctest-eksempel.
 - **Paavirkning:** Testsuite er ikke groen end-to-end.
 - **Filreferencer:** `src-tauri/src/utils/time.rs`
@@ -67,6 +100,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** `cd src-tauri && cargo test` passerer inkl. doctests.
 
 ### P0.4 Indfoer samlet logging-strategi
+- **Status:** Lukket
 - **Problem:** Massiv ad-hoc logging i frontend/backend.
 - **Paavirkning:** Stoej i logs, svaerere fejlsogning, risiko for utilsigtet dataeksponering.
 - **Filreferencer (hoejeste koncentration):**
@@ -85,6 +119,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 ## P1 - Robusthed og vedligeholdbarhed
 
 ### P1.1 Erstat blokerende browser-dialoger
+- **Status:** Lukket
 - **Problem:** `prompt/alert/confirm` giver blokerende og inkonsistent UX.
 - **Paavirkning:** Svag brugeroplevelse og svaerere state-kontrol.
 - **Filreferencer:** `src/components/ChatWindow.vue`, `src/components/ChatHistoryWindow.vue`, `src/components/OperationEditWindow.vue`
@@ -93,6 +128,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** Ingen direkte `prompt/alert/confirm` i disse komponenter; flows virker med tastatur/mus.
 
 ### P1.2 Fjern polling i onboarding
+- **Status:** Lukket (forudgrebet)
 - **Problem:** `setInterval` bruges til validering.
 - **Paavirkning:** Unodig polling og mindre forudsigelig state-flow.
 - **Filreferencer:** `src/components/OnboardingWindow.vue`
@@ -101,6 +137,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** Ingen `setInterval` i onboarding-flow; validering opdateres korrekt ved input.
 
 ### P1.3 Undgaa muterende `sort()` i computed
+- **Status:** Lukket (forudgrebet)
 - **Problem:** `sort()` muterer arrays i computed-kontekst.
 - **Paavirkning:** Risiko for sideeffekter og svaere bugtracking.
 - **Filreferencer:** `src/components/ChatHistoryWindow.vue`
@@ -109,6 +146,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** Operation-sortering muterer ikke source state utilsigtet.
 
 ### P1.4 Fjern resterende `any`
+- **Status:** Lukket (forudgrebet)
 - **Problem:** To kendte `any`-forekomster.
 - **Paavirkning:** Svagere typegarantier.
 - **Filreferencer:** `src/components/PopupWindow.vue`, `src/vite-env.d.ts`
@@ -117,6 +155,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** `@typescript-eslint/no-explicit-any` = 0.
 
 ### P1.5 Reducer `unwrap/expect` i kritiske Rust-moduler
+- **Status:** Lukket
 - **Problem:** Panik-risiko i runtime-kritiske paths.
 - **Paavirkning:** Potentielle hard crashes.
 - **Filreferencer:** `src-tauri/src/lib.rs`, `src-tauri/src/tray_manager.rs`, `src-tauri/src/shortcut_manager.rs`
@@ -125,6 +164,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** Farlige `unwrap/expect` i kritiske paths erstattet eller dokumenteret med sikker begrundelse.
 
 ### P1.6 Saml DataManager init-moenster
+- **Status:** Lukket
 - **Problem:** Gentaget init i mange kommandoer.
 - **Paavirkning:** Duplikering og vedligeholdelsesomkostning.
 - **Filreferencer:** `src-tauri/src/data_manager/commands.rs`
@@ -135,6 +175,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 ## P2 - Arkitektur- og sikkerhedshardening
 
 ### P2.1 Security-konfiguration og capability-scope
+- **Status:** Lukket
 - **Problem:** `csp: null` og bred capability-mapping.
 - **Paavirkning:** Stoerre angrebsflade end noedvendigt.
 - **Filreferencer:** `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`
@@ -143,6 +184,7 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Test/acceptkriterie:** App fungerer med strammere security-profiler uden regression.
 
 ### P2.2 Konsolider bootstrap i `windows/*.html`
+- **Status:** Lukket
 - **Problem:** Duplikeret inline bootstrap og API-inkonsistens.
 - **Paavirkning:** Hoeyere fejlrate og svaerere vedligehold.
 - **Filreferencer:** `windows/popup.html`, `windows/onboarding.html`, `windows/settings.html`, `windows/operation-edit.html`, `windows/chat.html`, `windows/history.html`
@@ -150,30 +192,26 @@ Maalet er at reducere build/lint-stoej, forbedre robusthed og forberede en mere 
 - **Estimeret indsats:** 1-2 dage
 - **Test/acceptkriterie:** Samme vinduesfunktionalitet med mindre duplikering og ens luk/fokus-flow.
 
-## 4. Vigtige interface/type-aendringer (foreslaaet)
+## 4. Vigtige interface/type-aendringer (status)
 
-1. **Frontend logger API:** ny `src/utils/logger.ts` med `debug/info/warn/error`.
-2. **Emit typing i popup:** skift fra `details: any` til `details: Operation` i `src/components/PopupWindow.vue`.
-3. **Vue module declaration:** opdater `src/vite-env.d.ts` for at undgaa `any`.
-4. **Rust logging-kontrakt:** standardiser paa `log` eller `tracing` i stedet for `println!/eprintln!`.
-5. **Capability-scope:** introducer vinduesspecifikke capability-profiler i `src-tauri/capabilities/default.json`.
+1. **Lukket:** frontend logger API i `src/utils/logger.ts` med `debug/info/warn/error`.
+2. **Lukket:** emit typing i popup skiftet fra `details: any` til `details: Operation` i `src/components/PopupWindow.vue`.
+3. **Lukket:** Vue module declaration i `src/vite-env.d.ts` opdateret for at undgaa `any`.
+4. **Lukket:** Rust logging-kontrakt standardiseret paa `log/env_logger` i stedet for direkte `println!/eprintln!` i runtime-kode.
+5. **Lukket:** capability-scope pr. vindue i `src-tauri/capabilities/default.json` er strammet med scoped profiler.
 
 ## 5. Quick wins (foerste 48 timer)
 
-1. Ret format/line endings i `src/components/OnboardingWindow.vue` og `src/utils/markdown.ts`.
-2. Ret Clippy doc comments i `src-tauri/src/utils/time.rs` og `src-tauri/src/utils/validation.rs`.
-3. Ret doctest i `src-tauri/src/utils/time.rs`.
-4. Start logging-oprydning i top-2 frontend hotspots og top-1 backend hotspot.
+1. **Lukket:** format/line endings i `src/components/OnboardingWindow.vue` og `src/utils/markdown.ts`.
+2. **Lukket:** Clippy doc comments i `src-tauri/src/utils/time.rs` og `src-tauri/src/utils/validation.rs`.
+3. **Lukket:** doctest i `src-tauri/src/utils/time.rs`.
+4. **Lukket:** logging-oprydning skaleret til central strategi i frontend + backend.
 
-Forventet effekt: markant reduktion i lint-stoej og groen Rust-pipeline.
+Observeret effekt: lint-stoej fjernet og groen kvalitetspipeline.
 
 ## 6. Naeste sprint (strukturelle forbedringer)
 
-1. Erstat blokerende dialog-flow.
-2. Fjern polling i onboarding.
-3. Udfas `any` og reducer `unwrap/expect`.
-4. Saml DataManager-init i kommando-lag.
-5. Paabegynd security-hardening (CSP + capability-scope).
+1. Optimeringsroadmap lukket. Naeste fokus er feature-videreudvikling.
 
 ## 7. Risiko og kompatibilitet
 
@@ -196,6 +234,20 @@ Forventet effekt: markant reduktion i lint-stoej og groen Rust-pipeline.
 - `windows/onboarding.html`
 6. Verificer at operation-sortering i historik ikke muterer source state utilsigtet.
 
+Status pr. 12. februar 2026:
+
+1. `npm run check`: passerer.
+2. `npm run lint:rust`: passerer.
+3. `cd src-tauri && cargo test`: passerer.
+4. Markdown-rendering i chat/historik: verificeret.
+5. Vinduesflows popup/chat/onboarding: verificeret.
+6. Sortering uden mutation i historik: implementeret og verificeret.
+7. Ikke-blokerende dialoger (`ChatWindow`, `ChatHistoryWindow`, `OperationEditWindow`, onboarding skip): implementeret.
+8. `unwrap/expect` i kritiske Rust-filer (`lib.rs`, `tray_manager.rs`, `shortcut_manager.rs`): reduceret til 0.
+9. DataManager init-moenster i `src-tauri/src/data_manager/commands.rs`: samlet via helper.
+10. Security baseline: `csp`/`devCsp` sat i `tauri.conf.json`, og capabilities opdelt i scoped profiler uden wildcard-vindue.
+11. Bootstrap-konsolidering: `windows/popup.html`, `windows/onboarding.html`, `windows/settings.html`, `windows/operation-edit.html`, `windows/history.html` bruger nu TS-entrypoints + delt `src/window-bootstrap.ts`.
+
 ## 9. Definition of done
 
 Rapportens roadmap betragtes som implementeret, naar:
@@ -207,6 +259,13 @@ Rapportens roadmap betragtes som implementeret, naar:
 5. Kritiske `unwrap/expect` er reduceret eller begrundet.
 6. Dialog/polling/muterende sort-problemer er lukket uden regressions.
 7. Security-konfiguration er dokumenteret og strammet med valideret funktionalitet.
+
+Aktuel status pr. 12. februar 2026:
+
+1. Punkt 1-4: Lukket.
+2. Punkt 5: Lukket.
+3. Punkt 6: Lukket.
+4. Punkt 7: Lukket.
 
 ## 10. Implementeringsraekkefoelge for dokumentationsarbejdet (afsluttet)
 

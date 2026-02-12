@@ -1,19 +1,22 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main", "edit_operations", "*"],
-  "permissions": [
-    "core:default",
-    "core:window:default",
-    "core:window:allow-create",
-    "core:window:allow-close",
-    "core:window:allow-set-focus",
-    "core:window:allow-show",
-    "core:window:allow-hide",
-    "core:window:allow-start-dragging",
-    "core:webview:default",
-    "core:webview:allow-create-webview-window",
-    "opener:default"
+  "capabilities": [
+    {
+      "identifier": "window-core",
+      "description": "Scoped IPC for local app windows that need core invoke + window close/drag actions.",
+      "windows": ["main", "onboarding", "popup", "settings", "edit_operations", "chat_*"],
+      "permissions": [
+        "core:default",
+        "core:window:default",
+        "core:window:allow-close",
+        "core:window:allow-start-dragging"
+      ]
+    },
+    {
+      "identifier": "onboarding-opener",
+      "description": "Allows opening external onboarding links from the onboarding window only.",
+      "windows": ["onboarding"],
+      "permissions": ["opener:default"]
+    }
   ]
 }

@@ -253,13 +253,24 @@
     <div class="skip-setup">
       <button class="skip-button" @click="skipSetup">Skip setup (configure later)</button>
     </div>
+
+    <AppConfirmDialog
+      :visible="skipDialogVisible"
+      title="Skip Setup"
+      message="Are you sure you want to skip setup? You can configure settings later from the system tray menu."
+      confirm-text="Skip"
+      @confirm="handleSkipDialogConfirm"
+      @cancel="handleSkipDialogCancel"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { openUrl } from '@tauri-apps/plugin-opener'
+  import AppConfirmDialog from './AppConfirmDialog.vue'
+  import { logger } from '../utils/logger'
   import type { Config } from '../types'
 
   // Props
@@ -294,6 +305,8 @@
   const error = ref<string | null>(null)
   const showApiKey = ref(false)
   const isTesting = ref(false)
+  const skipDialogVisible = ref(false)
+  let skipDialogResolver: ((confirmed: boolean) => void) | null = null
 
   // Form data
   const formData = ref({
@@ -382,7 +395,7 @@
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
-      console.error('Failed to close onboarding window:', error)
+      logger.error('Failed to close onboarding window:', error)
     }
   }
 
@@ -390,7 +403,7 @@
     try {
       await openUrl('https://aistudio.google.com/app/apikey')
     } catch (err) {
-      console.error('Failed to open API key URL:', err)
+      logger.error('Failed to open API key URL:', err)
       error.value =
         'Failed to open browser. Please visit https://aistudio.google.com/app/apikey manually.'
     }
@@ -426,7 +439,7 @@
         error.value = 'Failed to connect to AI service. Please check your API key.'
       }
     } catch (err) {
-      console.error('Connection test failed:', err)
+      logger.error('Connection test failed:', err)
       testResults.value.connection = false
       error.value = err instanceof Error ? err.message : 'Connection test failed'
     } finally {
@@ -522,32 +535,48 @@
           const currentWindow = getCurrentWindow()
           await currentWindow.close()
         } catch (error) {
-          console.error('Failed to close onboarding window:', error)
+          logger.error('Failed to close onboarding window:', error)
           // Fallback: emit event in case window close fails
           emit('setup-complete')
         }
       }, 1000)
     } catch (err) {
-      console.error('Failed to save configuration:', err)
+      logger.error('Failed to save configuration:', err)
       error.value = err instanceof Error ? err.message : 'Failed to save configuration'
       isLoading.value = false
     }
   }
 
+  const requestSkipConfirmation = (): Promise<boolean> => {
+    skipDialogVisible.value = true
+    return new Promise(resolve => {
+      skipDialogResolver = resolve
+    })
+  }
+
+  const handleSkipDialogConfirm = () => {
+    skipDialogVisible.value = false
+    skipDialogResolver?.(true)
+    skipDialogResolver = null
+  }
+
+  const handleSkipDialogCancel = () => {
+    skipDialogVisible.value = false
+    skipDialogResolver?.(false)
+    skipDialogResolver = null
+  }
+
   const skipSetup = async () => {
-    if (
-      confirm(
-        'Are you sure you want to skip setup? You can configure settings later from the system tray menu.'
-      )
-    ) {
-      try {
-        const { getCurrentWindow } = await import('@tauri-apps/api/window')
-        const currentWindow = getCurrentWindow()
-        await currentWindow.close()
-      } catch (error) {
-        console.error('Failed to close onboarding window:', error)
-        emit('setup-skipped')
-      }
+    const shouldSkip = await requestSkipConfirmation()
+    if (!shouldSkip) return
+
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const currentWindow = getCurrentWindow()
+      await currentWindow.close()
+    } catch (error) {
+      logger.error('Failed to close onboarding window:', error)
+      emit('setup-skipped')
     }
   }
 
@@ -591,18 +620,24 @@
     }
   }
 
+  watch(
+    () => formData.value.apiKey,
+    () => {
+      watchApiKey()
+    }
+  )
+
   // Lifecycle
   onMounted(() => {
     // Focus the component for keyboard navigation
     ;(document.querySelector('.onboarding-window') as HTMLElement)?.focus()
+  })
 
-    // Watch for API key changes
-    // Watch for API key changes
-    const interval = setInterval(watchApiKey, 500)
-
-    onUnmounted(() => {
-      clearInterval(interval)
-    })
+  onUnmounted(() => {
+    if (skipDialogResolver) {
+      skipDialogResolver(false)
+      skipDialogResolver = null
+    }
   })
 </script>
 

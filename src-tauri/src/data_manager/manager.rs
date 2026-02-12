@@ -33,10 +33,10 @@ impl DataManager {
 
         // Try to load existing app_data.json
         if self.file_path.exists() {
-            println!("Loading app_data.json from: {:?}", self.file_path);
+            log::info!("Loading app_data.json from: {:?}", self.file_path);
             self.load_data().await?;
         } else {
-            println!("No app_data.json found, attempting migration from old files");
+            log::info!("No app_data.json found, attempting migration from old files");
             self.migrate_from_old_files().await?;
             self.save_data().await?;
         }
@@ -85,7 +85,7 @@ impl DataManager {
         // Load config.json if exists
         let config_path = exe_dir.join("config.json");
         if config_path.exists() {
-            println!("Migrating config.json");
+            log::info!("Migrating config.json");
             if let Ok(content) = fs::read_to_string(&config_path).await {
                 if let Ok(config) = serde_json::from_str(&content) {
                     self.data.config = config;
@@ -96,7 +96,7 @@ impl DataManager {
         // Load options.json if exists
         let options_path = exe_dir.join("options.json");
         if options_path.exists() {
-            println!("Migrating options.json");
+            log::info!("Migrating options.json");
             if let Ok(content) = fs::read_to_string(&options_path).await {
                 if let Ok(operations) = serde_json::from_str(&content) {
                     self.data.operations = operations;
@@ -107,7 +107,7 @@ impl DataManager {
         // Load chat_history.json if exists
         let history_path = exe_dir.join("chat_history.json");
         if history_path.exists() {
-            println!("Migrating chat_history.json");
+            log::info!("Migrating chat_history.json");
             if let Ok(content) = fs::read_to_string(&history_path).await {
                 if let Ok(history) = serde_json::from_str(&content) {
                     self.data.chat_history = history;
@@ -118,7 +118,7 @@ impl DataManager {
         // Load saved_conversations.json if exists
         let conversations_path = exe_dir.join("saved_conversations.json");
         if conversations_path.exists() {
-            println!("Migrating saved_conversations.json");
+            log::info!("Migrating saved_conversations.json");
             if let Ok(content) = fs::read_to_string(&conversations_path).await {
                 if let Ok(conversations) = serde_json::from_str(&content) {
                     self.data.saved_conversations = conversations;
@@ -126,7 +126,7 @@ impl DataManager {
             }
         }
 
-        println!("Migration complete - data consolidated into app_data.json");
+        log::info!("Migration complete - data consolidated into app_data.json");
 
         // Optional: Archive old files instead of deleting
         // This is safer for users

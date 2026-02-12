@@ -38,21 +38,21 @@
         <details class="thoughts-details">
           <summary class="thoughts-header">💭 AI's Thinking Process</summary>
           <div class="thoughts-content">
-            <div
+            <SanitizedMarkdown
               class="markdown-content thoughts-markdown"
-              v-html="renderMarkdown(message.thoughts)"
-            ></div>
+              :markdown="message.thoughts"
+            />
           </div>
         </details>
       </div>
 
       <!-- Message Content -->
       <div class="message-content">
-        <div
+        <SanitizedMarkdown
           v-if="message.role === 'assistant'"
           class="markdown-content"
-          v-html="renderMarkdown(message.content)"
-        ></div>
+          :markdown="message.content"
+        />
         <div v-else class="user-content">
           {{ message.content }}
         </div>
@@ -72,7 +72,8 @@
 </template>
 
 <script setup lang="ts">
-  import { renderMarkdown } from '../utils/markdown'
+  import SanitizedMarkdown from './SanitizedMarkdown.vue'
+  import { logger } from '../utils/logger'
 
   // Props
   interface Props {
@@ -106,7 +107,7 @@
     try {
       await navigator.clipboard.writeText(content)
     } catch (err) {
-      console.error('Failed to copy message:', err)
+      logger.error('Failed to copy message:', err)
     }
   }
 </script>

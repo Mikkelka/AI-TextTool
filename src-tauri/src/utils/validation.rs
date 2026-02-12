@@ -1,7 +1,7 @@
-/// Validation utilities for input sanitation and checking
-///
-/// This module provides validation functions for user input to ensure
-/// data integrity and security at API boundaries.
+//! Validation utilities for input sanitation and checking.
+//!
+//! This module provides validation functions for user input to ensure
+//! data integrity and security at API boundaries.
 
 /// Maximum allowed length for text input (100KB)
 pub const MAX_TEXT_LENGTH: usize = 100_000;
@@ -35,7 +35,11 @@ pub fn validate_text_input(text: &str) -> Result<(), String> {
     }
 
     if trimmed.len() > MAX_TEXT_LENGTH {
-        return Err(format!("Text cannot exceed {} characters ({} KB)", MAX_TEXT_LENGTH, MAX_TEXT_LENGTH / 1024));
+        return Err(format!(
+            "Text cannot exceed {} characters ({} KB)",
+            MAX_TEXT_LENGTH,
+            MAX_TEXT_LENGTH / 1024
+        ));
     }
 
     Ok(())
@@ -57,7 +61,11 @@ pub fn validate_message_input(message: &str) -> Result<(), String> {
     }
 
     if trimmed.len() > MAX_MESSAGE_LENGTH {
-        return Err(format!("Message cannot exceed {} characters ({} KB)", MAX_MESSAGE_LENGTH, MAX_MESSAGE_LENGTH / 1024));
+        return Err(format!(
+            "Message cannot exceed {} characters ({} KB)",
+            MAX_MESSAGE_LENGTH,
+            MAX_MESSAGE_LENGTH / 1024
+        ));
     }
 
     Ok(())
@@ -83,7 +91,10 @@ pub fn validate_operation_name(operation: &str) -> Result<(), String> {
     }
 
     // Check for valid characters (alphanumeric, spaces, hyphens, underscores)
-    if !trimmed.chars().all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '_') {
+    if !trimmed
+        .chars()
+        .all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '_')
+    {
         return Err("Operation name contains invalid characters".to_string());
     }
 
