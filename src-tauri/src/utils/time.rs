@@ -20,7 +20,7 @@ pub fn get_current_timestamp_millis() -> u128 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis())
         .unwrap_or_else(|e| {
-            eprintln!("Failed to get current time: {}", e);
+            log::error!("Failed to get current time: {}", e);
             0 // Fallback to 0 instead of panic
         })
 }
@@ -35,7 +35,7 @@ pub fn get_current_timestamp_secs() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or_else(|e| {
-            eprintln!("Failed to get current time: {}", e);
+            log::error!("Failed to get current time: {}", e);
             0
         })
 }

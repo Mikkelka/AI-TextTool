@@ -217,10 +217,10 @@
 
             <div class="text-section">
               <div class="text-label">AI Result:</div>
-              <div
+              <SanitizedMarkdown
                 class="text-content processed-text"
-                v-html="renderMarkdown(entry.processed_text)"
-              ></div>
+                :markdown="entry.processed_text"
+              />
             </div>
           </div>
         </div>
@@ -243,7 +243,7 @@
   import { ref, computed, onMounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
-  import { renderMarkdown } from '../utils/markdown'
+  import SanitizedMarkdown from './SanitizedMarkdown.vue'
   import { logger } from '../utils/logger'
   import type { SavedConversation } from '../types'
 
@@ -458,8 +458,6 @@
     }
     return classMap[operation] || 'operation-default'
   }
-
-  // Using imported renderMarkdown from utils
 
   // New conversation management methods
   const reopenConversation = async (conversation: SavedConversation) => {

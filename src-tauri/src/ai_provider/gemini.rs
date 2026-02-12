@@ -53,7 +53,7 @@ impl RateLimiter {
             if let Some(&oldest_call) = self.calls.front() {
                 let wait_time = Duration::from_secs(60) - now.duration_since(oldest_call);
                 if !wait_time.is_zero() {
-                    println!("Rate limit reached, waiting {:?}", wait_time);
+                    log::warn!("Rate limit reached, waiting {:?}", wait_time);
                     sleep(wait_time).await;
                     now = Instant::now();
                 }
@@ -230,7 +230,7 @@ impl GeminiProvider {
                                 // Rate limit exceeded - implement exponential backoff
                                 if retry_count < self.max_retries {
                                     let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
-                                    println!("Rate limited, retrying after {:?}", delay);
+                                    log::warn!("Rate limited, retrying after {:?}", delay);
                                     sleep(delay).await;
                                     return self
                                         .generate_content_with_retry(
@@ -252,7 +252,7 @@ impl GeminiProvider {
                                 // Server error - retry with exponential backoff
                                 if retry_count < self.max_retries {
                                     let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
-                                    println!("Server error, retrying after {:?}", delay);
+                                    log::warn!("Server error, retrying after {:?}", delay);
                                     sleep(delay).await;
                                     return self
                                         .generate_content_with_retry(

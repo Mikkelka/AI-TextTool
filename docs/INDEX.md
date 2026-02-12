@@ -46,9 +46,10 @@ Welcome to the AI-TextTool documentation. This folder contains project documenta
 ---
 
 ### [CODE_OPTIMIZATION_2026-02-12.md](CODE_OPTIMIZATION_2026-02-12.md)
-**Prioritized optimization roadmap based on current codebase checks (2026-02-12)**
+**Prioritized optimization roadmap with implementation status (2026-02-12)**
 - Verified baseline from lint/test/build commands
-- Priority buckets: P0, P1, P2
+- Priority buckets: P0, P1, P2 with current status
+- P0 marked as completed; remaining focus moved to selected P1/P2 items
 - Concrete file references and acceptance criteria
 - Quick wins (first 48 hours) and next sprint guidance
 - Risk/compatibility notes and definition of done

@@ -48,7 +48,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
             {
                 // On left click, do nothing - user should use right-click for menu
                 // or use the global hotkey to interact with the app
-                println!("Tray icon clicked - use right-click for menu");
+                log::debug!("Tray icon clicked - use right-click for menu");
             }
         })
         .build(app);
@@ -64,22 +64,22 @@ fn handle_tray_menu_event<R: Runtime>(app: &tauri::AppHandle<R>, menu_id: &str) 
         }
         "chat" => {
             if let Err(e) = window_manager::create_tray_chat_window(app) {
-                eprintln!("Failed to create chat window from tray: {:?}", e);
+                log::error!("Failed to create chat window from tray: {e:?}");
             }
         }
         "settings" => {
             if let Err(e) = window_manager::create_settings_window(app) {
-                eprintln!("Failed to create settings window: {:?}", e);
+                log::error!("Failed to create settings window: {e:?}");
             }
         }
         "chat_history" => {
             if let Err(e) = window_manager::create_chat_history_window(app) {
-                eprintln!("Failed to create chat history window: {:?}", e);
+                log::error!("Failed to create chat history window: {e:?}");
             }
         }
         "edit_operations" => {
             if let Err(e) = window_manager::create_edit_operations_window(app) {
-                eprintln!("Failed to create edit operations window: {:?}", e);
+                log::error!("Failed to create edit operations window: {e:?}");
             }
         }
         _ => {}

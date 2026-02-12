@@ -72,7 +72,7 @@ pub fn create_window<R: Runtime>(
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
 
-    println!(
+    log::info!(
         "Creating window '{}' with title '{}'",
         config.window_id, config.title
     );
@@ -117,13 +117,13 @@ pub fn create_window<R: Runtime>(
     let window = builder.build()?;
     let _ = window.set_focus();
 
-    println!("Window '{}' created successfully", config.window_id);
+    log::info!("Window '{}' created successfully", config.window_id);
     Ok(())
 }
 
 /// Show the onboarding window for first-time setup
 pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    println!("Creating onboarding window");
+    log::info!("Creating onboarding window");
 
     let onboarding_window = WebviewWindowBuilder::new(
         app,
@@ -143,24 +143,24 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
     .decorations(false)
     .build()?;
 
-    println!("Onboarding window created successfully");
+    log::info!("Onboarding window created successfully");
 
     // Listen for onboarding window close event
     let app_handle = app.clone();
     onboarding_window.on_window_event(move |event| {
         if let tauri::WindowEvent::CloseRequested { .. } = event {
-            println!("Onboarding window closed - setting up tray and shortcuts");
+            log::info!("Onboarding window closed - setting up tray and shortcuts");
 
             // After onboarding is closed, set up tray and shortcuts
             if let Err(e) = super::tray_manager::create_tray(&app_handle) {
-                eprintln!("Failed to create tray after onboarding: {:?}", e);
+                log::error!("Failed to create tray after onboarding: {e:?}");
             }
 
             // Register global shortcut after onboarding (hardcoded to ctrl+space)
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
             match app_handle.global_shortcut().register("CmdOrCtrl+Space") {
-                Ok(()) => println!("Global shortcut registered after onboarding"),
-                Err(e) => println!("Failed to register shortcut after onboarding: {:?}", e),
+                Ok(()) => log::info!("Global shortcut registered after onboarding"),
+                Err(e) => log::error!("Failed to register shortcut after onboarding: {e:?}"),
             }
         }
     });
@@ -178,7 +178,7 @@ pub fn create_popup_window<R: Runtime>(
     // Create timestamp for unique URL
     let timestamp = time::get_current_timestamp_millis();
 
-    println!(
+    log::info!(
         "Creating popup window at mouse position: ({}, {})",
         mouse_x, mouse_y
     );
@@ -228,7 +228,7 @@ fn create_chat_window<R: Runtime>(
     prefix: &str,
     context: &str,
 ) -> tauri::Result<()> {
-    println!("{}", context);
+    log::info!("{context}");
 
     // Create timestamp for unique window ID
     let timestamp = time::get_current_timestamp_millis();
@@ -281,7 +281,7 @@ pub fn create_tray_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::
 
 /// Create a settings window from tray menu
 pub fn create_settings_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    println!("Opening settings window...");
+    log::info!("Opening settings window...");
 
     let config = WindowConfig {
         window_id: "settings".to_string(),
@@ -308,7 +308,7 @@ pub fn create_settings_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
 
 /// Create a chat history window from tray menu
 pub fn create_chat_history_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    println!("Opening chat history window...");
+    log::info!("Opening chat history window...");
 
     let config = WindowConfig {
         window_id: "chat_history".to_string(),
@@ -335,7 +335,7 @@ pub fn create_chat_history_window<R: Runtime>(app: &tauri::AppHandle<R>) -> taur
 
 /// Create an edit operations window from tray menu
 pub fn create_edit_operations_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    println!("Opening edit operations window...");
+    log::info!("Opening edit operations window...");
 
     let config = WindowConfig {
         window_id: "edit_operations".to_string(),

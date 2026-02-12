@@ -9,7 +9,7 @@ pub fn greet(name: &str) -> String {
 
 #[tauri::command]
 pub fn process_text(text: String, option: String, app: tauri::AppHandle) -> Result<String, String> {
-    println!("Processing text: '{}' with option: '{}'", text, option);
+    log::info!("Processing text with option '{}'", option);
 
     let processed_text = match option.as_str() {
         "add_word" => format!("{} [PROCESSED]", text),
@@ -18,14 +18,14 @@ pub fn process_text(text: String, option: String, app: tauri::AppHandle) -> Resu
         _ => text,                                            // Return original if unknown option
     };
 
-    println!("Processed result: '{}'", processed_text);
+    log::debug!("Processed result length: {}", processed_text.len());
 
     // Put processed text in clipboard
     if let Err(e) = app.clipboard().write_text(processed_text.clone()) {
         return Err(format!("Failed to write to clipboard: {:?}", e));
     }
 
-    println!("Text put in clipboard, will auto-paste after popup closes");
+    log::debug!("Text put in clipboard, will auto-paste after popup closes");
 
     Ok(processed_text)
 }

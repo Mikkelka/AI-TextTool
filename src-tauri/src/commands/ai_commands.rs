@@ -63,7 +63,7 @@ pub async fn process_text_with_ai(
     operation: String,
     app: tauri::AppHandle,
 ) -> Result<String, String> {
-    println!(
+    log::info!(
         "Processing text with AI (length: {} chars) using operation: '{}'",
         text.len(),
         operation
@@ -122,7 +122,7 @@ pub async fn process_text_with_ai(
         return Err(format!("Failed to write to clipboard: {:?}", e));
     }
 
-    println!("AI processing completed successfully, result copied to clipboard");
+    log::info!("AI processing completed successfully, result copied to clipboard");
     Ok(result)
 }
 
@@ -134,7 +134,7 @@ pub async fn chat_with_ai(
     enable_thinking: Option<bool>,
     app: tauri::AppHandle,
 ) -> Result<ChatResponse, String> {
-    println!("Chat with AI (length: {} chars)", message.len());
+    log::info!("Chat with AI (length: {} chars)", message.len());
 
     // Validate input
     validation::validate_message_input(&message)?;
@@ -185,7 +185,7 @@ pub async fn chat_with_ai(
         .await
     {
         Ok(response) => {
-            println!("Chat response generated successfully");
+            log::info!("Chat response generated successfully");
             Ok(response)
         }
         Err(e) => Err(format!("Chat failed: {}", e)),
@@ -194,7 +194,7 @@ pub async fn chat_with_ai(
 
 #[tauri::command]
 pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
-    println!("Testing AI connection...");
+    log::info!("Testing AI connection...");
 
     let manager = load_data_manager(app).await?;
     let config = manager.get_config().clone();
@@ -210,11 +210,11 @@ pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
 
     match provider.test_connection().await {
         Ok(connected) => {
-            println!("Connection test result: {}", connected);
+            log::info!("Connection test result: {}", connected);
             Ok(connected)
         }
         Err(e) => {
-            println!("Connection test failed: {}", e);
+            log::warn!("Connection test failed: {}", e);
             Ok(false)
         }
     }
