@@ -74,6 +74,7 @@
   import { invoke } from '@tauri-apps/api/core'
   import { openUrl } from '@tauri-apps/plugin-opener'
   import { getCurrentWindow } from '@tauri-apps/api/window'
+  import { logger } from '../utils/logger'
   import type { Config } from '../types'
 
   const formData = ref({
@@ -97,7 +98,7 @@
 
   const loadConfig = async () => {
     try {
-      console.log('Loading existing configuration...')
+      logger.debug('Loading existing configuration...')
       const config = await invoke<Config>('dm_load_config')
 
       // Populate form with existing config
@@ -108,20 +109,20 @@
         systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
-      console.log('Configuration loaded successfully')
+      logger.debug('Configuration loaded successfully')
     } catch (error) {
-      console.error('Failed to load config:', error)
+      logger.error('Failed to load config:', error)
       // If no config exists, use defaults (form is already initialized with defaults)
-      console.log('Using default configuration values')
+      logger.debug('Using default configuration values')
     }
   }
 
   const openApiKeyPage = async () => {
     try {
       await openUrl('https://aistudio.google.com/app/apikey')
-      console.log('Opened API key page')
+      logger.debug('Opened API key page')
     } catch (error) {
-      console.error('Failed to open API key page:', error)
+      logger.error('Failed to open API key page:', error)
       showMessage(
         'Failed to open browser. Please visit https://aistudio.google.com/app/apikey manually.',
         'error'
@@ -134,7 +135,7 @@
 
     try {
       isSaving.value = true
-      console.log('Saving settings...')
+      logger.debug('Saving settings...')
 
       // Load existing config first to preserve other settings
       let config: Config
@@ -174,7 +175,7 @@
       await invoke('dm_save_config', { config })
 
       showMessage('Settings saved successfully!', 'success')
-      console.log('Settings saved successfully')
+      logger.debug('Settings saved successfully')
 
       // Close window after brief delay to show success message
       setTimeout(async () => {
@@ -182,11 +183,11 @@
           const currentWindow = getCurrentWindow()
           await currentWindow.close()
         } catch (error) {
-          console.error('Failed to close window:', error)
+          logger.error('Failed to close window:', error)
         }
       }, 1500)
     } catch (error) {
-      console.error('Failed to save settings:', error)
+      logger.error('Failed to save settings:', error)
       showMessage('Failed to save settings. Please try again.', 'error')
     } finally {
       isSaving.value = false
@@ -198,12 +199,12 @@
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
-      console.error('Failed to close window:', error)
+      logger.error('Failed to close window:', error)
     }
   }
 
   onMounted(() => {
-    console.log('SettingsWindow mounted successfully')
+    logger.debug('SettingsWindow mounted successfully')
     void loadConfig()
   })
 </script>

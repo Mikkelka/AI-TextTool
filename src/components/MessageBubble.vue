@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
   import { renderMarkdown } from '../utils/markdown'
+  import { logger } from '../utils/logger'
 
   // Props
   interface Props {
@@ -106,7 +107,7 @@
     try {
       await navigator.clipboard.writeText(content)
     } catch (err) {
-      console.error('Failed to copy message:', err)
+      logger.error('Failed to copy message:', err)
     }
   }
 </script>

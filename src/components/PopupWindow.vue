@@ -71,6 +71,7 @@
 <script setup lang="ts">
   import { ref, onMounted, onUnmounted, nextTick } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
+  import { logger } from '../utils/logger'
   import type { Operation, PopupWindowProps } from '../types'
 
   // Props
@@ -81,7 +82,7 @@
   // Emits
   interface Emits {
     (e: 'close'): void
-    (e: 'operation-selected', operation: string, details: any): void
+    (e: 'operation-selected', operation: string, details: Operation): void
   }
 
   const emit = defineEmits<Emits>()
@@ -115,7 +116,7 @@
         selectedIndex.value = 0
       }
     } catch (err) {
-      console.error('Failed to load operations:', err)
+      logger.error('Failed to load operations:', err)
       error.value = err instanceof Error ? err.message : 'Failed to load operations'
     } finally {
       isLoading.value = false
@@ -127,15 +128,15 @@
   }
 
   const handleOperationClick = async (operationKey: string, operation: Operation) => {
-    console.log(`Operation clicked: ${operationKey}, open_in_window: ${operation.open_in_window}`)
+    logger.debug(`Operation clicked: ${operationKey}, open_in_window: ${operation.open_in_window}`)
 
     if (!clipboardText.value?.trim()) {
-      console.warn('No text selected for processing')
+      logger.warn('No text selected for processing')
       error.value = 'No text selected for processing'
       return
     }
 
-    console.log(
+    logger.debug(
       `Processing operation: ${operationKey} with text length: ${clipboardText.value.length}`
     )
 
@@ -144,16 +145,16 @@
       emit('operation-selected', operationKey, operation)
 
       if (operation.open_in_window) {
-        console.log(`Opening chat window for operation: ${operationKey}`)
+        logger.debug(`Opening chat window for operation: ${operationKey}`)
         // Open chat window for chat operations
         await openChatWindow(operationKey, operation)
       } else {
-        console.log(`Processing text directly for operation: ${operationKey}`)
+        logger.debug(`Processing text directly for operation: ${operationKey}`)
         // Process directly for non-chat operations
         await processTextDirectly(operationKey, operation)
       }
     } catch (err) {
-      console.error('Operation failed:', err)
+      logger.error('Operation failed:', err)
       error.value = err instanceof Error ? err.message : 'Operation failed'
     } finally {
       processingOperation.value = null
@@ -167,7 +168,7 @@
         operation: operationKey
       })) as string
 
-      console.log('Text processed successfully:', result)
+      logger.debug('Text processed successfully:', result)
 
       // Save to chat history
       await invoke('save_chat_entry', {
@@ -183,9 +184,9 @@
       setTimeout(async () => {
         try {
           await invoke('simulate_paste')
-          console.log('Auto-paste completed')
+          logger.debug('Auto-paste completed')
         } catch (pasteError) {
-          console.error('Auto-paste failed:', pasteError)
+          logger.error('Auto-paste failed:', pasteError)
         }
       }, 200)
     } catch (err) {
@@ -195,11 +196,11 @@
 
   const openChatWindow = async (operationKey: string, operation: Operation) => {
     try {
-      console.log(`Opening chat window for operation: ${operationKey}`)
+      logger.debug(`Opening chat window for operation: ${operationKey}`)
 
       // Send raw text - let the backend handle operation prefix
       const textToSend = clipboardText.value
-      console.log(
+      logger.debug(
         `Text to send (length: ${textToSend.length}):`,
         textToSend.substring(0, 100) + '...'
       )
@@ -211,12 +212,12 @@
         instruction: operation.instruction
       })
 
-      console.log('Chat window opened successfully via backend command')
+      logger.debug('Chat window opened successfully via backend command')
 
       // Close popup after opening chat
       void closeWindow()
     } catch (err) {
-      console.error('Failed to open chat window:', err)
+      logger.error('Failed to open chat window:', err)
       throw new Error(`Failed to open chat window: ${err}`)
     }
   }
@@ -284,12 +285,12 @@
 
   const closeWindow = async () => {
     try {
-      console.log('Closing popup window...')
+      logger.debug('Closing popup window...')
       const { getCurrentWindow } = await import('@tauri-apps/api/window')
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
-      console.error('Failed to close popup window:', error)
+      logger.error('Failed to close popup window:', error)
       // Fallback: emit close event
       emit('close')
     }

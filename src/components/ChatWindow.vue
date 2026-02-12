@@ -146,6 +146,7 @@
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { setupMarkdownCopyFunction, cleanupMarkdownCopyFunction } from '../utils/markdown'
+  import { logger } from '../utils/logger'
   import MessageBubble from './MessageBubble.vue'
   import InputArea from './InputArea.vue'
   import type { ChatMessage, ChatWindowProps, AIResponse } from '../types'
@@ -222,7 +223,7 @@
       const models = (await invoke('get_ai_models')) as string[]
       state.availableModels = models
     } catch (err) {
-      console.error('Failed to load models:', err)
+      logger.error('Failed to load models:', err)
       state.availableModels = [
         'gemini-3-flash-preview',
         'gemini-2.5-flash',
@@ -327,7 +328,7 @@
         }
       }
     } catch (err) {
-      console.error('Failed to get AI response:', err)
+      logger.error('Failed to get AI response:', err)
       state.error = err instanceof Error ? err.message : 'Failed to get AI response'
 
       // Remove processing message on error
@@ -391,7 +392,7 @@
         }
       }
     } catch (err) {
-      console.error('Failed to regenerate response:', err)
+      logger.error('Failed to regenerate response:', err)
       state.error = err instanceof Error ? err.message : 'Failed to regenerate response'
 
       // Remove processing message
@@ -439,10 +440,10 @@
         thinkingModeEnabled: state.enableThinking
       })) as string
 
-      console.log('Conversation saved successfully with ID:', conversationId)
+      logger.debug('Conversation saved successfully with ID:', conversationId)
       alert('✅ Conversation saved successfully!')
     } catch (err) {
-      console.error('Failed to save conversation:', err)
+      logger.error('Failed to save conversation:', err)
       state.error =
         'Failed to save conversation: ' + (err instanceof Error ? err.message : String(err))
       alert('❌ Failed to save conversation: ' + state.error)
@@ -525,7 +526,7 @@
     if (!props.conversationId) return
 
     try {
-      console.log('Loading conversation:', props.conversationId)
+      logger.debug('Loading conversation:', props.conversationId)
 
       const conversation = (await invoke('load_conversation_messages', {
         conversationId: props.conversationId
@@ -548,7 +549,7 @@
       state.messages = conversation.messages.map(msg => {
         // Validate role before using it
         if (!isValidRole(msg.role)) {
-          console.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
+          logger.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
           return {
             role: 'assistant' as const,
             content: msg.content,
@@ -569,10 +570,10 @@
       // Restore thinking mode setting
       if (conversation.thinking_mode_enabled !== undefined) {
         state.enableThinking = conversation.thinking_mode_enabled
-        console.log(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
+        logger.debug(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
       }
 
-      console.log(
+      logger.debug(
         `Loaded conversation "${conversation.title}" with ${conversation.messages.length} messages`
       )
 
@@ -580,7 +581,7 @@
       await nextTick()
       void scrollToBottom()
     } catch (err) {
-      console.error('Failed to load conversation:', err)
+      logger.error('Failed to load conversation:', err)
       state.error =
         'Failed to load conversation: ' + (err instanceof Error ? err.message : String(err))
     }
@@ -605,7 +606,7 @@
 
   // Lifecycle
   onMounted(async () => {
-    console.log('ChatWindow mounted with props:', {
+    logger.debug('ChatWindow mounted with props:', {
       operation: props.operation,
       initialText: props.initialText ? `${props.initialText.length} chars` : 'none',
       title: props.title,
@@ -620,22 +621,22 @@
     const operation = props.operation || urlParams.get('operation') || ''
     const initialText = props.initialText || urlParams.get('text') || ''
 
-    console.log('Final values after URL parsing:', {
+    logger.debug('Final values after URL parsing:', {
       operation,
       initialText: initialText ? `${initialText.length} chars` : 'none'
     })
 
     // Load existing conversation if conversationId is provided
     if (props.conversationId) {
-      console.log('Loading existing conversation:', props.conversationId)
+      logger.debug('Loading existing conversation:', props.conversationId)
       await loadConversation()
     } else {
       // Send initial message if there's initial text and operation (only for new chats)
       if (initialText && operation) {
-        console.log(`Auto-sending initial text for operation: ${operation}`)
+        logger.debug(`Auto-sending initial text for operation: ${operation}`)
         await sendMessage(initialText)
       } else {
-        console.log('No initial text or operation - waiting for user input')
+        logger.debug('No initial text or operation - waiting for user input')
       }
     }
 

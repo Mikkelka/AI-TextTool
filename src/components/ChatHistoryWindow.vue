@@ -244,6 +244,7 @@
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { renderMarkdown } from '../utils/markdown'
+  import { logger } from '../utils/logger'
   import type { SavedConversation } from '../types'
 
   // Chat Entry Interface
@@ -290,8 +291,8 @@
       filtered = filtered.filter(entry => entry.ai_option === selectedOperation.value)
     }
 
-    // Sort by timestamp (newest first)
-    return filtered.sort(
+    // Sort by timestamp (newest first) without mutating source array
+    return [...filtered].sort(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
   })
@@ -315,8 +316,8 @@
       filtered = filtered.filter(conversation => conversation.operation === selectedOperation.value)
     }
 
-    // Sort by created_at timestamp (newest first)
-    return filtered.sort(
+    // Sort by created_at timestamp (newest first) without mutating source array
+    return [...filtered].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )
   })
@@ -336,7 +337,7 @@
       entries.value = history
       conversations.value = savedConversations
     } catch (err) {
-      console.error('Failed to load history:', err)
+      logger.error('Failed to load history:', err)
       error.value = err instanceof Error ? err.message : 'Failed to load history'
     } finally {
       isLoading.value = false
@@ -362,7 +363,7 @@
       entries.value = []
       conversations.value = []
     } catch (err) {
-      console.error('Failed to clear history:', err)
+      logger.error('Failed to clear history:', err)
       error.value = 'Failed to clear history: ' + (err instanceof Error ? err.message : String(err))
     }
   }
@@ -370,18 +371,18 @@
   const copyOriginalText = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      console.log('Original text copied to clipboard')
+      logger.debug('Original text copied to clipboard')
     } catch (err) {
-      console.error('Failed to copy text:', err)
+      logger.error('Failed to copy text:', err)
     }
   }
 
   const copyProcessedText = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      console.log('Processed text copied to clipboard')
+      logger.debug('Processed text copied to clipboard')
     } catch (err) {
-      console.error('Failed to copy text:', err)
+      logger.error('Failed to copy text:', err)
     }
   }
 
@@ -393,12 +394,12 @@
         operation: entry.ai_option
       })) as string
 
-      console.log('Text reprocessed successfully:', result)
+      logger.debug('Text reprocessed successfully:', result)
 
       // Refresh history to show the new entry
       await loadHistory()
     } catch (err) {
-      console.error('Failed to reprocess text:', err)
+      logger.error('Failed to reprocess text:', err)
       error.value =
         'Failed to reprocess text: ' + (err instanceof Error ? err.message : String(err))
     }
@@ -409,7 +410,7 @@
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (err) {
-      console.error('Failed to close window:', err)
+      logger.error('Failed to close window:', err)
     }
   }
 
@@ -470,9 +471,9 @@
         title: conversation.title
       })
 
-      console.log('Reopened conversation:', conversation.title)
+      logger.debug('Reopened conversation:', conversation.title)
     } catch (err) {
-      console.error('Failed to reopen conversation:', err)
+      logger.error('Failed to reopen conversation:', err)
       error.value =
         'Failed to reopen conversation: ' + (err instanceof Error ? err.message : String(err))
       alert('❌ Failed to reopen conversation')
@@ -497,7 +498,7 @@
       await navigator.clipboard.writeText(markdown)
       alert('✅ Conversation exported to clipboard as Markdown!')
     } catch (err) {
-      console.error('Failed to export conversation:', err)
+      logger.error('Failed to export conversation:', err)
       error.value = 'Failed to export conversation'
       alert('❌ Failed to export conversation')
     }
@@ -518,9 +519,9 @@
       // Remove from local state
       conversations.value = conversations.value.filter(c => c.id !== conversationId)
 
-      console.log('Conversation deleted:', conversation.title)
+      logger.debug('Conversation deleted:', conversation.title)
     } catch (err) {
-      console.error('Failed to delete conversation:', err)
+      logger.error('Failed to delete conversation:', err)
       error.value =
         'Failed to delete conversation: ' + (err instanceof Error ? err.message : String(err))
       alert('❌ Failed to delete conversation')

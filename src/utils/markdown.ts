@@ -1,5 +1,6 @@
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { logger } from './logger'
 
 // Configure marked for GitHub Flavored Markdown
 marked.setOptions({
@@ -69,7 +70,7 @@ export function renderMarkdown(markdown: string): string {
 
     return sanitized
   } catch (error) {
-    console.error('Error rendering markdown:', error)
+    logger.error('Error rendering markdown:', error)
     // Fallback to escaped plain text
     return escapeHtml(markdown)
   }
@@ -93,10 +94,7 @@ function addCustomClasses(html: string): string {
       relParts.add('noopener')
       relParts.add('noreferrer')
       const newRel = Array.from(relParts).join(' ')
-      const updatedAttrs = attrs.replace(
-        /rel\s*=\s*["'][^"']*["']/i,
-        `rel="${newRel}"`
-      )
+      const updatedAttrs = attrs.replace(/rel\s*=\s*["'][^"']*["']/i, `rel="${newRel}"`)
       return `<a${updatedAttrs}>`
     }
 
@@ -128,7 +126,7 @@ const handleCopyCodeClick = (event: Event) => {
           }, 1000)
         })
         .catch(err => {
-          console.error('Failed to copy code:', err)
+          logger.error('Failed to copy code:', err)
         })
     }
   }
@@ -149,4 +147,3 @@ export function setupMarkdownCopyFunction() {
 export function cleanupMarkdownCopyFunction() {
   document.removeEventListener('click', handleCopyCodeClick)
 }
-

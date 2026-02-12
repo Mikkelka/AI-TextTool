@@ -257,9 +257,10 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import { ref, computed, onMounted, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { openUrl } from '@tauri-apps/plugin-opener'
+  import { logger } from '../utils/logger'
   import type { Config } from '../types'
 
   // Props
@@ -382,7 +383,7 @@
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
-      console.error('Failed to close onboarding window:', error)
+      logger.error('Failed to close onboarding window:', error)
     }
   }
 
@@ -390,7 +391,7 @@
     try {
       await openUrl('https://aistudio.google.com/app/apikey')
     } catch (err) {
-      console.error('Failed to open API key URL:', err)
+      logger.error('Failed to open API key URL:', err)
       error.value =
         'Failed to open browser. Please visit https://aistudio.google.com/app/apikey manually.'
     }
@@ -426,7 +427,7 @@
         error.value = 'Failed to connect to AI service. Please check your API key.'
       }
     } catch (err) {
-      console.error('Connection test failed:', err)
+      logger.error('Connection test failed:', err)
       testResults.value.connection = false
       error.value = err instanceof Error ? err.message : 'Connection test failed'
     } finally {
@@ -522,13 +523,13 @@
           const currentWindow = getCurrentWindow()
           await currentWindow.close()
         } catch (error) {
-          console.error('Failed to close onboarding window:', error)
+          logger.error('Failed to close onboarding window:', error)
           // Fallback: emit event in case window close fails
           emit('setup-complete')
         }
       }, 1000)
     } catch (err) {
-      console.error('Failed to save configuration:', err)
+      logger.error('Failed to save configuration:', err)
       error.value = err instanceof Error ? err.message : 'Failed to save configuration'
       isLoading.value = false
     }
@@ -545,7 +546,7 @@
         const currentWindow = getCurrentWindow()
         await currentWindow.close()
       } catch (error) {
-        console.error('Failed to close onboarding window:', error)
+        logger.error('Failed to close onboarding window:', error)
         emit('setup-skipped')
       }
     }
@@ -591,18 +592,17 @@
     }
   }
 
+  watch(
+    () => formData.value.apiKey,
+    () => {
+      watchApiKey()
+    }
+  )
+
   // Lifecycle
   onMounted(() => {
     // Focus the component for keyboard navigation
     ;(document.querySelector('.onboarding-window') as HTMLElement)?.focus()
-
-    // Watch for API key changes
-    // Watch for API key changes
-    const interval = setInterval(watchApiKey, 500)
-
-    onUnmounted(() => {
-      clearInterval(interval)
-    })
   })
 </script>
 
