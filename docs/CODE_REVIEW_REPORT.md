@@ -12,7 +12,7 @@ Note: Ratings assume this is a personal, local-only app used by a single person.
 ### 2) Clipboard can be overwritten with marker and not restored (High, 4/5)
 **Issue:** The clipboard is set to a marker to detect changes, but if no text is selected or a failure occurs, the original clipboard value may be lost.
 - Evidence: `src-tauri/src/shortcut_manager.rs:47-73`, `src-tauri/src/shortcut_manager.rs:146-155`
-**Improve:** Always restore `original_clipboard` before returning in the “no text detected” or error paths.
+**Improve:** Always restore `original_clipboard` before returning in the no-text-detected or error paths.
 **Status:** Fixed on 2026-01-27 (restore original clipboard on error/no-text paths).
 
 ### 3) Rate limiter records pre-wait timestamp (Medium, 3/5)
@@ -22,9 +22,9 @@ Note: Ratings assume this is a personal, local-only app used by a single person.
 **Status:** Fixed on 2026-01-27 (record timestamp after waiting).
 
 ### 4) Duplicate/competing prompts for text operations (Medium, 3/5)
-**Issue:** Text operations combine a prefixed prompt *and* a hardcoded prompt *and* a system instruction, which duplicates or conflicts with the user instruction set. This can reduce response quality and make operations inconsistent.
+**Issue:** Text operations combine a prefixed prompt and a hardcoded prompt and a system instruction, which duplicates or conflicts with the user instruction set. This can reduce response quality and make operations inconsistent.
 - Evidence: `src-tauri/src/commands/ai_commands.rs:95-109`, `src-tauri/src/ai_provider/gemini.rs:474-499`, `src-tauri/src/data_manager/types.rs:150-193`
-**Improve:** Choose a single source of truth (either operation prefix/instruction **or** hardcoded prompts) and pass only one.
+**Improve:** Choose a single source of truth (either operation prefix/instruction or hardcoded prompts) and pass only one.
 **Status:** Fixed on 2026-01-27 (text operations now use operation config only).
 
 ### 5) Non-atomic writes to `app_data.json` (Medium, 3/5)
@@ -46,11 +46,14 @@ Note: Ratings assume this is a personal, local-only app used by a single person.
 **Status:** Fixed on 2026-01-27 (ensure rel includes noopener/noreferrer for target=_blank).
 
 ## Testing gaps
+
 - No automated tests for clipboard flows, data migration, or AI error handling. Add at least one integration test for clipboard detection and one for data save/load integrity.
 
 ## Open questions / assumptions
+
 - Are you ok with removing clipboard content logging entirely, or do you want a debug-only toggle?
 - Should text operations be fully driven by the editable operations in `app_data.json` (and remove hardcoded prompts)?
 
 ## Change summary (high-level)
+
 - Focus on privacy (logs), clipboard safety, and prompt consistency first. Then fix rate limiting and data-write robustness.

@@ -17,8 +17,7 @@
     "check": "npm run lint && prettier --check \"src/**/*.{vue,js,ts,html,css,json}\"",
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
-    "security-check": "npm audit --audit-level=moderate",
-    "tauri": "tauri"
+    "security-check": "npm audit --audit-level=moderate"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

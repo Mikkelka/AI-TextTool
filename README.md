@@ -166,16 +166,20 @@ npm run lint:rust        # Check Rust linting (Clippy)
 # Specific fixes
 npm run fix:vue          # Fix Vue + format with Prettier
 npm run fix:rust         # Format Rust code
+
+# Security
+npm run security-check   # Run npm audit with moderate threshold
 ```
 
 **Important**: Always run `npm run check` before committing to ensure code quality!
 
 ## 📚 Documentation
 
-- **[CLAUDE.md](CLAUDE.md)** - Complete project documentation for developers
-- **[docs/TAURI_REFERENCE.md](docs/TAURI_REFERENCE.md)** - Comprehensive Tauri 2.0 plugin usage guide with real-world solutions
-- **[docs/CODE_REVIEW.md](docs/CODE_REVIEW.md)** - Code review report and optimization opportunities
 - **[docs/INDEX.md](docs/INDEX.md)** - Documentation index and navigation guide
+- **[docs/TAURI_REFERENCE.md](docs/TAURI_REFERENCE.md)** - Tauri-specific implementation notes and working patterns
+- **[docs/CODE_REVIEW_REPORT.md](docs/CODE_REVIEW_REPORT.md)** - Concise historical code review summary
+- **[docs/CODE_REVIEW.md](docs/CODE_REVIEW.md)** - Older, detailed historical review
+- **[docs/CODE_OPTIMIZATION_2026-02-12.md](docs/CODE_OPTIMIZATION_2026-02-12.md)** - Optimization roadmap and status snapshot
 
 The Tauri reference covers:
 - Clipboard Manager, Global Shortcut, File System, Opener plugins
