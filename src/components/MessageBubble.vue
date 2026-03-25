@@ -7,17 +7,17 @@
         { 'message-processing': message.isProcessing }
       ]"
     >
-      <!-- Message Header -->
       <div class="message-header">
         <span class="message-role">
-          {{ message.role === 'user' ? '👤 You' : '🤖 AI Assistant' }}
+          <AppIcon :icon="message.role === 'user' ? UserRound : Bot" :size="14" />
+          {{ message.role === 'user' ? 'You' : 'AI Assistant' }}
         </span>
         <span class="message-time">
           {{ formatTime(message.timestamp) }}
         </span>
         <div class="message-actions">
           <button class="copy-btn" title="Copy message" @click="copyMessage(message.content)">
-            📋
+            <AppIcon :icon="Copy" :size="14" />
           </button>
           <button
             v-if="message.role === 'assistant' && !message.isProcessing"
@@ -25,18 +25,20 @@
             title="Regenerate response"
             @click="$emit('regenerate')"
           >
-            🔄
+            <AppIcon :icon="RefreshCw" :size="14" />
           </button>
         </div>
       </div>
 
-      <!-- Thinking Process (only for assistant messages with thoughts) -->
       <div
         v-if="message.role === 'assistant' && message.thoughts && !message.isProcessing"
         class="thoughts-section"
       >
         <details class="thoughts-details">
-          <summary class="thoughts-header">💭 AI's Thinking Process</summary>
+          <summary class="thoughts-header">
+            <AppIcon :icon="Brain" :size="14" />
+            AI's Thinking Process
+          </summary>
           <div class="thoughts-content">
             <SanitizedMarkdown
               class="markdown-content thoughts-markdown"
@@ -46,7 +48,6 @@
         </details>
       </div>
 
-      <!-- Message Content -->
       <div class="message-content">
         <SanitizedMarkdown
           v-if="message.role === 'assistant'"
@@ -58,7 +59,6 @@
         </div>
       </div>
 
-      <!-- Processing Indicator -->
       <div v-if="message.isProcessing" class="processing-indicator">
         <div class="thinking-dots">
           <span></span>
@@ -72,10 +72,11 @@
 </template>
 
 <script setup lang="ts">
+  import { Bot, Brain, Copy, RefreshCw, UserRound } from '@lucide/vue'
+  import AppIcon from './AppIcon.vue'
   import SanitizedMarkdown from './SanitizedMarkdown.vue'
   import { logger } from '../utils/logger'
 
-  // Props
   interface Props {
     message: {
       role: 'user' | 'assistant'
@@ -88,12 +89,10 @@
 
   defineProps<Props>()
 
-  // Emits
   defineEmits<{
     regenerate: []
   }>()
 
-  // Helper functions
   const formatTime = (timestamp: string): string => {
     try {
       const date = new Date(timestamp)
@@ -152,6 +151,9 @@
   }
 
   .message-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 600;
     color: #666;
   }
@@ -167,6 +169,9 @@
 
   .copy-btn,
   .regenerate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     cursor: pointer;
@@ -195,7 +200,6 @@
     color: #ffffff;
   }
 
-  /* Markdown Content Styles */
   .markdown-content :deep(h1),
   .markdown-content :deep(h2),
   .markdown-content :deep(h3),
@@ -352,7 +356,6 @@
     }
   }
 
-  /* Thoughts Section */
   .thoughts-section {
     margin-bottom: 12px;
   }
@@ -408,7 +411,6 @@
     border-color: rgba(173, 216, 230, 0.3);
   }
 
-  /* Dark mode support */
   @media (prefers-color-scheme: dark) {
     .message-assistant {
       background: rgba(45, 55, 72, 0.95);
@@ -496,7 +498,6 @@
     }
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .message-bubble {
       max-width: 95%;

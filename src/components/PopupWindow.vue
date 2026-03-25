@@ -8,7 +8,7 @@
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
-      <div class="error-icon">⚠️</div>
+      <div class="error-icon"><AppIcon :icon="TriangleAlert" :size="28" /></div>
       <p class="error-message">{{ error }}</p>
       <button class="retry-button" @click="loadOperations">Retry</button>
     </div>
@@ -17,14 +17,14 @@
     <div v-else class="popup-content">
       <!-- Minimal Header -->
       <div class="popup-header" data-tauri-drag-region>
-        <span class="popup-title" data-tauri-drag-region>AI Operations</span>
+        <span class="popup-title" data-tauri-drag-region><AppIcon :icon="Sparkles" :size="14" />AI Operations</span>
         <button
           class="popup-close-btn"
           title="Close (ESC)"
           data-tauri-drag-region="false"
           @click="closeWindow"
         >
-          ✕
+          <AppIcon :icon="X" :size="12" />
         </button>
       </div>
 
@@ -71,6 +71,8 @@
 <script setup lang="ts">
   import { ref, onMounted, onUnmounted, nextTick } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
+  import { Sparkles, TriangleAlert, X } from '@lucide/vue'
+  import AppIcon from './AppIcon.vue'
   import { logger } from '../utils/logger'
   import type { Operation, PopupWindowProps } from '../types'
 
@@ -401,11 +403,17 @@
   }
 
   .popup-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 500;
     user-select: none;
   }
 
   .popup-close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: none;

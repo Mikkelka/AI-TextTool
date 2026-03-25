@@ -4,15 +4,13 @@
     <div class="chat-header" data-tauri-drag-region>
       <div class="header-left" data-tauri-drag-region>
         <h1 class="chat-title" data-tauri-drag-region>{{ windowTitle }}</h1>
-        <div v-if="operation" class="operation-info" data-tauri-drag-region>
+        <div v-if="showOperationBadge" class="operation-info" data-tauri-drag-region>
           <span class="operation-badge" data-tauri-drag-region>{{ operation }}</span>
         </div>
       </div>
 
-      <div class="header-controls">
-        <!-- Model Selector -->
+      <div class="header-center" data-tauri-drag-region>
         <div class="model-selector">
-          <label for="model-select">Model:</label>
           <select
             id="model-select"
             v-model="state.selectedModel"
@@ -26,9 +24,14 @@
           </select>
         </div>
 
-        <!-- Thinking Toggle -->
         <div v-if="supportsThinking" class="thinking-toggle">
-          <label class="toggle-label">
+          <label
+            class="toggle-label toggle-label--icon"
+            title="Thinking mode gives Gemini more room to reason before answering."
+          >
+            <span class="thinking-icon" aria-hidden="true">
+              <AppIcon :icon="Brain" :size="16" />
+            </span>
             <input
               v-model="state.enableThinking"
               type="checkbox"
@@ -36,11 +39,11 @@
               data-tauri-drag-region="false"
             />
             <span class="toggle-slider"></span>
-            Thinking Mode
           </label>
         </div>
+      </div>
 
-        <!-- Action Buttons -->
+      <div class="header-actions">
         <div class="action-buttons">
           <button
             class="action-btn save-btn"
@@ -49,7 +52,7 @@
             data-tauri-drag-region="false"
             @click="saveConversation"
           >
-            💾
+            <AppIcon :icon="Save" :size="16" />
           </button>
           <button
             class="action-btn clear-btn"
@@ -58,23 +61,7 @@
             data-tauri-drag-region="false"
             @click="clearConversation"
           >
-            🗑️
-          </button>
-          <button
-            class="action-btn zoom-btn"
-            title="Zoom in (Ctrl+Plus)"
-            data-tauri-drag-region="false"
-            @click="zoomIn"
-          >
-            🔍+
-          </button>
-          <button
-            class="action-btn zoom-btn"
-            title="Zoom out (Ctrl+Minus)"
-            data-tauri-drag-region="false"
-            @click="zoomOut"
-          >
-            🔍-
+            <AppIcon :icon="Trash2" :size="16" />
           </button>
           <button
             class="action-btn close-btn"
@@ -82,7 +69,7 @@
             data-tauri-drag-region="false"
             @click="closeWindow"
           >
-            ✕
+            <AppIcon :icon="X" :size="16" />
           </button>
         </div>
       </div>
@@ -93,7 +80,7 @@
       <!-- Welcome Message -->
       <div v-if="state.messages.length === 0" class="welcome-message">
         <div class="welcome-content">
-          <h2>💬 AI Chat Assistant</h2>
+          <h2 class="welcome-heading"><AppIcon :icon="MessageSquareText" :size="20" />AI Chat Assistant</h2>
           <p v-if="initialText">Ready to process your text and answer follow-up questions.</p>
           <p v-else>Start a conversation by typing your message below.</p>
           <div v-if="initialText" class="initial-text-preview">
@@ -133,9 +120,9 @@
     <!-- Error Display -->
     <div v-if="state.error" class="error-message">
       <div class="error-content">
-        <span class="error-icon">⚠️</span>
+        <span class="error-icon"><AppIcon :icon="TriangleAlert" :size="16" /></span>
         <span class="error-text">{{ state.error }}</span>
-        <button class="error-close" @click="clearError">✕</button>
+        <button class="error-close" @click="clearError"><AppIcon :icon="X" :size="14" /></button>
       </div>
     </div>
     <AppPromptDialog
@@ -166,9 +153,11 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
+  import { Brain, MessageSquareText, Save, TriangleAlert, Trash2, X } from '@lucide/vue'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { setupMarkdownCopyFunction, cleanupMarkdownCopyFunction } from '../utils/markdown'
   import { logger } from '../utils/logger'
+  import AppIcon from './AppIcon.vue'
   import AppConfirmDialog from './AppConfirmDialog.vue'
   import AppPromptDialog from './AppPromptDialog.vue'
   import AppToast from './AppToast.vue'
@@ -192,8 +181,7 @@
     error: null as string | null,
     selectedModel: 'gemini-3-flash-preview' as string,
     enableThinking: false,
-    availableModels: [] as string[],
-    zoomLevel: 100
+    availableModels: [] as string[]
   })
 
   // Refs
@@ -216,7 +204,12 @@
   // Computed Properties
   const windowTitle = computed(() => {
     if (props.title && props.title !== 'AI Chat') return props.title
-    return props.operation ? `AI Chat - ${props.operation}` : 'AI Chat'
+    if (!props.operation || props.operation === 'Chat') return 'AI Chat'
+    return `AI Chat - ${props.operation}`
+  })
+
+  const showOperationBadge = computed(() => {
+    return Boolean(props.operation && props.operation !== 'Chat')
   })
 
   const initialTextPreview = computed(() => {
@@ -570,24 +563,6 @@
     inputArea.value?.focusInput()
   }
 
-  const zoomIn = () => {
-    if (state.zoomLevel < 200) {
-      state.zoomLevel += 10
-      applyZoom()
-    }
-  }
-
-  const zoomOut = () => {
-    if (state.zoomLevel > 50) {
-      state.zoomLevel -= 10
-      applyZoom()
-    }
-  }
-
-  const applyZoom = () => {
-    document.documentElement.style.fontSize = `${state.zoomLevel}%`
-  }
-
   const closeWindow = () => {
     void getCurrentWindow().close()
   }
@@ -599,15 +574,6 @@
         case 'L':
           event.preventDefault()
           void clearConversation()
-          break
-        case '=':
-        case '+':
-          event.preventDefault()
-          zoomIn()
-          break
-        case '-':
-          event.preventDefault()
-          zoomOut()
           break
       }
     } else if (event.key === 'Escape') {
@@ -767,8 +733,8 @@
 
   /* Header Styles */
   .chat-header {
+    position: relative;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
     background: rgba(255, 255, 255, 0.95);
@@ -781,6 +747,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
   }
 
   .chat-title {
@@ -800,32 +767,40 @@
     text-transform: capitalize;
   }
 
-  .header-controls {
+  .header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 16px;
+    padding: 0 8px;
+    max-width: calc(100% - 280px);
+  }
+
+  .header-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-left: auto;
   }
 
   .model-selector {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
-  }
-
-  .model-selector label {
-    color: #666;
-    font-weight: 500;
+    min-width: 220px;
   }
 
   .model-dropdown {
-    padding: 4px 8px;
+    min-width: 220px;
+    padding: 8px 12px;
     border: 1px solid #ddd;
-    border-radius: 6px;
+    border-radius: 10px;
     background: white;
     font-size: 13px;
     color: #333;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   .model-dropdown:disabled {
@@ -841,15 +816,29 @@
   .toggle-label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #666;
+    gap: 12px;
+    padding: 8px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.82);
     cursor: pointer;
     user-select: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .toggle-label--icon {
+    gap: 10px;
   }
 
   .toggle-label input {
     display: none;
+  }
+
+  .thinking-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
   }
 
   .toggle-slider {
@@ -942,7 +931,10 @@
     color: #666;
   }
 
-  .welcome-content h2 {
+  .welcome-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     color: #333;
     margin-bottom: 16px;
   }
@@ -1040,6 +1032,13 @@
     max-width: 400px;
   }
 
+  .error-icon,
+  .error-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .error-close {
     background: none;
     border: none;
@@ -1074,10 +1073,6 @@
       color: #93c5fd;
     }
 
-    .model-selector label {
-      color: #cbd5e0;
-    }
-
     .model-dropdown {
       background: #4a5568;
       color: #e2e8f0;
@@ -1085,7 +1080,12 @@
     }
 
     .toggle-label {
-      color: #cbd5e0;
+      background: rgba(45, 55, 72, 0.9);
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .thinking-icon {
+      color: #a0aec0;
     }
 
     .action-btn {
@@ -1112,7 +1112,7 @@
       color: #cbd5e0;
     }
 
-    .welcome-content h2 {
+    .welcome-heading {
       color: #e2e8f0;
     }
   }
@@ -1125,21 +1125,37 @@
       align-items: stretch;
     }
 
-    .header-controls {
-      justify-content: space-between;
+    .header-center {
+      position: static;
+      left: auto;
+      transform: none;
+      align-items: stretch;
+      justify-content: flex-start;
       flex-wrap: wrap;
       gap: 8px;
+      padding: 0;
+      max-width: none;
+    }
+
+    .header-actions {
+      justify-content: flex-end;
+      margin-left: 0;
+    }
+
+    .model-selector {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .model-dropdown {
+      min-width: 0;
+      width: 100%;
     }
   }
 
   @media (max-width: 480px) {
     .chat-messages {
       padding: 12px;
-    }
-
-    .model-selector,
-    .thinking-toggle {
-      font-size: 12px;
     }
 
     .action-buttons {
@@ -1151,5 +1167,6 @@
       height: 28px;
       font-size: 12px;
     }
+
   }
 </style>
