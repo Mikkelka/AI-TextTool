@@ -1,6 +1,6 @@
-# Tauri 2.0 Features & Solutions Documentation
+# Tauri 2.x Features & Solutions Documentation
 
-This document provides comprehensive, battle-tested documentation for Tauri 2.0 features used in this project. It includes working code examples, common issues, and solutions that took significant time to discover.
+This document provides comprehensive, battle-tested documentation for Tauri 2.x features used in this project. It includes working code examples, common issues, and solutions that took significant time to discover.
 
 > **Why this exists**: Tauri's official documentation is often incomplete or unclear. This guide documents real-world usage patterns and solutions to common problems.
 
@@ -392,10 +392,10 @@ tauri::Builder::default()
 
 #### Frontend (Vue/TypeScript)
 
-**CRITICAL**: Use the correct import path for Tauri 2.0:
+**CRITICAL**: Use the correct import path for Tauri 2.x:
 
 ```typescript
-// ✅ Correct - Tauri 2.0
+// Correct for Tauri 2.x
 import { openUrl } from '@tauri-apps/plugin-opener'
 
 async function openLink(url: string) {
@@ -434,7 +434,7 @@ async function openGeminiDocs() {
 **Solution**: Use `@tauri-apps/plugin-opener`:
 
 ```typescript
-// This is the ONLY correct import for Tauri 2.0
+// This is the ONLY correct import for Tauri 2.x
 import { openUrl } from '@tauri-apps/plugin-opener'
 ```
 
@@ -875,7 +875,7 @@ async function openChat() {
 **Why backend is better:**
 - Uses `tauri::WebviewUrl::App()` for proper URL handling
 - Avoids frontend permission and context issues
-- More reliable in Tauri 2.0
+- More reliable in Tauri 2.x
 - Consistent behavior across platforms
 
 #### Issue 5: Close window vs. hide window
@@ -1227,7 +1227,7 @@ eprintln!("Error occurred: {}", error);
 
 ## Resources
 
-- **Tauri 2.0 Official Docs**: https://v2.tauri.app/
+- **Tauri 2.x Official Docs**: https://v2.tauri.app/
 - **Plugin Documentation**: https://v2.tauri.app/plugin/
 - **API Reference**: https://docs.rs/tauri/2.0/
 

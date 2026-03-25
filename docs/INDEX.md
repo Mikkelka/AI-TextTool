@@ -30,6 +30,8 @@ Point-in-time optimization roadmap and status snapshot from February 12, 2026.
 ## Notes
 
 - `AGENTS.md` in the repo root is the active repository-instructions file for coding agents.
+- `README.md` and `AGENTS.md` should be treated as the current source of truth for day-to-day commands and current app defaults.
+- Historical docs in this folder may mention older model names, older branches, or point-in-time dependency states.
 - The old Claude-specific doc has been removed because it is no longer part of the workflow.
 
 ---

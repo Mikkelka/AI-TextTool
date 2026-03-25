@@ -33,6 +33,9 @@ A powerful desktop application that brings AI-powered text processing to your fi
 ### ⚙️ **Professional Configuration**
 - Google AI Studio API key integration
 - Choose between Gemini Flash and Flash-Lite models
+- Default Gemini setup:
+  - Chat: `gemini-3-flash-preview`
+  - Text operations: `gemini-3.1-flash-lite-preview`
 - Customizable system instructions
 - Configurable global shortcuts
 
@@ -53,7 +56,7 @@ A powerful desktop application that brings AI-powered text processing to your fi
 ## 🛠️ Technology Stack
 
 - **Frontend**: Vue 3 + TypeScript with Composition API
-- **Backend**: Rust with Tauri framework
+- **Backend**: Rust with Tauri 2.x
 - **AI Integration**: Google Gemini API with rate limiting
 - **Platform**: Cross-platform desktop application
 
@@ -139,6 +142,10 @@ npm run build        # Build desktop application
 # Frontend only
 npm run dev:web      # Start Vite dev server only
 npm run build:web    # Build frontend only
+
+# Quality
+npm run check        # Run linting + Prettier checks
+npm run fix          # Auto-fix Vue linting and format Rust
 ```
 
 ### Data Storage
@@ -186,6 +193,8 @@ The Tauri reference covers:
 - Window Management patterns and solutions
 - Common issues and their fixes
 - All code examples are battle-tested from this project
+
+Historical review docs are kept for context, but they are not the source of truth for current model choices or dependency versions.
 
 ## 🤝 Contributing
 
