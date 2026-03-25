@@ -16,8 +16,8 @@
         title="Send message (Enter)"
         @click="handleSendClick"
       >
-        <span v-if="!isProcessing">📤</span>
-        <span v-else class="spinner">⏳</span>
+        <AppIcon v-if="!isProcessing" :icon="SendHorizontal" :size="18" />
+        <AppIcon v-else class="spinner" :icon="LoaderCircle" :size="18" />
       </button>
     </div>
 
@@ -34,7 +34,9 @@
 </template>
 
 <script setup lang="ts">
+  import { LoaderCircle, SendHorizontal } from '@lucide/vue'
   import { ref, computed, nextTick, onMounted } from 'vue'
+  import AppIcon from './AppIcon.vue'
 
   // Props
   interface Props {
