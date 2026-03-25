@@ -228,7 +228,7 @@
   })
 
   const supportsThinking = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(
+    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(
       state.selectedModel
     )
   })
@@ -264,8 +264,7 @@
       logger.error('Failed to load models:', err)
       state.availableModels = [
         'gemini-3-flash-preview',
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite'
+        'gemini-3.1-flash-lite-preview'
       ]
     }
   }

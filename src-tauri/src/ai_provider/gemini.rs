@@ -487,14 +487,14 @@ impl GeminiProvider {
 
     /// Get available models (placeholder - would require additional API call)
     pub fn get_available_models() -> Vec<&'static str> {
-        vec!["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
+        vec!["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]
     }
 
     /// Check if a model supports thinking mode (for advanced reasoning)
     #[cfg(test)]
     pub fn supports_thinking_mode(model: &str) -> bool {
         // Currently, thinking mode is supported by certain models
-        matches!(model, "gemini-2.5-flash" | "gemini-1.5-pro")
+        matches!(model, "gemini-3-flash-preview")
     }
 
     /// Test the connection to Gemini API
@@ -503,7 +503,7 @@ impl GeminiProvider {
 
         match self
             .generate_content(
-                "gemini-2.5-flash-lite", // Use the fastest model for testing
+                "gemini-3.1-flash-lite-preview", // Use the lightweight model for testing
                 test_content,
                 Some("Please respond with just 'OK' to test the connection."),
                 Some(GenerationConfig {
@@ -539,9 +539,9 @@ mod tests {
 
     #[test]
     fn test_model_support() {
-        assert!(GeminiProvider::supports_thinking_mode("gemini-2.5-flash"));
+        assert!(GeminiProvider::supports_thinking_mode("gemini-3-flash-preview"));
         assert!(!GeminiProvider::supports_thinking_mode(
-            "gemini-2.5-flash-lite"
+            "gemini-3.1-flash-lite-preview"
         ));
     }
 }

@@ -18,6 +18,26 @@ pub struct DataManager {
 }
 
 impl DataManager {
+    fn normalize_config_models(config: &mut Config) {
+        if config.text_model == "gemini-3.1-flash-lite" {
+            config.text_model = "gemini-3.1-flash-lite-preview".to_string();
+        }
+
+        if config.text_model == "gemini-2.5-flash-lite" {
+            config.text_model = "gemini-3.1-flash-lite-preview".to_string();
+        }
+
+        if let Some(gemini) = config.providers.get_mut("Gemini") {
+            if gemini.text_model_name == "gemini-3.1-flash-lite" {
+                gemini.text_model_name = "gemini-3.1-flash-lite-preview".to_string();
+            }
+
+            if gemini.text_model_name == "gemini-2.5-flash-lite" {
+                gemini.text_model_name = "gemini-3.1-flash-lite-preview".to_string();
+            }
+        }
+    }
+
     /// Create a new DataManager instance
     pub fn new(_app_handle: AppHandle) -> Self {
         Self {
@@ -48,6 +68,7 @@ impl DataManager {
     async fn load_data(&mut self) -> Result<(), DataError> {
         let content = fs::read_to_string(&self.file_path).await?;
         self.data = serde_json::from_str(&content)?;
+        Self::normalize_config_models(&mut self.data.config);
         Ok(())
     }
 
@@ -169,6 +190,8 @@ impl DataManager {
 
     // Update methods
     pub async fn update_config(&mut self, config: Config) -> Result<(), DataError> {
+        let mut config = config;
+        Self::normalize_config_models(&mut config);
         self.data.config = config;
         self.save_data().await
     }
