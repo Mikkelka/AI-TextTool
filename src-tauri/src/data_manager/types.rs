@@ -1,6 +1,7 @@
 ﻿use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::ai_provider::GroundingSource;
 
 /// Custom error types for data management
 #[derive(Debug, thiserror::Error)]
@@ -89,6 +90,10 @@ pub struct ConversationMessage {
     pub content: String,
     pub timestamp: String,
     pub thoughts: Option<String>,
+    #[serde(default)]
+    pub sources: Vec<GroundingSource>,
+    #[serde(default)]
+    pub search_queries: Vec<String>,
 }
 
 /// Saved conversation
@@ -102,6 +107,8 @@ pub struct SavedConversation {
     pub updated_at: String,
     #[serde(default)]
     pub thinking_mode_enabled: bool,
+    #[serde(default)]
+    pub grounding_enabled: bool,
 }
 
 /// Metadata for the data file

@@ -161,7 +161,20 @@ pub struct GeminiRequest {
     pub generation_config: Option<GenerationConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub safety_settings: Option<Vec<SafetySetting>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tools: Option<Vec<Tool>>,
 }
+
+/// Gemini tool configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tool {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub google_search: Option<GoogleSearchTool>,
+}
+
+/// Google Search grounding tool
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GoogleSearchTool {}
 
 /// Candidate response from Gemini API
 #[derive(Debug, Deserialize)]
@@ -173,6 +186,8 @@ pub struct Candidate {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[allow(dead_code)]
     pub safety_ratings: Option<Vec<serde_json::Value>>,
+    #[serde(rename = "groundingMetadata", skip_serializing_if = "Option::is_none")]
+    pub grounding_metadata: Option<GroundingMetadata>,
 }
 
 /// Usage metadata from Gemini API
@@ -204,6 +219,62 @@ pub struct ChatResponse {
     pub answer: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thoughts: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sources: Option<Vec<GroundingSource>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search_queries: Option<Vec<String>>,
+}
+
+/// Grounding metadata returned by Google Search grounded responses
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroundingMetadata {
+    #[serde(rename = "webSearchQueries", default)]
+    pub web_search_queries: Vec<String>,
+    #[serde(rename = "groundingChunks", default)]
+    pub grounding_chunks: Vec<GroundingChunk>,
+    #[serde(rename = "groundingSupports", default)]
+    #[allow(dead_code)]
+    pub grounding_supports: Vec<GroundingSupport>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroundingChunk {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub web: Option<GroundingWebSource>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroundingWebSource {
+    pub uri: String,
+    pub title: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroundingSupport {
+    #[allow(dead_code)]
+    pub segment: GroundingSegment,
+    #[serde(rename = "groundingChunkIndices", default)]
+    #[allow(dead_code)]
+    pub grounding_chunk_indices: Vec<usize>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroundingSegment {
+    #[serde(rename = "startIndex")]
+    #[allow(dead_code)]
+    pub start_index: Option<usize>,
+    #[serde(rename = "endIndex")]
+    #[allow(dead_code)]
+    pub end_index: Option<usize>,
+    #[allow(dead_code)]
+    pub text: Option<String>,
+}
+
+/// Source extracted from grounding metadata for UI rendering
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GroundingSource {
+    pub title: String,
+    pub uri: String,
 }
 
 /// Error response from Gemini API

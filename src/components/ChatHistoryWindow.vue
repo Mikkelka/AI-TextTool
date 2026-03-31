@@ -561,6 +561,13 @@
       conversation.messages.forEach((message, _index) => {
         const role = message.role === 'user' ? '👤 **User**' : '🤖 **Assistant**'
         markdown += `## ${role}\n\n${message.content}\n\n`
+        if (message.sources?.length) {
+          markdown += `### Sources\n\n`
+          message.sources.forEach(source => {
+            markdown += `- [${source.title}](${source.uri})\n`
+          })
+          markdown += `\n`
+        }
       })
 
       // Copy to clipboard

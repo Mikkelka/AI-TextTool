@@ -14,8 +14,8 @@
     },
     {
       "identifier": "onboarding-opener",
-      "description": "Allows opening external onboarding links from the onboarding window only.",
-      "windows": ["onboarding"],
+      "description": "Allows opening external links from onboarding, settings, and chat windows.",
+      "windows": ["onboarding", "settings", "chat_*"],
       "permissions": ["opener:default"]
     }
   ]

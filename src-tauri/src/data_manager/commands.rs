@@ -58,6 +58,7 @@ pub async fn save_conversation(
     operation: String,
     messages: Vec<ConversationMessage>,
     thinking_mode_enabled: Option<bool>,
+    grounding_enabled: Option<bool>,
 ) -> Result<String, String> {
     let mut manager = load_data_manager(app).await?;
 
@@ -72,6 +73,7 @@ pub async fn save_conversation(
         created_at: now.clone(),
         updated_at: now,
         thinking_mode_enabled: thinking_mode_enabled.unwrap_or(false),
+        grounding_enabled: grounding_enabled.unwrap_or(false),
     };
 
     manager

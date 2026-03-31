@@ -41,6 +41,24 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+
+        <div v-if="supportsGrounding" class="thinking-toggle">
+          <label
+            class="toggle-label toggle-label--icon"
+            title="Let Gemini use Google Search for fresher, source-backed answers."
+          >
+            <span class="thinking-icon" aria-hidden="true">
+              <AppIcon :icon="Search" :size="16" />
+            </span>
+            <input
+              v-model="state.enableGrounding"
+              type="checkbox"
+              :disabled="state.isProcessing"
+              data-tauri-drag-region="false"
+            />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 
       <div class="header-actions">
@@ -153,7 +171,7 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
-  import { Brain, MessageSquareText, Save, TriangleAlert, Trash2, X } from '@lucide/vue'
+  import { Brain, MessageSquareText, Save, Search, TriangleAlert, Trash2, X } from '@lucide/vue'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { setupMarkdownCopyFunction, cleanupMarkdownCopyFunction } from '../utils/markdown'
   import { logger } from '../utils/logger'
@@ -163,7 +181,7 @@
   import AppToast from './AppToast.vue'
   import MessageBubble from './MessageBubble.vue'
   import InputArea from './InputArea.vue'
-  import type { ChatMessage, ChatWindowProps, AIResponse } from '../types'
+  import type { AIResponse, ChatMessage, ChatWindowProps, Config } from '../types'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {
@@ -181,6 +199,7 @@
     error: null as string | null,
     selectedModel: 'gemini-3-flash-preview' as string,
     enableThinking: false,
+    enableGrounding: false,
     availableModels: [] as string[]
   })
 
@@ -226,6 +245,12 @@
     )
   })
 
+  const supportsGrounding = computed(() => {
+    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(
+      state.selectedModel
+    )
+  })
+
   // Validation constants
   const MAX_MESSAGE_LENGTH = 10000 // 10KB limit, matching backend
   const MIN_MESSAGE_LENGTH = 1
@@ -259,6 +284,17 @@
         'gemini-3-flash-preview',
         'gemini-3.1-flash-lite-preview'
       ]
+    }
+  }
+
+  const loadCurrentChatModel = async () => {
+    try {
+      const config = await invoke<Config>('dm_load_config')
+      if (config.chat_model) {
+        state.selectedModel = config.chat_model
+      }
+    } catch (err) {
+      logger.warn('Failed to load current chat model:', err)
     }
   }
 
@@ -398,7 +434,9 @@
         message: messageToSend,
         history: chatHistory.slice(0, -1),
         customInstruction: instruction || null,
-        enableThinking: state.enableThinking
+        selectedModel: state.selectedModel,
+        enableThinking: state.enableThinking,
+        enableGrounding: state.enableGrounding
       })) as AIResponse
 
       // Update AI message with response
@@ -409,7 +447,9 @@
           content: response.answer,
           timestamp: new Date().toISOString(),
           isProcessing: false,
-          thoughts: response.thoughts
+          thoughts: response.thoughts,
+          sources: response.sources,
+          searchQueries: response.search_queries
         }
       }
     } catch (err) {
@@ -462,7 +502,9 @@
         message: userMessage.content,
         history: chatHistory.slice(0, -1),
         customInstruction: instruction || null,
-        enableThinking: state.enableThinking
+        selectedModel: state.selectedModel,
+        enableThinking: state.enableThinking,
+        enableGrounding: state.enableGrounding
       })) as AIResponse
 
       // Update AI message
@@ -473,7 +515,9 @@
           content: response.answer,
           timestamp: new Date().toISOString(),
           isProcessing: false,
-          thoughts: response.thoughts
+          thoughts: response.thoughts,
+          sources: response.sources,
+          searchQueries: response.search_queries
         }
       }
     } catch (err) {
@@ -514,7 +558,9 @@
           role: msg.role,
           content: msg.content,
           timestamp: msg.timestamp,
-          thoughts: msg.thoughts
+          thoughts: msg.thoughts,
+          sources: msg.sources || [],
+          search_queries: msg.searchQueries || []
         }))
 
       // Save the full conversation
@@ -522,7 +568,8 @@
         title: title.trim(),
         operation: props.operation || 'Chat',
         messages: conversationMessages,
-        thinkingModeEnabled: state.enableThinking
+        thinkingModeEnabled: state.enableThinking,
+        groundingEnabled: state.enableGrounding
       })) as string
 
       logger.debug('Conversation saved successfully with ID:', conversationId)
@@ -599,10 +646,16 @@
           content: string
           timestamp: string
           thoughts?: string
+          sources?: Array<{
+            title: string
+            uri: string
+          }>
+          search_queries?: string[]
         }>
         created_at: string
         updated_at: string
         thinking_mode_enabled?: boolean
+        grounding_enabled?: boolean
       }
 
       // Convert and load messages
@@ -615,7 +668,9 @@
             content: msg.content,
             timestamp: msg.timestamp,
             isProcessing: false,
-            thoughts: msg.thoughts
+            thoughts: msg.thoughts,
+            sources: msg.sources,
+            searchQueries: msg.search_queries
           }
         }
         return {
@@ -623,7 +678,9 @@
           content: msg.content,
           timestamp: msg.timestamp,
           isProcessing: false,
-          thoughts: msg.thoughts
+          thoughts: msg.thoughts,
+          sources: msg.sources,
+          searchQueries: msg.search_queries
         }
       })
 
@@ -631,6 +688,11 @@
       if (conversation.thinking_mode_enabled !== undefined) {
         state.enableThinking = conversation.thinking_mode_enabled
         logger.debug(`Restored thinking mode: ${conversation.thinking_mode_enabled}`)
+      }
+
+      if (conversation.grounding_enabled !== undefined) {
+        state.enableGrounding = conversation.grounding_enabled && supportsGrounding.value
+        logger.debug(`Restored grounding mode: ${conversation.grounding_enabled}`)
       }
 
       logger.debug(
@@ -664,6 +726,19 @@
     }
   )
 
+  watch(
+    () => state.selectedModel,
+    model => {
+      if (!supportsThinking.value) {
+        state.enableThinking = false
+      }
+      if (!supportsGrounding.value) {
+        state.enableGrounding = false
+      }
+      logger.debug(`Selected chat model changed to: ${model}`)
+    }
+  )
+
   // Lifecycle
   onMounted(async () => {
     logger.debug('ChatWindow mounted with props:', {
@@ -673,7 +748,7 @@
       conversationId: props.conversationId
     })
 
-    await loadAvailableModels()
+    await Promise.all([loadAvailableModels(), loadCurrentChatModel()])
     void focusInput()
 
     // Parse URL parameters if not provided as props (fallback)

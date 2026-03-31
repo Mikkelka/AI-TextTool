@@ -1,4 +1,5 @@
 use reqwest::Client;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -191,6 +192,7 @@ impl GeminiProvider {
                 generation_config: generation_config
                     .or_else(|| Some(self.default_generation_config.clone())),
                 safety_settings: Some(self.default_safety_settings.clone()),
+                tools: None,
             };
 
             let url = format!("{}/models/{}:generateContent", self.base_url, model);
@@ -303,12 +305,14 @@ impl GeminiProvider {
         contents: Vec<Content>,
         system_instruction: Option<&str>,
         generation_config: Option<GenerationConfig>,
+        enable_google_search_grounding: bool,
     ) -> Result<ChatResponse, GeminiError> {
         self.generate_chat_content_with_retry(
             model,
             contents,
             system_instruction,
             generation_config,
+            enable_google_search_grounding,
             0,
         )
         .await
@@ -321,6 +325,7 @@ impl GeminiProvider {
         contents: Vec<Content>,
         system_instruction: Option<&'a str>,
         generation_config: Option<GenerationConfig>,
+        enable_google_search_grounding: bool,
         retry_count: u32,
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<ChatResponse, GeminiError>> + Send + 'a>,
@@ -349,6 +354,11 @@ impl GeminiProvider {
                 generation_config: generation_config
                     .or_else(|| Some(self.default_generation_config.clone())),
                 safety_settings: Some(self.default_safety_settings.clone()),
+                tools: enable_google_search_grounding.then(|| {
+                    vec![Tool {
+                        google_search: Some(GoogleSearchTool::default()),
+                    }]
+                }),
             };
 
             let url = format!("{}/models/{}:generateContent", self.base_url, model);
@@ -387,8 +397,18 @@ impl GeminiProvider {
                             } else {
                                 Some(thoughts_parts.join("\n"))
                             };
+                            let (sources, search_queries) = candidate
+                                .grounding_metadata
+                                .as_ref()
+                                .map(Self::extract_grounding_details)
+                                .unwrap_or_else(|| (None, None));
 
-                            return Ok(ChatResponse { answer, thoughts });
+                            return Ok(ChatResponse {
+                                answer,
+                                thoughts,
+                                sources,
+                                search_queries,
+                            });
                         }
 
                         Err(GeminiError::InvalidRequest {
@@ -411,6 +431,7 @@ impl GeminiProvider {
                                             request.contents,
                                             system_instruction,
                                             request.generation_config,
+                                            enable_google_search_grounding,
                                             retry_count + 1,
                                         )
                                         .await;
@@ -430,6 +451,7 @@ impl GeminiProvider {
                                             request.contents,
                                             system_instruction,
                                             request.generation_config,
+                                            enable_google_search_grounding,
                                             retry_count + 1,
                                         )
                                         .await;
@@ -471,6 +493,7 @@ impl GeminiProvider {
         system_instruction: Option<&str>,
         model: &str,
         generation_config: Option<GenerationConfig>,
+        enable_google_search_grounding: bool,
     ) -> Result<ChatResponse, GeminiError> {
         // Convert chat messages to Gemini Content format
         let contents: Vec<Content> = messages
@@ -481,13 +504,27 @@ impl GeminiProvider {
             })
             .collect();
 
-        self.generate_chat_content(model, contents, system_instruction, generation_config)
-            .await
+        self.generate_chat_content(
+            model,
+            contents,
+            system_instruction,
+            generation_config,
+            enable_google_search_grounding,
+        )
+        .await
     }
 
     /// Get available models (placeholder - would require additional API call)
     pub fn get_available_models() -> Vec<&'static str> {
         vec!["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]
+    }
+
+    /// Check if a model supports Google Search grounding in this app
+    pub fn supports_google_search_grounding(model: &str) -> bool {
+        matches!(
+            model,
+            "gemini-3-flash-preview" | "gemini-3.1-flash-lite-preview"
+        )
     }
 
     /// Check if a model supports thinking mode (for advanced reasoning)
@@ -518,6 +555,32 @@ impl GeminiProvider {
             Err(GeminiError::InvalidApiKey) => Ok(false),
             Err(e) => Err(e),
         }
+    }
+
+    fn extract_grounding_details(
+        metadata: &GroundingMetadata,
+    ) -> (Option<Vec<GroundingSource>>, Option<Vec<String>>) {
+        let mut seen = HashSet::new();
+        let mut sources = Vec::new();
+
+        for chunk in &metadata.grounding_chunks {
+            let Some(web) = &chunk.web else {
+                continue;
+            };
+
+            if seen.insert(web.uri.clone()) {
+                sources.push(GroundingSource {
+                    title: web.title.clone(),
+                    uri: web.uri.clone(),
+                });
+            }
+        }
+
+        let sources = (!sources.is_empty()).then_some(sources);
+        let search_queries = (!metadata.web_search_queries.is_empty())
+            .then(|| metadata.web_search_queries.clone());
+
+        (sources, search_queries)
     }
 }
 
