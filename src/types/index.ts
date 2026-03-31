@@ -6,6 +6,13 @@ export interface ChatMessage {
   timestamp: string
   isProcessing?: boolean
   thoughts?: string
+  sources?: GroundingSource[]
+  searchQueries?: string[]
+}
+
+export interface GroundingSource {
+  title: string
+  uri: string
 }
 
 export interface Operation {
@@ -52,6 +59,7 @@ export interface SavedConversation {
   created_at: string
   updated_at: string
   thinking_mode_enabled?: boolean
+  grounding_enabled?: boolean
 }
 
 export interface ConversationMessage {
@@ -59,6 +67,8 @@ export interface ConversationMessage {
   content: string
   timestamp: string
   thoughts?: string
+  sources?: GroundingSource[]
+  searchQueries?: string[]
 }
 
 // Props interfaces for components
@@ -80,6 +90,8 @@ export type ModelName = 'gemini-3-flash-preview' | 'gemini-3.1-flash-lite-previe
 export interface AIResponse {
   answer: string
   thoughts?: string
+  sources?: GroundingSource[]
+  search_queries?: string[]
 }
 
 // Error types

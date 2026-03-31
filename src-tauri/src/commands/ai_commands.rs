@@ -131,7 +131,9 @@ pub async fn chat_with_ai(
     message: String,
     history: Vec<ChatMessage>,
     custom_instruction: Option<String>,
+    selected_model: Option<String>,
     enable_thinking: Option<bool>,
+    enable_grounding: Option<bool>,
     app: tauri::AppHandle,
 ) -> Result<ChatResponse, String> {
     log::info!("Chat with AI (length: {} chars)", message.len());
@@ -159,6 +161,18 @@ pub async fn chat_with_ai(
     let system_instruction = custom_instruction
         .as_ref()
         .unwrap_or(&config.chat_system_instruction);
+    let selected_model = selected_model
+        .map(|model| model.trim().to_string())
+        .filter(|model| !model.is_empty())
+        .unwrap_or_else(|| config.chat_model.clone());
+    let enable_grounding = enable_grounding.unwrap_or(false);
+
+    if enable_grounding && !GeminiProvider::supports_google_search_grounding(&selected_model) {
+        return Err(format!(
+            "Google Search grounding is not supported for model '{}'. Select Gemini 3 Flash Preview or Gemini 3.1 Flash-Lite Preview.",
+            selected_model
+        ));
+    }
 
     // Create generation config with thinking if enabled
     let generation_config = if enable_thinking.unwrap_or(false) {
@@ -179,8 +193,9 @@ pub async fn chat_with_ai(
         .chat_completion_with_thoughts(
             messages,
             Some(system_instruction),
-            &config.chat_model,
+            &selected_model,
             generation_config,
+            enable_grounding,
         )
         .await
     {

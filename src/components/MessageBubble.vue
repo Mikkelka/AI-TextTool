@@ -59,6 +59,24 @@
         </div>
       </div>
 
+      <div
+        v-if="message.role === 'assistant' && message.sources?.length && !message.isProcessing"
+        class="sources-section"
+      >
+        <div class="sources-header">Sources</div>
+        <div class="sources-list">
+          <a
+            v-for="source in message.sources"
+            :key="source.uri"
+            class="source-chip"
+            :href="source.uri"
+            @click.prevent="openSource(source.uri)"
+          >
+            {{ source.title }}
+          </a>
+        </div>
+      </div>
+
       <div v-if="message.isProcessing" class="processing-indicator">
         <div class="thinking-dots">
           <span></span>
@@ -73,6 +91,7 @@
 
 <script setup lang="ts">
   import { Bot, Brain, Copy, RefreshCw, UserRound } from '@lucide/vue'
+  import { openUrl } from '@tauri-apps/plugin-opener'
   import AppIcon from './AppIcon.vue'
   import SanitizedMarkdown from './SanitizedMarkdown.vue'
   import { logger } from '../utils/logger'
@@ -84,6 +103,11 @@
       timestamp: string
       isProcessing?: boolean
       thoughts?: string
+      sources?: Array<{
+        title: string
+        uri: string
+      }>
+      searchQueries?: string[]
     }
   }
 
@@ -107,6 +131,14 @@
       await navigator.clipboard.writeText(content)
     } catch (err) {
       logger.error('Failed to copy message:', err)
+    }
+  }
+
+  const openSource = async (url: string) => {
+    try {
+      await openUrl(url)
+    } catch (err) {
+      logger.error('Failed to open source URL:', err)
     }
   }
 </script>
@@ -322,6 +354,44 @@
     font-size: 13px;
   }
 
+  .sources-section {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .sources-header {
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .sources-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .source-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(25, 118, 210, 0.08);
+    color: #0f5ca8;
+    font-size: 12px;
+    text-decoration: none;
+    border: 1px solid rgba(25, 118, 210, 0.14);
+  }
+
+  .source-chip:hover {
+    background: rgba(25, 118, 210, 0.14);
+  }
+
   .thinking-dots {
     display: flex;
     gap: 2px;
@@ -472,6 +542,24 @@
     .thoughts-details {
       background: rgba(59, 130, 246, 0.1);
       border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .sources-section {
+      border-top-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .sources-header {
+      color: #94a3b8;
+    }
+
+    .source-chip {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.28);
+      color: #bfdbfe;
+    }
+
+    .source-chip:hover {
+      background: rgba(59, 130, 246, 0.22);
     }
 
     .thoughts-header {
