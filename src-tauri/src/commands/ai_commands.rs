@@ -1,9 +1,11 @@
+use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use super::super::ai_provider::{
     ChatMessage, ChatResponse, Content, GeminiError, GeminiProvider, GenerationConfig,
-    ThinkingConfig,
+    GlobalRateLimiter, ThinkingConfig,
 };
+use super::super::ai_provider::gemini::RateLimiter;
 use super::super::data_manager::DataManager;
 use super::super::utils::validation;
 
@@ -57,6 +59,12 @@ async fn load_data_manager(app: tauri::AppHandle) -> Result<DataManager, String>
     Ok(manager)
 }
 
+/// Helper function to get the shared rate limiter from Tauri state
+fn get_rate_limiter(app: &tauri::AppHandle) -> std::sync::Arc<tokio::sync::Mutex<RateLimiter>> {
+    let global_limiter = app.state::<GlobalRateLimiter>();
+    global_limiter.get_limiter()
+}
+
 #[tauri::command]
 pub async fn process_text_with_ai(
     text: String,
@@ -84,8 +92,9 @@ pub async fn process_text_with_ai(
         );
     }
 
-    // Create Gemini provider
-    let provider = GeminiProvider::new(config.api_key)
+    // Get shared rate limiter and create Gemini provider
+    let rate_limiter = get_rate_limiter(&app);
+    let provider = GeminiProvider::new(config.api_key, rate_limiter)
         .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
@@ -142,15 +151,16 @@ pub async fn chat_with_ai(
     validation::validate_message_input(&message)?;
 
     // Load configuration
-    let manager = load_data_manager(app).await?;
+    let manager = load_data_manager(app.clone()).await?;
     let config = manager.get_config().clone();
 
     if config.api_key.trim().is_empty() {
         return Err("API key not configured".to_string());
     }
 
-    // Create provider
-    let provider = GeminiProvider::new(config.api_key)
+    // Get shared rate limiter and create provider
+    let rate_limiter = get_rate_limiter(&app);
+    let provider = GeminiProvider::new(config.api_key, rate_limiter)
         .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
@@ -211,14 +221,15 @@ pub async fn chat_with_ai(
 pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     log::info!("Testing AI connection...");
 
-    let manager = load_data_manager(app).await?;
+    let manager = load_data_manager(app.clone()).await?;
     let config = manager.get_config().clone();
 
     if config.api_key.trim().is_empty() {
         return Ok(false);
     }
 
-    let provider = match GeminiProvider::new(config.api_key) {
+    let rate_limiter = get_rate_limiter(&app);
+    let provider = match GeminiProvider::new(config.api_key, rate_limiter) {
         Ok(provider) => provider,
         Err(_) => return Ok(false),
     };

@@ -22,7 +22,7 @@ Always format your response professionally using these markdown features.";
 
 /// Rate limiting tracker
 #[derive(Debug)]
-struct RateLimiter {
+pub(crate) struct RateLimiter {
     calls: VecDeque<Instant>,
     max_calls_per_minute: usize,
 }
@@ -67,6 +67,24 @@ impl RateLimiter {
     }
 }
 
+/// Global rate limiter shared across all provider instances
+#[derive(Debug)]
+pub struct GlobalRateLimiter {
+    limiter: Arc<Mutex<RateLimiter>>,
+}
+
+impl GlobalRateLimiter {
+    pub fn new(max_calls_per_minute: usize) -> Self {
+        Self {
+            limiter: Arc::new(Mutex::new(RateLimiter::new(max_calls_per_minute))),
+        }
+    }
+
+    pub fn get_limiter(&self) -> Arc<Mutex<RateLimiter>> {
+        self.limiter.clone()
+    }
+}
+
 /// Main Gemini AI provider
 #[derive(Debug)]
 pub struct GeminiProvider {
@@ -80,8 +98,8 @@ pub struct GeminiProvider {
 }
 
 impl GeminiProvider {
-    /// Create a new Gemini provider instance
-    pub fn new(api_key: String) -> Result<Self, GeminiError> {
+    /// Create a new Gemini provider instance with a shared rate limiter
+    pub fn new(api_key: String, rate_limiter: Arc<Mutex<RateLimiter>>) -> Result<Self, GeminiError> {
         if api_key.trim().is_empty() {
             return Err(GeminiError::InvalidApiKey);
         }
@@ -113,7 +131,7 @@ impl GeminiProvider {
             client,
             api_key,
             base_url: "https://generativelanguage.googleapis.com/v1beta".to_string(),
-            rate_limiter: Arc::new(Mutex::new(RateLimiter::new(15))), // Gemini allows ~15 requests per minute
+            rate_limiter,
             default_generation_config: GenerationConfig::default(),
             default_safety_settings,
             max_retries: 3,
@@ -200,7 +218,7 @@ impl GeminiProvider {
             let response = self
                 .client
                 .post(&url)
-                .query(&[("key", &self.api_key)])
+                .header("Authorization", format!("Bearer {}", &self.api_key))
                 .json(&request)
                 .send()
                 .await;
@@ -366,7 +384,7 @@ impl GeminiProvider {
             let response = self
                 .client
                 .post(&url)
-                .query(&[("key", &self.api_key)])
+                .header("Authorization", format!("Bearer {}", &self.api_key))
                 .json(&request)
                 .send()
                 .await;

@@ -204,11 +204,8 @@ pub fn create_popup_window<R: Runtime>(
         decorations: false,
         close_existing: vec!["popup".to_string()],
         initialization_script: Some(format!(
-            "window.clipboardText = '{}';",
-            clipboard_text
-                .replace('\'', "\\'")
-                .replace('\n', "\\n")
-                .replace('\r', "\\r")
+            "window.clipboardText = {};",
+            serde_json::to_string(&clipboard_text).unwrap_or_else(|_| "\"\"".to_string())
         )),
     };
 

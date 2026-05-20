@@ -1,6 +1,8 @@
 use tauri::Manager;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
+use ai_provider::GlobalRateLimiter;
+
 mod ai_provider;
 mod commands;
 mod data_manager;
@@ -13,11 +15,14 @@ mod window_manager;
 pub fn run() {
     utils::logging::init_logging();
 
+    let rate_limiter = GlobalRateLimiter::new(15);
+
     let run_result = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(shortcut_manager::create_shortcut_handler())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
+        .manage(rate_limiter)
         .setup(|app| {
             // Hide the main window immediately on startup
             if let Some(window) = app.get_webview_window("main") {
