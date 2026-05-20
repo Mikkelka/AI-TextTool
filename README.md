@@ -184,17 +184,7 @@ npm run security-check   # Run npm audit with moderate threshold
 
 - **[docs/INDEX.md](docs/INDEX.md)** - Documentation index and navigation guide
 - **[docs/TAURI_REFERENCE.md](docs/TAURI_REFERENCE.md)** - Tauri-specific implementation notes and working patterns
-- **[docs/CODE_REVIEW_REPORT.md](docs/CODE_REVIEW_REPORT.md)** - Concise historical code review summary
-- **[docs/CODE_REVIEW.md](docs/CODE_REVIEW.md)** - Older, detailed historical review
 - **[docs/CODE_OPTIMIZATION_2026-02-12.md](docs/CODE_OPTIMIZATION_2026-02-12.md)** - Optimization roadmap and status snapshot
-
-The Tauri reference covers:
-- Clipboard Manager, Global Shortcut, File System, Opener plugins
-- Window Management patterns and solutions
-- Common issues and their fixes
-- All code examples are battle-tested from this project
-
-Historical review docs are kept for context, but they are not the source of truth for current model choices or dependency versions.
 
 ## 🤝 Contributing
 
