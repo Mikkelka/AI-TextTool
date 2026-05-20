@@ -2,7 +2,7 @@
 
 > Udført: 2026-05-20
 > Kilder: Qwen 3.6 Plus Free + DeepSeek V4 Flash
-> Status: P0 delvist fikset (2/3), P1-P3 pending. Branch: `fix/code-review-cleanup`
+> Status: P0 delvist fikset (2/3), P1 delvist fikset (2/6), P2-P3 pending. Branch: `fix/code-review-cleanup`
 
 ---
 
@@ -30,15 +30,16 @@
 
 ## 🟠 P1 — Design- og arkitekturproblemer
 
-### 4. Hvid tekst på lys baggrund — ulæseligt i light mode
+### 4. Hvid tekst på lys baggrund — ulæseligt i light mode ✅ LØST
 - **Fil:** `src/components/MessageBubble.vue:231, 167`
 - **Problem:** `.markdown-content { color: #ffffff; }` på baggrund `rgba(255, 255, 255, 0.95)`. Brødtekst er hvid-på-næsten-hvid i light mode. Dark mode fungerer fint (`color: #e2e8f0` via `prefers-color-scheme: dark`).
-- **Fix:** Ændr base color til `#333` i light mode og override i dark mode.
+- **Fix:** Ændret base color til `#333`, headings til `#1a1a2e`, tables/blockquotes/hr til light-mode farver.
+- **Commit:** `adf4596`
 
-### 5. Manglende ikonfiler til bundling
+### 5. Manglende ikonfiler til bundling ⚠️ INVALID
 - **Fil:** `src-tauri/tauri.conf.json:31-36`
 - **Problem:** Bundle config refererer til `icons/32x32.png`, `icons/128x128.png`, `icons/128x128@2x.png`, `icons/icon.icns`, `icons/icon.ico` — men disse filer findes ikke. `src-tauri/icons/` indeholder kun Microsoft Store PNGs. Byg fejler ved packaging.
-- **Fix:** Generér/skaf de manglende ikonfiler, eller opdater `tauri.conf.json` til de eksisterende filer.
+- **Status:** Alle ikonfiler eksisterer allerede i `src-tauri/icons/`. Fundet er baseret på en fejltagelse.
 
 ### 6. DataManager instantieres for hver kommando
 - **Filer:** `src-tauri/src/commands/ai_commands.rs:51-58`, `src-tauri/src/data_manager/commands.rs:11-15`
@@ -70,10 +71,11 @@
 - **Problem:** Fire forskellige formater: `"CmdOrCtrl+Space"`, `"ctrl+space"`, `"CommandOrControl+Space"`.
 - **Fix:** Standardisér til Tauri v2 format ét sted.
 
-### 12. `clear_chat_history` sletter også saved conversations
+### 12. `clear_chat_history` sletter også saved conversations ✅ LØST
 - **Fil:** `src-tauri/src/data_manager/manager.rs:244-248`
-- **Problem:** Funktionen kalder både `chat_history.clear()` og `saved_conversations.clear()`. Uventet sideeffekt.
-- **Fix:** Split i `clear_chat_history()` og `clear_saved_conversations()`.
+- **Problem:** Funktionen kaldte både `chat_history.clear()` og `saved_conversations.clear()`. Uventet sideeffekt.
+- **Fix:** Splittet i `clear_chat_history()` og `clear_saved_conversations()` med separat Tauri command.
+- **Commit:** `adf4596`
 
 ---
 
@@ -286,13 +288,13 @@
 | P0 | 1 | XSS i clipboard injection | ✅ Løst | Medium | Høj — sikkerhed |
 | P0 | 2 | API key i URL | ⚠️ Wontfix | Lav | Høj — sikkerhed |
 | P0 | 3 | Global rate limiting | ✅ Løst | Medium | Høj — stabilitet |
-| P1 | 4 | Hvid tekst i light mode | Pending | Lav | Høj — UI bug |
-| P1 | 5 | Manglende ikonfiler | Pending | Lav | Høj — build fejl |
+| P1 | 4 | Hvid tekst i light mode | ✅ Løst | Lav | Høj — UI bug |
+| P1 | 5 | Manglende ikonfiler | ⚠️ Invalid | — | — |
 | P1 | 6 | DataManager som Tauri state | Pending | Høj | Høj — ydeevne + race conditions |
 | P1 | 7 | Redundant config | Pending | Medium | Høj — dataintegritet |
 | P1 | 9 | reqwest::Client genbrug | Pending | Lav | Medium — ydeevne |
 | P1 | 10 | Hardcoded shortcut | Pending | Medium | Medium — funktionalitet |
-| P1 | 12 | clear_chat_history sideeffekt | Pending | Lav | Medium — UX |
+| P1 | 12 | clear_chat_history sideeffekt | ✅ Løst | Lav | Medium — UX |
 | P2 | 13 | Duplikeret retry-logik | Pending | Lav | Medium — vedligeholdelse |
 | P2 | 15 | Død kode | Pending | Lav | Lav — oprydning |
 | P2 | 16 | Escape key dobbelt | Pending | Lav | Medium — UX bug |
