@@ -189,9 +189,9 @@
     ChatMessage,
     ChatWindowProps,
     Config,
-    ModelName,
     SavedConversation
   } from '../types'
+  import { DEFAULT_CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES } from '../types'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {
@@ -207,7 +207,7 @@
     messages: [] as ChatMessage[],
     isProcessing: false,
     error: null as string | null,
-    selectedModel: 'gemini-3-flash-preview' as ModelName,
+    selectedModel: DEFAULT_CHAT_MODEL,
     enableThinking: false,
     enableGrounding: false,
     availableModels: [] as string[]
@@ -250,11 +250,11 @@
   })
 
   const supportsThinking = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'].includes(state.selectedModel)
+    return MODEL_CAPABILITIES[state.selectedModel]?.thinking ?? false
   })
 
   const supportsGrounding = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'].includes(state.selectedModel)
+    return MODEL_CAPABILITIES[state.selectedModel]?.grounding ?? false
   })
 
   // Validation constants
@@ -286,7 +286,7 @@
       state.availableModels = models
     } catch (err) {
       logger.error('Failed to load models:', err)
-      state.availableModels = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']
+      state.availableModels = [...MODEL_NAMES]
     }
   }
 

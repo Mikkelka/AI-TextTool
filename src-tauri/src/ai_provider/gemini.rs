@@ -532,24 +532,22 @@ impl GeminiProvider {
         .await
     }
 
-    /// Get available models (placeholder - would require additional API call)
+    /// Get available models
     pub fn get_available_models() -> Vec<&'static str> {
-        vec!["gemini-3-flash-preview", "gemini-3.1-flash-lite"]
+        GeminiModel::ALL.iter().map(|m| m.as_str()).collect()
     }
 
     /// Check if a model supports Google Search grounding in this app
     pub fn supports_google_search_grounding(model: &str) -> bool {
-        matches!(
-            model,
-            "gemini-3-flash-preview" | "gemini-3.1-flash-lite"
-        )
+        GeminiModel::ALL.iter().any(|m| m.as_str() == model)
     }
 
     /// Check if a model supports thinking mode (for advanced reasoning)
     #[cfg(test)]
     pub fn supports_thinking_mode(model: &str) -> bool {
-        // Currently, thinking mode is supported by certain models
-        matches!(model, "gemini-3-flash-preview")
+        GeminiModel::ALL
+            .iter()
+            .any(|m| m.as_str() == model && m.supports_thinking())
     }
 
     /// Test the connection to Gemini API
@@ -558,7 +556,7 @@ impl GeminiProvider {
 
         match self
             .generate_content(
-                "gemini-3.1-flash-lite", // Use the lightweight model for testing
+                GeminiModel::DEFAULT_TEXT.as_str(),
                 test_content,
                 Some("Please respond with just 'OK' to test the connection."),
                 Some(GenerationConfig {
@@ -620,9 +618,7 @@ mod tests {
 
     #[test]
     fn test_model_support() {
-        assert!(GeminiProvider::supports_thinking_mode("gemini-3-flash-preview"));
-        assert!(!GeminiProvider::supports_thinking_mode(
-            "gemini-3.1-flash-lite"
-        ));
+        assert!(GeminiProvider::supports_thinking_mode(GeminiModel::Gemini3FlashPreview.as_str()));
+        assert!(!GeminiProvider::supports_thinking_mode(GeminiModel::Gemini31FlashLite.as_str()));
     }
 }

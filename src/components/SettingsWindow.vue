@@ -26,14 +26,16 @@
 
       <label>Chat Model</label>
       <select v-model="formData.chatModel" class="form-select">
-        <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
-        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
+        <option v-for="model in MODEL_NAMES" :key="model" :value="model">
+          {{ formatModelName(model) }}
+        </option>
       </select>
 
       <label>Text Operations Model</label>
       <select v-model="formData.textModel" class="form-select">
-        <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
-        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
+        <option v-for="model in MODEL_NAMES" :key="model" :value="model">
+          {{ formatModelName(model) }}
+        </option>
       </select>
 
       <label>Chat System Instruction</label>
@@ -61,12 +63,13 @@
   import { openUrl } from '@tauri-apps/plugin-opener'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { logger } from '../utils/logger'
-  import type { Config } from '../types'
+  import type { Config, ModelName } from '../types'
+  import { DEFAULT_CHAT_MODEL, DEFAULT_TEXT_MODEL, MODEL_NAMES } from '../types'
 
   const formData = ref({
     apiKey: '',
-    chatModel: 'gemini-3-flash-preview',
-    textModel: 'gemini-3.1-flash-lite',
+    chatModel: DEFAULT_CHAT_MODEL,
+    textModel: DEFAULT_TEXT_MODEL,
     systemInstruction: 'You are a helpful AI assistant.'
   })
 
@@ -82,6 +85,15 @@
     }, 3000)
   }
 
+  const formatModelName = (model: ModelName): string => {
+    return model
+      .replace('gemini-', 'Gemini ')
+      .replace('-', ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
   const loadConfig = async () => {
     try {
       logger.debug('Loading existing configuration...')
@@ -90,8 +102,8 @@
       // Populate form with existing config
       formData.value = {
         apiKey: config.api_key || '',
-        chatModel: config.chat_model || 'gemini-3-flash-preview',
-        textModel: config.text_model || 'gemini-3.1-flash-lite',
+        chatModel: config.chat_model || DEFAULT_CHAT_MODEL,
+        textModel: config.text_model || DEFAULT_TEXT_MODEL,
         systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
@@ -133,8 +145,8 @@
           api_key: '',
           chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: 'gemini-3-flash-preview',
-          text_model: 'gemini-3.1-flash-lite',
+          chat_model: DEFAULT_CHAT_MODEL,
+          text_model: DEFAULT_TEXT_MODEL,
           shortcut: 'CommandOrControl+Space',
           locale: 'en',
           streaming: false,

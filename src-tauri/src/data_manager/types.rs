@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::ai_provider::GroundingSource;
+use crate::ai_provider::types::GeminiModel;
 
 /// Custom error types for data management
 #[derive(Debug, thiserror::Error)]
@@ -17,8 +18,8 @@ pub enum DataError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderConfig {
     pub api_key: String,
-    pub chat_model_name: String,
-    pub text_model_name: String,
+    pub chat_model_name: GeminiModel,
+    pub text_model_name: GeminiModel,
     pub chat_system_instruction: String,
 }
 
@@ -26,8 +27,8 @@ impl Default for ProviderConfig {
     fn default() -> Self {
         Self {
             api_key: String::new(),
-            chat_model_name: "gemini-3-flash-preview".to_string(),
-            text_model_name: "gemini-3.1-flash-lite".to_string(),
+            chat_model_name: GeminiModel::DEFAULT_CHAT,
+            text_model_name: GeminiModel::DEFAULT_TEXT,
             chat_system_instruction: "You are a friendly, helpful AI assistant.".to_string(),
         }
     }
@@ -41,8 +42,8 @@ pub struct Config {
     pub streaming: bool,
     pub provider: String,
     pub api_key: String,
-    pub chat_model: String,
-    pub text_model: String,
+    pub chat_model: GeminiModel,
+    pub text_model: GeminiModel,
     pub chat_system_instruction: String,
 }
 
@@ -57,8 +58,8 @@ impl Default for Config {
             streaming: false,
             provider: "Gemini".to_string(),
             api_key: String::new(),
-            chat_model: "gemini-3-flash-preview".to_string(),
-            text_model: "gemini-3.1-flash-lite".to_string(),
+            chat_model: GeminiModel::DEFAULT_CHAT,
+            text_model: GeminiModel::DEFAULT_TEXT,
             chat_system_instruction: ProviderConfig::default().chat_system_instruction,
         }
     }

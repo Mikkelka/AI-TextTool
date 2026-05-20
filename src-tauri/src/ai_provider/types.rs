@@ -1,6 +1,56 @@
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// Supported Gemini models with centralized constants
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum GeminiModel {
+    Gemini3FlashPreview,
+    Gemini31FlashLite,
+}
+
+impl GeminiModel {
+    pub const ALL: &'static [Self] = &[Self::Gemini3FlashPreview, Self::Gemini31FlashLite];
+    pub const DEFAULT_CHAT: Self = Self::Gemini3FlashPreview;
+    pub const DEFAULT_TEXT: Self = Self::Gemini31FlashLite;
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Gemini3FlashPreview => "gemini-3-flash-preview",
+            Self::Gemini31FlashLite => "gemini-3.1-flash-lite",
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn supports_thinking(&self) -> bool {
+        matches!(self, Self::Gemini3FlashPreview)
+    }
+
+
+}
+
+impl std::fmt::Display for GeminiModel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl Serialize for GeminiModel {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for GeminiModel {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(match s.as_str() {
+            "gemini-3-flash-preview" => Self::Gemini3FlashPreview,
+            "gemini-3.1-flash-lite" => Self::Gemini31FlashLite,
+            _ => Self::DEFAULT_CHAT,
+        })
+    }
+}
+
 /// Custom error types for Gemini API operations
 #[derive(Debug, Error)]
 pub enum GeminiError {

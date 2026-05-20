@@ -26,8 +26,8 @@ export interface Operation {
 // Provider configuration settings
 export interface ProviderSettings {
   api_key?: string
-  chat_model_name?: string
-  text_model_name?: string
+  chat_model_name?: ModelName
+  text_model_name?: ModelName
   chat_system_instruction?: string
 }
 
@@ -35,8 +35,8 @@ export interface Config {
   api_key: string
   chat_system_instruction: string
   provider: string
-  chat_model: string
-  text_model: string
+  chat_model: ModelName
+  text_model: ModelName
   shortcut: string
   locale: string
   streaming: boolean
@@ -85,6 +85,19 @@ export interface PopupWindowProps {
 
 // Utility types
 export type ModelName = 'gemini-3-flash-preview' | 'gemini-3.1-flash-lite'
+
+export const MODEL_NAMES: readonly ModelName[] = [
+  'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite'
+] as const
+
+export const DEFAULT_CHAT_MODEL: ModelName = 'gemini-3-flash-preview'
+export const DEFAULT_TEXT_MODEL: ModelName = 'gemini-3.1-flash-lite'
+
+export const MODEL_CAPABILITIES: Record<ModelName, { thinking: boolean; grounding: boolean }> = {
+  'gemini-3-flash-preview': { thinking: true, grounding: true },
+  'gemini-3.1-flash-lite': { thinking: false, grounding: true }
+}
 
 export interface AIResponse {
   answer: string
