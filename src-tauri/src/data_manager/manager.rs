@@ -20,20 +20,20 @@ pub struct DataManager {
 impl DataManager {
     fn normalize_config_models(config: &mut Config) {
         if config.text_model == "gemini-3.1-flash-lite" {
-            config.text_model = "gemini-3.1-flash-lite-preview".to_string();
+            config.text_model = "gemini-3.1-flash-lite".to_string();
         }
 
         if config.text_model == "gemini-2.5-flash-lite" {
-            config.text_model = "gemini-3.1-flash-lite-preview".to_string();
+            config.text_model = "gemini-3.1-flash-lite".to_string();
         }
 
         if let Some(gemini) = config.providers.get_mut("Gemini") {
             if gemini.text_model_name == "gemini-3.1-flash-lite" {
-                gemini.text_model_name = "gemini-3.1-flash-lite-preview".to_string();
+                gemini.text_model_name = "gemini-3.1-flash-lite".to_string();
             }
 
             if gemini.text_model_name == "gemini-2.5-flash-lite" {
-                gemini.text_model_name = "gemini-3.1-flash-lite-preview".to_string();
+                gemini.text_model_name = "gemini-3.1-flash-lite".to_string();
             }
         }
     }

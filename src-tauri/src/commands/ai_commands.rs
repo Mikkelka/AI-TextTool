@@ -179,7 +179,7 @@ pub async fn chat_with_ai(
 
     if enable_grounding && !GeminiProvider::supports_google_search_grounding(&selected_model) {
         return Err(format!(
-            "Google Search grounding is not supported for model '{}'. Select Gemini 3 Flash Preview or Gemini 3.1 Flash-Lite Preview.",
+            "Google Search grounding is not supported for model '{}'. Select Gemini 3 Flash or Gemini 3.1 Flash-Lite.",
             selected_model
         ));
     }

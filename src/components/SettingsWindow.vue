@@ -26,22 +26,14 @@
 
       <label>Chat Model</label>
       <select v-model="formData.chatModel" class="form-select">
-        <option value="gemini-3-flash-preview">
-          Gemini 3 Flash Preview
-        </option>
-        <option value="gemini-3.1-flash-lite-preview">
-          Gemini 3.1 Flash-Lite Preview
-        </option>
+        <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
       </select>
 
       <label>Text Operations Model</label>
       <select v-model="formData.textModel" class="form-select">
-        <option value="gemini-3-flash-preview">
-          Gemini 3 Flash Preview
-        </option>
-        <option value="gemini-3.1-flash-lite-preview">
-          Gemini 3.1 Flash-Lite Preview
-        </option>
+        <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
       </select>
 
       <label>Chat System Instruction</label>
@@ -74,7 +66,7 @@
   const formData = ref({
     apiKey: '',
     chatModel: 'gemini-3-flash-preview',
-    textModel: 'gemini-3.1-flash-lite-preview',
+    textModel: 'gemini-3.1-flash-lite',
     systemInstruction: 'You are a helpful AI assistant.'
   })
 
@@ -99,7 +91,7 @@
       formData.value = {
         apiKey: config.api_key || '',
         chatModel: config.chat_model || 'gemini-3-flash-preview',
-        textModel: config.text_model || 'gemini-3.1-flash-lite-preview',
+        textModel: config.text_model || 'gemini-3.1-flash-lite',
         systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
@@ -142,7 +134,7 @@
           chat_system_instruction: '',
           provider: 'Gemini',
           chat_model: 'gemini-3-flash-preview',
-          text_model: 'gemini-3.1-flash-lite-preview',
+          text_model: 'gemini-3.1-flash-lite',
           shortcut: 'CommandOrControl+Space',
           locale: 'en',
           streaming: false,
@@ -155,6 +147,11 @@
       config.chat_system_instruction = formData.value.systemInstruction
       config.chat_model = formData.value.chatModel
       config.text_model = formData.value.textModel
+
+      // Ensure providers object exists (defensive: Rust may omit it)
+      if (!config.providers) {
+        config.providers = {}
+      }
 
       // Ensure provider config exists and is updated
       if (!config.providers.Gemini) {

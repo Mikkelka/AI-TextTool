@@ -27,7 +27,7 @@ impl Default for ProviderConfig {
         Self {
             api_key: String::new(),
             chat_model_name: "gemini-3-flash-preview".to_string(),
-            text_model_name: "gemini-3.1-flash-lite-preview".to_string(),
+            text_model_name: "gemini-3.1-flash-lite".to_string(),
             chat_system_instruction: "You are a friendly, helpful AI assistant.".to_string(),
         }
     }
@@ -58,7 +58,7 @@ impl Default for Config {
             provider: "Gemini".to_string(),
             api_key: String::new(),
             chat_model: "gemini-3-flash-preview".to_string(),
-            text_model: "gemini-3.1-flash-lite-preview".to_string(),
+            text_model: "gemini-3.1-flash-lite".to_string(),
             chat_system_instruction: ProviderConfig::default().chat_system_instruction,
         }
     }

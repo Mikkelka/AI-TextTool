@@ -250,11 +250,11 @@
   })
 
   const supportsThinking = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(state.selectedModel)
+    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'].includes(state.selectedModel)
   })
 
   const supportsGrounding = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(state.selectedModel)
+    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite'].includes(state.selectedModel)
   })
 
   // Validation constants
@@ -286,7 +286,7 @@
       state.availableModels = models
     } catch (err) {
       logger.error('Failed to load models:', err)
-      state.availableModels = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview']
+      state.availableModels = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']
     }
   }
 

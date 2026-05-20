@@ -534,14 +534,14 @@ impl GeminiProvider {
 
     /// Get available models (placeholder - would require additional API call)
     pub fn get_available_models() -> Vec<&'static str> {
-        vec!["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]
+        vec!["gemini-3-flash-preview", "gemini-3.1-flash-lite"]
     }
 
     /// Check if a model supports Google Search grounding in this app
     pub fn supports_google_search_grounding(model: &str) -> bool {
         matches!(
             model,
-            "gemini-3-flash-preview" | "gemini-3.1-flash-lite-preview"
+            "gemini-3-flash-preview" | "gemini-3.1-flash-lite"
         )
     }
 
@@ -558,7 +558,7 @@ impl GeminiProvider {
 
         match self
             .generate_content(
-                "gemini-3.1-flash-lite-preview", // Use the lightweight model for testing
+                "gemini-3.1-flash-lite", // Use the lightweight model for testing
                 test_content,
                 Some("Please respond with just 'OK' to test the connection."),
                 Some(GenerationConfig {
@@ -622,7 +622,7 @@ mod tests {
     fn test_model_support() {
         assert!(GeminiProvider::supports_thinking_mode("gemini-3-flash-preview"));
         assert!(!GeminiProvider::supports_thinking_mode(
-            "gemini-3.1-flash-lite-preview"
+            "gemini-3.1-flash-lite"
         ));
     }
 }

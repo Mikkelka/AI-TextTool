@@ -84,7 +84,7 @@ export interface PopupWindowProps {
 }
 
 // Utility types
-export type ModelName = 'gemini-3-flash-preview' | 'gemini-3.1-flash-lite-preview'
+export type ModelName = 'gemini-3-flash-preview' | 'gemini-3.1-flash-lite'
 
 export interface AIResponse {
   answer: string

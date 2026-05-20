@@ -35,7 +35,7 @@ A powerful desktop application that brings AI-powered text processing to your fi
 - Choose between Gemini Flash and Flash-Lite models
 - Default Gemini setup:
   - Chat: `gemini-3-flash-preview`
-  - Text operations: `gemini-3.1-flash-lite-preview`
+  - Text operations: `gemini-3.1-flash-lite`
 - Customizable system instructions
 - Configurable global shortcuts
 
