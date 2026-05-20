@@ -98,7 +98,10 @@
       <!-- Welcome Message -->
       <div v-if="state.messages.length === 0" class="welcome-message">
         <div class="welcome-content">
-          <h2 class="welcome-heading"><AppIcon :icon="MessageSquareText" :size="20" />AI Chat Assistant</h2>
+          <h2 class="welcome-heading">
+            <AppIcon :icon="MessageSquareText" :size="20" />
+            AI Chat Assistant
+          </h2>
           <p v-if="initialText">Ready to process your text and answer follow-up questions.</p>
           <p v-else>Start a conversation by typing your message below.</p>
           <div v-if="initialText" class="initial-text-preview">
@@ -181,7 +184,7 @@
   import AppToast from './AppToast.vue'
   import MessageBubble from './MessageBubble.vue'
   import InputArea from './InputArea.vue'
-  import type { AIResponse, ChatMessage, ChatWindowProps, Config } from '../types'
+  import type { AIResponse, ChatMessage, ChatWindowProps, Config, ModelName, SavedConversation } from '../types'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {
@@ -197,7 +200,7 @@
     messages: [] as ChatMessage[],
     isProcessing: false,
     error: null as string | null,
-    selectedModel: 'gemini-3-flash-preview' as string,
+    selectedModel: 'gemini-3-flash-preview' as ModelName,
     enableThinking: false,
     enableGrounding: false,
     availableModels: [] as string[]
@@ -240,15 +243,11 @@
   })
 
   const supportsThinking = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(
-      state.selectedModel
-    )
+    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(state.selectedModel)
   })
 
   const supportsGrounding = computed(() => {
-    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(
-      state.selectedModel
-    )
+    return ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'].includes(state.selectedModel)
   })
 
   // Validation constants
@@ -280,10 +279,7 @@
       state.availableModels = models
     } catch (err) {
       logger.error('Failed to load models:', err)
-      state.availableModels = [
-        'gemini-3-flash-preview',
-        'gemini-3.1-flash-lite-preview'
-      ]
+      state.availableModels = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview']
     }
   }
 
@@ -637,26 +633,7 @@
 
       const conversation = (await invoke('load_conversation_messages', {
         conversationId: props.conversationId
-      })) as {
-        id: string
-        title: string
-        operation: string
-        messages: Array<{
-          role: string
-          content: string
-          timestamp: string
-          thoughts?: string
-          sources?: Array<{
-            title: string
-            uri: string
-          }>
-          search_queries?: string[]
-        }>
-        created_at: string
-        updated_at: string
-        thinking_mode_enabled?: boolean
-        grounding_enabled?: boolean
-      }
+      })) as SavedConversation
 
       // Convert and load messages
       state.messages = conversation.messages.map(msg => {
@@ -751,28 +728,15 @@
     await Promise.all([loadAvailableModels(), loadCurrentChatModel()])
     void focusInput()
 
-    // Parse URL parameters if not provided as props (fallback)
-    const urlParams = new URLSearchParams(window.location.search)
-    const operation = props.operation || urlParams.get('operation') || ''
-    const initialText = props.initialText || urlParams.get('text') || ''
-
-    logger.debug('Final values after URL parsing:', {
-      operation,
-      initialText: initialText ? `${initialText.length} chars` : 'none'
-    })
-
     // Load existing conversation if conversationId is provided
     if (props.conversationId) {
       logger.debug('Loading existing conversation:', props.conversationId)
       await loadConversation()
+    } else if (props.initialText && props.operation) {
+      logger.debug(`Auto-sending initial text for operation: ${props.operation}`)
+      await sendMessage(props.initialText)
     } else {
-      // Send initial message if there's initial text and operation (only for new chats)
-      if (initialText && operation) {
-        logger.debug(`Auto-sending initial text for operation: ${operation}`)
-        await sendMessage(initialText)
-      } else {
-        logger.debug('No initial text or operation - waiting for user input')
-      }
+      logger.debug('No initial text or operation - waiting for user input')
     }
 
     // Setup global markdown copy function
@@ -784,6 +748,7 @@
       clearTimeout(toastTimer)
       toastTimer = null
     }
+    toastVisible.value = false
     if (saveDialogResolver) {
       saveDialogResolver(null)
       saveDialogResolver = null
@@ -1242,6 +1207,5 @@
       height: 28px;
       font-size: 12px;
     }
-
   }
 </style>

@@ -180,9 +180,11 @@ pub struct GoogleSearchTool {}
 #[derive(Debug, Deserialize)]
 pub struct Candidate {
     pub content: Content,
+    /// Reason why the generation finished (API response field)
     #[serde(skip_serializing_if = "Option::is_none")]
     #[allow(dead_code)]
     pub finish_reason: Option<String>,
+    /// Safety category ratings from the API (not used in UI)
     #[serde(skip_serializing_if = "Option::is_none")]
     #[allow(dead_code)]
     pub safety_ratings: Option<Vec<serde_json::Value>>,
@@ -190,7 +192,7 @@ pub struct Candidate {
     pub grounding_metadata: Option<GroundingMetadata>,
 }
 
-/// Usage metadata from Gemini API
+/// Usage metadata from Gemini API (parsed but not currently displayed)
 #[derive(Debug, Deserialize)]
 pub struct UsageMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -208,6 +210,7 @@ pub struct UsageMetadata {
 #[derive(Debug, Deserialize)]
 pub struct GeminiResponse {
     pub candidates: Vec<Candidate>,
+    /// Token usage info (parsed but not currently displayed)
     #[serde(skip_serializing_if = "Option::is_none")]
     #[allow(dead_code)]
     pub usage_metadata: Option<UsageMetadata>,
@@ -232,6 +235,7 @@ pub struct GroundingMetadata {
     pub web_search_queries: Vec<String>,
     #[serde(rename = "groundingChunks", default)]
     pub grounding_chunks: Vec<GroundingChunk>,
+    /// Grounding support segments (parsed but not currently displayed)
     #[serde(rename = "groundingSupports", default)]
     #[allow(dead_code)]
     pub grounding_supports: Vec<GroundingSupport>,
@@ -249,6 +253,7 @@ pub struct GroundingWebSource {
     pub title: String,
 }
 
+/// Grounding support segments with chunk indices (parsed but not displayed)
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroundingSupport {
     #[allow(dead_code)]
@@ -285,6 +290,7 @@ pub struct GeminiErrorResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct GeminiErrorDetails {
+    /// Error code from API (used for internal classification)
     #[allow(dead_code)]
     pub code: i32,
     pub message: String,

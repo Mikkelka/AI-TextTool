@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { Sparkles, TriangleAlert, X } from '@lucide/vue'
   import AppIcon from './AppIcon.vue'
@@ -105,7 +105,7 @@
   const showFadeIn = ref(true)
 
   // Get text from props or window.clipboardText injection
-  const clipboardText = ref(props.selectedText || window.clipboardText || '')
+  const clipboardText = computed(() => props.selectedText || window.clipboardText || '')
 
   // Methods
   const loadOperations = async () => {
@@ -309,7 +309,6 @@
   onUnmounted(() => {
 
     // Clear sensitive data
-    clipboardText.value = ''
     delete window.clipboardText
   })
 </script>
