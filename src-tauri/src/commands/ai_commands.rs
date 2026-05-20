@@ -2,9 +2,10 @@ use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use super::super::ai_provider::{
-    ChatMessage, ChatResponse, Content, GeminiError, GeminiModel, GeminiProvider, GenerationConfig,
+    ChatMessage, ChatResponse, Content, GeminiError, GeminiProvider, GenerationConfig,
     GlobalRateLimiter, ThinkingConfig,
 };
+use super::super::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
 use super::super::ai_provider::gemini::RateLimiter;
 use super::super::data_manager::DataManager;
 use super::super::utils::validation;
@@ -114,7 +115,7 @@ pub async fn process_text_with_ai(
     let contents = vec![Content::user(full_prompt)];
     let result = match provider
         .generate_content_with_formatting(
-            config.text_model.as_str(),
+            &config.text_model,
             contents,
             Some(&operation_details.instruction),
             None,
@@ -174,15 +175,13 @@ pub async fn chat_with_ai(
     let selected_model = selected_model
         .map(|model| model.trim().to_string())
         .filter(|model| !model.is_empty())
-        .unwrap_or_else(|| config.chat_model.to_string());
+        .unwrap_or_else(|| config.chat_model.clone());
     let enable_grounding = enable_grounding.unwrap_or(false);
 
     if enable_grounding && !GeminiProvider::supports_google_search_grounding(&selected_model) {
         return Err(format!(
             "Google Search grounding is not supported for model '{}'. Select {} or {}.",
-            selected_model,
-            GeminiModel::DEFAULT_CHAT,
-            GeminiModel::DEFAULT_TEXT
+            selected_model, CHAT_MODEL, TEXT_MODEL
         ));
     }
 

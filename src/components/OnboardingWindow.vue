@@ -272,7 +272,7 @@
   import AppConfirmDialog from './AppConfirmDialog.vue'
   import { logger } from '../utils/logger'
   import type { Config } from '../types'
-  import { DEFAULT_CHAT_MODEL, DEFAULT_TEXT_MODEL } from '../types'
+  import { CHAT_MODEL, TEXT_MODEL } from '../types'
 
   // Props
   interface Props {
@@ -495,8 +495,8 @@
           api_key: '',
           chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: DEFAULT_CHAT_MODEL,
-          text_model: DEFAULT_TEXT_MODEL,
+          chat_model: CHAT_MODEL,
+          text_model: TEXT_MODEL,
           shortcut: 'ctrl+space',
           locale: 'en',
           streaming: false,
@@ -512,8 +512,8 @@
       if (!config.providers.Gemini) {
         config.providers.Gemini = {
           api_key: formData.value.apiKey,
-          chat_model_name: DEFAULT_CHAT_MODEL,
-          text_model_name: DEFAULT_TEXT_MODEL,
+          chat_model_name: CHAT_MODEL,
+          text_model_name: TEXT_MODEL,
           chat_system_instruction: formData.value.systemInstruction
         }
       } else {

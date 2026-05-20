@@ -64,12 +64,12 @@
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { logger } from '../utils/logger'
   import type { Config, ModelName } from '../types'
-  import { DEFAULT_CHAT_MODEL, DEFAULT_TEXT_MODEL, MODEL_NAMES } from '../types'
+  import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL } from '../types'
 
   const formData = ref({
     apiKey: '',
-    chatModel: DEFAULT_CHAT_MODEL,
-    textModel: DEFAULT_TEXT_MODEL,
+    chatModel: CHAT_MODEL,
+    textModel: TEXT_MODEL,
     systemInstruction: 'You are a helpful AI assistant.'
   })
 
@@ -102,8 +102,8 @@
       // Populate form with existing config
       formData.value = {
         apiKey: config.api_key || '',
-        chatModel: config.chat_model || DEFAULT_CHAT_MODEL,
-        textModel: config.text_model || DEFAULT_TEXT_MODEL,
+        chatModel: config.chat_model || CHAT_MODEL,
+        textModel: config.text_model || TEXT_MODEL,
         systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
@@ -145,8 +145,8 @@
           api_key: '',
           chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: DEFAULT_CHAT_MODEL,
-          text_model: DEFAULT_TEXT_MODEL,
+          chat_model: CHAT_MODEL,
+          text_model: TEXT_MODEL,
           shortcut: 'CommandOrControl+Space',
           locale: 'en',
           streaming: false,

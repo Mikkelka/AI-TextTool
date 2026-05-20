@@ -534,20 +534,18 @@ impl GeminiProvider {
 
     /// Get available models
     pub fn get_available_models() -> Vec<&'static str> {
-        GeminiModel::ALL.iter().map(|m| m.as_str()).collect()
+        MODEL_NAMES.to_vec()
     }
 
     /// Check if a model supports Google Search grounding in this app
     pub fn supports_google_search_grounding(model: &str) -> bool {
-        GeminiModel::ALL.iter().any(|m| m.as_str() == model)
+        MODEL_NAMES.contains(&model)
     }
 
     /// Check if a model supports thinking mode (for advanced reasoning)
     #[cfg(test)]
     pub fn supports_thinking_mode(model: &str) -> bool {
-        GeminiModel::ALL
-            .iter()
-            .any(|m| m.as_str() == model && m.supports_thinking())
+        model == CHAT_MODEL
     }
 
     /// Test the connection to Gemini API
@@ -556,7 +554,7 @@ impl GeminiProvider {
 
         match self
             .generate_content(
-                GeminiModel::DEFAULT_TEXT.as_str(),
+                TEXT_MODEL,
                 test_content,
                 Some("Please respond with just 'OK' to test the connection."),
                 Some(GenerationConfig {
@@ -618,7 +616,7 @@ mod tests {
 
     #[test]
     fn test_model_support() {
-        assert!(GeminiProvider::supports_thinking_mode(GeminiModel::Gemini3FlashPreview.as_str()));
-        assert!(!GeminiProvider::supports_thinking_mode(GeminiModel::Gemini31FlashLite.as_str()));
+        assert!(GeminiProvider::supports_thinking_mode(CHAT_MODEL));
+        assert!(!GeminiProvider::supports_thinking_mode(TEXT_MODEL));
     }
 }

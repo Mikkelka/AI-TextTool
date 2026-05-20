@@ -84,19 +84,15 @@ export interface PopupWindowProps {
 }
 
 // Utility types
-export type ModelName = 'gemini-3-flash-preview' | 'gemini-3.1-flash-lite'
+export const CHAT_MODEL = 'gemini-3-flash-preview'
+export const TEXT_MODEL = 'gemini-3.1-flash-lite'
 
-export const MODEL_NAMES: readonly ModelName[] = [
-  'gemini-3-flash-preview',
-  'gemini-3.1-flash-lite'
-] as const
-
-export const DEFAULT_CHAT_MODEL: ModelName = 'gemini-3-flash-preview'
-export const DEFAULT_TEXT_MODEL: ModelName = 'gemini-3.1-flash-lite'
+export const MODEL_NAMES = [CHAT_MODEL, TEXT_MODEL] as const
+export type ModelName = (typeof MODEL_NAMES)[number]
 
 export const MODEL_CAPABILITIES: Record<ModelName, { thinking: boolean; grounding: boolean }> = {
   'gemini-3-flash-preview': { thinking: true, grounding: true },
-  'gemini-3.1-flash-lite': { thinking: false, grounding: true }
+  'gemini-3.1-flash-lite': { thinking: true, grounding: true }
 }
 
 export interface AIResponse {

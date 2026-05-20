@@ -191,7 +191,7 @@
     Config,
     SavedConversation
   } from '../types'
-  import { DEFAULT_CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES } from '../types'
+  import { CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES } from '../types'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {
@@ -207,7 +207,7 @@
     messages: [] as ChatMessage[],
     isProcessing: false,
     error: null as string | null,
-    selectedModel: DEFAULT_CHAT_MODEL,
+    selectedModel: CHAT_MODEL,
     enableThinking: false,
     enableGrounding: false,
     availableModels: [] as string[]
