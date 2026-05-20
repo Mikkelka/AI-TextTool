@@ -2,7 +2,7 @@
 
 > Udført: 2026-05-20
 > Kilder: Qwen 3.6 Plus Free + DeepSeek V4 Flash
-> Status: P0 delvist fikset (2/3), P1 delvist fikset (2/6), P2-P3 pending. Branch: `fix/code-review-cleanup`
+> Status: P0 delvist (2/3), P1 delvist (2/6), P2 delvist (6/18), P3 pending. Branch: `fix/code-review-cleanup`
 
 ---
 
@@ -91,25 +91,28 @@
 - **Problem:** `sendMessage` og `regenerateResponse` indeholder næsten identisk logik til chat history, instruktioner, AI-kald og fejlhåndtering.
 - **Fix:** Ekstraher shared `execute_chat_request` metode.
 
-### 15. Død kode: `greet` og `process_text`
+### 15. Død kode: `greet` og `process_text` ✅ LØST
 - **Fil:** `src-tauri/src/commands/utility_commands.rs:6-31`
 - **Problem:** `greet` er Tauri template-rest. `process_text` er placeholder der aldrig bør være i production. Registreret i `lib.rs:65-66`.
-- **Fix:** Fjern begge kommandoer og deres registration i `invoke_handler`.
+- **Fix:** Fjernet begge kommandoer og deres registration i `invoke_handler`.
+- **Commit:** `3eb894f`
 
-### 16. Escape key håndteres dobbelt
+### 16. Escape key håndteres dobbelt ✅ LØST
 - **Fil:** `src/components/PopupWindow.vue:2, 306`
 - **Problem:** Template binder `@keydown="handleKeydown"` OG `onMounted` tilføjer `document.addEventListener('keydown', handleKeydown)`. Escape fires to gange.
-- **Fix:** Fjern `document.addEventListener`, behold kun template-bindingen.
+- **Fix:** Fjernet `document.addEventListener`, template-bindingen håndterer alle keys.
+- **Commit:** `3eb894f`
 
 ### 17. Duplicate Window interface
 - **Filer:** `src/vite-env.d.ts:10-14`, `src/types/window.d.ts:5-13`
 - **Problem:** Begge erklærer `interface Window { clipboardText?: string }`. TypeScript merger dem, men det er forvirrende og fejlbehæftet.
 - **Fix:** Fjern erklæringen fra `vite-env.d.ts`, behold kun i `src/types/window.d.ts`.
 
-### 18. `xxx:` pseudo-protokol i DOMPurify regex
+### 18. `xxx:` pseudo-protokol i DOMPurify regex ✅ LØST
 - **Fil:** `src/utils/markdown.ts:67-68`
 - **Problem:** `ALLOWED_URI_REGEXP` tillader `xxx:` — ikke en reel URI-protokol, kan udnyttes.
-- **Fix:** Fjern `|xxx` fra regex.
+- **Fix:** Fjernet `|xxx` fra regex.
+- **Commit:** `3eb894f`
 
 ### 19. Identiske computed properties
 - **Fil:** `src/components/ChatWindow.vue:242-252`
@@ -121,10 +124,11 @@
 - **Problem:** Både `operations` (Record) og `operationsArray` (Array) skal holdes synkront manuelt.
 - **Fix:** Brug kun sorteret array og udled lookup-map via `computed`.
 
-### 21. Magic numbers i shortcut_manager
+### 21. Magic numbers i shortcut_manager ✅ LØST
 - **Fil:** `src-tauri/src/shortcut_manager.rs:35, 51, 77, 92`
 - **Problem:** `200` (debounce), `50` (initial delay), `50` (clipboard write delay), `250` (copy-wait) — ingen navngivne konstanter eller dokumentation.
-- **Fix:** Definer som navngivne konstanter øverst i filen.
+- **Fix:** Defineret som navngivne konstanter øverst i filen med dokumentation.
+- **Commit:** `3eb894f`
 
 ### 22. `enigo` initieres flere gange
 - **Fil:** `src-tauri/src/shortcut_manager.rs:173, 193, 234`
@@ -151,10 +155,11 @@
 - **Problem:** `throw new Error(\`Failed: ${err}\`)` mister original stack trace.
 - **Fix:** Brug `throw err` direkte eller wrap med `.cause`.
 
-### 27. Encoding-fejl: bullet character
+### 27. Encoding-fejl: bullet character ✅ LØST
 - **Fil:** `src/components/OperationEditWindow.vue:48`
 - **Problem:** `â€¢` i stedet for korrekt bullet `•` (U+2022). UTF-8 mojibake.
-- **Fix:** Erstat med korrekt Unicode-tegn.
+- **Fix:** Erstattet med korrekt Unicode-tegn.
+- **Commit:** `3eb894f`
 
 ### 28. Kodepilkering i window_commands
 - **Fil:** `src-tauri/src/commands/window_commands.rs:6-50, 52-108`
@@ -231,10 +236,11 @@
 - **Problem:** `description = "A Tauri App"`, `authors = ["you"]`. Mangler `[lints.clippy]` sektion til CI.
 - **Fix:** Opdater med reelle værdier og tilføj lint-konfiguration.
 
-### 43. `.gitignore` tastefejl
+### 43. `.gitignore` tastefejl ✅ LØST
 - **Fil:** `.gitignore:27`
 - **Problem:** `pyton program` — "pyton" skal være "python". Mellemrummet gør det til to separate patterns.
-- **Fix:** Ret til `python` eller fjern linjen.
+- **Fix:** Fjernet linjen.
+- **Commit:** `3eb894f`
 
 ### 44. Inkonsistent `:deep()` brug i MessageBubble
 - **Fil:** `src/components/MessageBubble.vue:247-348`
@@ -296,11 +302,13 @@
 | P1 | 10 | Hardcoded shortcut | Pending | Medium | Medium — funktionalitet |
 | P1 | 12 | clear_chat_history sideeffekt | ✅ Løst | Lav | Medium — UX |
 | P2 | 13 | Duplikeret retry-logik | Pending | Lav | Medium — vedligeholdelse |
-| P2 | 15 | Død kode | Pending | Lav | Lav — oprydning |
-| P2 | 16 | Escape key dobbelt | Pending | Lav | Medium — UX bug |
-| P2 | 18 | xxx: i DOMPurify | Pending | Lav | Medium — sikkerhed |
-| P2 | 21 | Magic numbers | Pending | Lav | Lav — læsbarhed |
-| P2 | 29-30 | Store Vue-komponenter | Pending | Høj | Medium — vedligeholdelse |
+| P2 | 15 | Død kode | ✅ Løst | Lav | Lav — oprydning |
+| P2 | 16 | Escape key dobbelt | ✅ Løst | Lav | Medium — UX bug |
+| P2 | 18 | xxx: i DOMPurify | ✅ Løst | Lav | Medium — sikkerhed |
+| P2 | 21 | Magic numbers | ✅ Løst | Lav | Lav — læsbarhed |
+| P2 | 25 | Bullet encoding | ✅ Løst | Lav | Lav — UI |
+| P2 | 27-28 | Store Vue-komponenter | Pending | Høj | Medium — vedligeholdelse |
+| P2 | 43 | .gitignore typo | ✅ Løst | Lav | Lav — oprydning |
 | P3 | 31-37 | TypeScript type-problemer | Pending | Lav | Lav — typesikkerhed |
 | P3 | 42-43 | Cargo.toml / .gitignore | Pending | Lav | Lav — oprydning |
 | ⚡ | 45 | DataManager skriver hele filen | Pending | Medium | Høj — ydeevne |
