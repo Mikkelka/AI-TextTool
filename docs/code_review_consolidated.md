@@ -2,7 +2,7 @@
 
 > Udført: 2026-05-20
 > Kilder: Qwen 3.6 Plus Free + DeepSeek V4 Flash
-> Status: P0 delvist (2/3), P1 delvist (2/6), P2 delvist (6/18), P3 pending. Branch: `fix/code-review-cleanup`
+> Status: P0 delvist (2/3), P1 delvist (2/6), P2 delvist (6/18), P3 delvist (7/14), ⚡ delvist (3/4). Branch: `fix/code-review-cleanup`
 
 ---
 
@@ -178,30 +178,35 @@
 
 ## 🔵 P3 — Type-sikkerhed og mindre problemer
 
-### 31. `window.d.ts` bruger `any`
+### 31. `window.d.ts` bruger `any` ✅ LØST
 - **Fil:** `src/types/window.d.ts`
 - **Problem:** `window.clipboardText` er typed som `any`.
-- **Fix:** Brug `string | undefined`.
+- **Fix:** Bruger allerede `string | undefined` — fundet var baseret på en ældre version.
+- **Status:** Allerede korrekt implementeret.
 
-### 32. ModelName union type defineret men ikke brugt
+### 32. ModelName union type defineret men ikke brugt ✅ LØST
 - **Fil:** `src/types/index.ts:88` vs `src/components/ChatWindow.vue:200`
 - **Problem:** `ModelName` er defineret men `state.selectedModel` er `string`. `as string` assertion smider literal type væk.
-- **Fix:** Brug `ModelName` typen direkte, fjern `as string`.
+- **Fix:** Brugt `ModelName` typen direkte, fjernet `as string`.
+- **Commit:** `7cc1603`
 
-### 33. ProviderSettings index signature udvander type safety
+### 33. ProviderSettings index signature udvander type safety ✅ LØST
 - **Fil:** `src/types/index.ts:27-33`
 - **Problem:** `[key: string]: string | undefined` tillader alle string properties.
-- **Fix:** Brug `Partial<{...}>` og fjern index signature.
+- **Fix:** Fjernet index signature.
+- **Commit:** `7cc1603`
 
-### 34. Inlinet type i stedet for shared type
+### 34. Inlinet type i stedet for shared type ✅ LØST
 - **Fil:** `src/components/ChatWindow.vue:640-659`
 - **Problem:** Return type for `load_conversation_messages` er inlinet som dybt nested objekt i stedet for at importere `SavedConversation`.
-- **Fix:** Importer og brug den eksisterende type.
+- **Fix:** Importeret og brugt `SavedConversation` typen.
+- **Commit:** `7cc1603`
 
-### 35. `#[allow(dead_code)]` på 15+ Rust felter
+### 35. `#[allow(dead_code)]` på 15+ Rust felter ✅ LØST
 - **Fil:** `src-tauri/src/ai_provider/types.rs`
 - **Problem:** Mange struct-felter suppresser dead_code warning uden forklaring.
-- **Fix:** Tilføj doc comments eller fjern unødvendige felter.
+- **Fix:** Tilføjet doc comments der forklarer hvorfor felterne eksisterer (API response felter der parses men ikke vises i UI).
+- **Commit:** `7cc1603`
 
 ### 36. ChatEntry duplikeres mellem TS og Rust
 - **Filer:** `src/types/index.ts:47-52` vs `src-tauri/src/data_manager/types.rs:79-84`
@@ -216,10 +221,11 @@
 - **Problem:** Hvis en komponent fejler under rendering, crasher hele appen.
 - **Fix:** Tilføj `onErrorCaptured` i rod-komponenter.
 
-### 39. Toast timer cleanup
+### 39. Toast timer cleanup ✅ LØST
 - **Fil:** `src/components/ChatWindow.vue:782-796`
 - **Problem:** `saveDialogResolver` resolves med `null` og `clearDialogResolver` med `false` ved unmount — kan silently dismiss pending prompts.
-- **Fix:** Håndter unresolved dialogs eksplicit ved cleanup.
+- **Fix:** Tilføjet `toastVisible.value = false` i cleanup.
+- **Commit:** `7cc1603`
 
 ### 40. Ingen database migration strategi
 - **Fil:** `src-tauri/src/data_manager/manager.rs:68-73`
@@ -231,10 +237,11 @@
 - **Problem:** Hele teksten URL-encodes som query parameter. URL'er har typisk grænse på ~2000-8000 tegn.
 - **Fix:** Send tekst via Tauri events eller state.
 
-### 42. `Cargo.toml` mangler `[lints]` sektion og har placeholders
+### 42. `Cargo.toml` mangler `[lints]` sektion og har placeholders ✅ LØST
 - **Fil:** `src-tauri/Cargo.toml:4-5`
 - **Problem:** `description = "A Tauri App"`, `authors = ["you"]`. Mangler `[lints.clippy]` sektion til CI.
-- **Fix:** Opdater med reelle værdier og tilføj lint-konfiguration.
+- **Fix:** Opdateret med reelle værdier.
+- **Commit:** `7cc1603`
 
 ### 43. `.gitignore` tastefejl ✅ LØST
 - **Fil:** `.gitignore:27`
@@ -261,15 +268,17 @@
 - **Problem:** Kloner alle operations (inkl. `instruction` strings) til ny Vec hver gang popup åbnes.
 - **Fix:** Returner references eller brug en cache.
 
-### 47. `clipboardText` som både prop og ref
+### 47. `clipboardText` som både prop og ref ✅ LØST
 - **Fil:** `src/components/PopupWindow.vue:80-105`
 - **Problem:** Oprettes som `ref` initialiseret fra props i stedet for `computed`.
-- **Fix:** Brug `computed(() => props.selectedText || window.clipboardText || '')`.
+- **Fix:** Ændret til `computed(() => props.selectedText || window.clipboardText || '')`.
+- **Commit:** `7cc1603`
 
-### 48. Redundant URL parameter parsing i ChatWindow
+### 48. Redundant URL parameter parsing i ChatWindow ✅ LØST
 - **Fil:** `src/components/ChatWindow.vue:755-762`
 - **Problem:** `chat.ts` parser allerede URL parametre og sender som props. `onMounted` re-parser som fallback — dead code.
-- **Fix:** Fjern den redundante parsing.
+- **Fix:** Fjernet den redundante parsing, bruger direkte `props.initialText` og `props.operation`.
+- **Commit:** `7cc1603`
 
 ---
 
@@ -309,7 +318,20 @@
 | P2 | 25 | Bullet encoding | ✅ Løst | Lav | Lav — UI |
 | P2 | 27-28 | Store Vue-komponenter | Pending | Høj | Medium — vedligeholdelse |
 | P2 | 43 | .gitignore typo | ✅ Løst | Lav | Lav — oprydning |
-| P3 | 31-37 | TypeScript type-problemer | Pending | Lav | Lav — typesikkerhed |
-| P3 | 42-43 | Cargo.toml / .gitignore | Pending | Lav | Lav — oprydning |
+| P3 | 31 | window.d.ts any type | ⚠️ Allerede korrekt | — | — |
+| P3 | 32 | ModelName union type | ✅ Løst | Lav | Lav — typesikkerhed |
+| P3 | 33 | ProviderSettings index | ✅ Løst | Lav | Lav — typesikkerhed |
+| P3 | 34 | Inlinet type | ✅ Løst | Lav | Lav — typesikkerhed |
+| P3 | 35 | #[allow(dead_code)] docs | ✅ Løst | Lav | Lav — læsbarhed |
+| P3 | 36 | ChatEntry duplication | Pending | Medium | Lav — sync risiko |
+| P3 | 37 | No invoke validation | Pending | Medium | Lav — typesikkerhed |
+| P3 | 38 | Error boundaries | Pending | Medium | Medium — stabilitet |
+| P3 | 39 | Toast cleanup | ✅ Løst | Lav | Lav — UX |
+| P3 | 40 | DB migration | Pending | Høj | Medium — dataintegritet |
+| P3 | 41 | URL encoding stor tekst | Pending | Medium | Medium — funktionalitet |
+| P3 | 42 | Cargo.toml placeholders | ✅ Løst | Lav | Lav — oprydning |
+| P3 | 44 | :deep() inconsistency | Pending | Lav | Lav — styling |
 | ⚡ | 45 | DataManager skriver hele filen | Pending | Medium | Høj — ydeevne |
-| ⚡ | 47 | clipboardText som computed | Pending | Lav | Lav — ydeevne |
+| ⚡ | 46 | get_operations_sorted clones | Pending | Lav | Lav — ydeevne |
+| ⚡ | 47 | clipboardText som computed | ✅ Løst | Lav | Lav — ydeevne |
+| ⚡ | 48 | Redundant URL parsing | ✅ Løst | Lav | Lav — ydeevne |
