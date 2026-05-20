@@ -2,26 +2,29 @@
 
 > Udført: 2026-05-20
 > Kilder: Qwen 3.6 Plus Free + DeepSeek V4 Flash
-> Status: Alle fund valideret mod kildekoden, feedback fra code_review_consolidated_feedback.md inkorporeret
+> Status: P0 delvist fikset (2/3), P1-P3 pending. Branch: `fix/code-review-cleanup`
 
 ---
 
 ## 🔴 P0 — Kritiske sikkerhedsproblemer
 
-### 1. XSS i clipboard-tekst injektion
+### 1. XSS i clipboard-tekst injektion ✅ LØST
 - **Fil:** `src-tauri/src/window_manager.rs:206-212`
 - **Problem:** Clipboard-tekst injiceres via `initialization_script` med kun `'` escaping. Mangler escaping for `</script>`, backticks, `\` og Unicode. Ondskabsfuld tekst kan bryde ud af strengen.
-- **Fix:** Brug `JSON.stringify()` til korrekt escaping eller send data via Tauri events.
+- **Fix:** Brugt `serde_json::to_string()` til korrekt escaping.
+- **Commit:** `2b8e924`
 
-### 2. API key eksponeret i URL query params
+### 2. API key eksponeret i URL query params ⚠️ WONTFIX
 - **Fil:** `src-tauri/src/ai_provider/gemini.rs:203`
 - **Problem:** `.query(&[("key", &self.api_key)])` sender API-nøglen som URL parameter. Lækkes til proxies, server-logs og browser-historik.
 - **Fix:** Brug `Authorization: Bearer <key>` header.
+- **Status:** Google AI Studio API understøtter **kun** `?key=` query parameter. `Authorization: Bearer` er kun til OAuth2 tokens. Ikke muligt at ændre uden at skifte til Google Cloud Vertex AI.
 
-### 3. Ingen global rate limiting
+### 3. Ingen global rate limiting ✅ LØST
 - **Fil:** `src-tauri/src/ai_provider/gemini.rs:24-68, 76`
 - **Problem:** `RateLimiter` er et struct-felt i `GeminiProvider`. Hver `new()` giver en ny limiter. Samtidige vinduer overskrider Gemini's grænser.
-- **Fix:** Gør rate limiteren global via `Arc<Mutex<RateLimiter>>` i Tauri state (`app.manage()`).
+- **Fix:** `GlobalRateLimiter` oprettes ved startup og gemmes som Tauri managed state. Alle `GeminiProvider` instanser deler samme limiter via `Arc<Mutex<RateLimiter>>`.
+- **Commit:** `2b8e924`
 
 ---
 
@@ -278,25 +281,25 @@
 
 ## Prioriteret handlingsplan
 
-| Prioritet | # | Issue | Indsats | Effekt |
-|-----------|---|-------|---------|--------|
-| P0 | 1 | XSS i clipboard injection | Medium | Høj — sikkerhed |
-| P0 | 2 | API key i URL | Lav | Høj — sikkerhed |
-| P0 | 3 | Global rate limiting | Medium | Høj — stabilitet |
-| P1 | 4 | Hvid tekst i light mode | Lav | Høj — UI bug |
-| P1 | 5 | Manglende ikonfiler | Lav | Høj — build fejl |
-| P1 | 6 | DataManager som Tauri state | Høj | Høj — ydeevne + race conditions |
-| P1 | 7 | Redundant config | Medium | Høj — dataintegritet |
-| P1 | 9 | reqwest::Client genbrug | Lav | Medium — ydeevne |
-| P1 | 10 | Hardcoded shortcut | Medium | Medium — funktionalitet |
-| P1 | 12 | clear_chat_history sideeffekt | Lav | Medium — UX |
-| P2 | 13 | Duplikeret retry-logik | Lav | Medium — vedligeholdelse |
-| P2 | 15 | Død kode | Lav | Lav — oprydning |
-| P2 | 16 | Escape key dobbelt | Lav | Medium — UX bug |
-| P2 | 18 | xxx: i DOMPurify | Lav | Medium — sikkerhed |
-| P2 | 21 | Magic numbers | Lav | Lav — læsbarhed |
-| P2 | 29-30 | Store Vue-komponenter | Høj | Medium — vedligeholdelse |
-| P3 | 31-37 | TypeScript type-problemer | Lav | Lav — typesikkerhed |
-| P3 | 42-43 | Cargo.toml / .gitignore | Lav | Lav — oprydning |
-| ⚡ | 45 | DataManager skriver hele filen | Medium | Høj — ydeevne |
-| ⚡ | 47 | clipboardText som computed | Lav | Lav — ydeevne |
+| Prioritet | # | Issue | Status | Indsats | Effekt |
+|-----------|---|-------|--------|---------|--------|
+| P0 | 1 | XSS i clipboard injection | ✅ Løst | Medium | Høj — sikkerhed |
+| P0 | 2 | API key i URL | ⚠️ Wontfix | Lav | Høj — sikkerhed |
+| P0 | 3 | Global rate limiting | ✅ Løst | Medium | Høj — stabilitet |
+| P1 | 4 | Hvid tekst i light mode | Pending | Lav | Høj — UI bug |
+| P1 | 5 | Manglende ikonfiler | Pending | Lav | Høj — build fejl |
+| P1 | 6 | DataManager som Tauri state | Pending | Høj | Høj — ydeevne + race conditions |
+| P1 | 7 | Redundant config | Pending | Medium | Høj — dataintegritet |
+| P1 | 9 | reqwest::Client genbrug | Pending | Lav | Medium — ydeevne |
+| P1 | 10 | Hardcoded shortcut | Pending | Medium | Medium — funktionalitet |
+| P1 | 12 | clear_chat_history sideeffekt | Pending | Lav | Medium — UX |
+| P2 | 13 | Duplikeret retry-logik | Pending | Lav | Medium — vedligeholdelse |
+| P2 | 15 | Død kode | Pending | Lav | Lav — oprydning |
+| P2 | 16 | Escape key dobbelt | Pending | Lav | Medium — UX bug |
+| P2 | 18 | xxx: i DOMPurify | Pending | Lav | Medium — sikkerhed |
+| P2 | 21 | Magic numbers | Pending | Lav | Lav — læsbarhed |
+| P2 | 29-30 | Store Vue-komponenter | Pending | Høj | Medium — vedligeholdelse |
+| P3 | 31-37 | TypeScript type-problemer | Pending | Lav | Lav — typesikkerhed |
+| P3 | 42-43 | Cargo.toml / .gitignore | Pending | Lav | Lav — oprydning |
+| ⚡ | 45 | DataManager skriver hele filen | Pending | Medium | Høj — ydeevne |
+| ⚡ | 47 | clipboardText som computed | Pending | Lav | Lav — ydeevne |
