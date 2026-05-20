@@ -7,6 +7,21 @@ use tokio::time::sleep;
 
 use super::{utils::time, window_manager};
 
+/// Time window to ignore duplicate shortcut triggers (milliseconds)
+const DEBOUNCE_MS: u128 = 200;
+
+/// Delay before reading clipboard to let other operations settle (milliseconds)
+const INITIAL_DELAY_MS: u64 = 50;
+
+/// Delay after writing clipboard marker to ensure it propagates (milliseconds)
+const CLIPBOARD_WRITE_DELAY_MS: u64 = 50;
+
+/// Delay after simulating copy to ensure the OS has captured the selection (milliseconds)
+const COPY_COMPLETION_DELAY_MS: u64 = 250;
+
+/// Additional delay before retrying a failed clipboard read (milliseconds)
+const CLIPBOARD_RETRY_DELAY_MS: u64 = 100;
+
 /// Create and configure the global shortcut handler with debouncing
 pub fn create_shortcut_handler<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
     let last_trigger = Arc::new(Mutex::new(
@@ -32,7 +47,7 @@ fn handle_global_shortcut<R: Runtime>(app: AppHandle<R>, last_trigger: Arc<Mutex
                 poisoned.into_inner()
             }
         };
-        if now.duration_since(*last_time).as_millis() < 200 {
+        if now.duration_since(*last_time).as_millis() < DEBOUNCE_MS {
             log::debug!("Debouncing - ignoring duplicate trigger");
             return;
         }
@@ -48,7 +63,7 @@ fn handle_global_shortcut<R: Runtime>(app: AppHandle<R>, last_trigger: Arc<Mutex
 /// Process the shortcut trigger: copy text, analyze clipboard, and show appropriate window
 async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Small initial delay to let any ongoing operations (like Ctrl+A) complete
-    sleep(std::time::Duration::from_millis(50)).await;
+        sleep(std::time::Duration::from_millis(CLIPBOARD_WRITE_DELAY_MS)).await;
 
     // First, get current clipboard content to compare later
     let original_clipboard = app_handle
@@ -74,7 +89,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     } else {
         log::debug!("Clipboard cleared with marker: {}", unique_marker);
         // Small delay to ensure clipboard write completes
-        sleep(std::time::Duration::from_millis(50)).await;
+    sleep(std::time::Duration::from_millis(INITIAL_DELAY_MS)).await;
     }
 
     // Simulate Ctrl+C to copy any selected text
@@ -89,14 +104,14 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     }
 
     // Longer delay to ensure copy operation completes reliably
-    sleep(std::time::Duration::from_millis(250)).await;
+    sleep(std::time::Duration::from_millis(COPY_COMPLETION_DELAY_MS)).await;
 
     // Get clipboard content after Ctrl+C - with retry logic
     let new_clipboard = match app_handle.clipboard().read_text() {
         Ok(content) => content,
         Err(_) => {
             // First retry after additional delay
-            sleep(std::time::Duration::from_millis(100)).await;
+            sleep(std::time::Duration::from_millis(CLIPBOARD_RETRY_DELAY_MS)).await;
             match app_handle.clipboard().read_text() {
                 Ok(content) => content,
                 Err(_) => {

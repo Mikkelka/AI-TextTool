@@ -29,23 +29,27 @@
             data-tauri-drag-region="false"
             @click="addNewOperation"
           >
-            <AppIcon :icon="Plus" :size="16" /> Add New
+            <AppIcon :icon="Plus" :size="16" />
+            Add New
           </button>
           <button
             class="control-btn reset-btn"
             data-tauri-drag-region="false"
             @click="resetToDefaults"
           >
-            <AppIcon :icon="RotateCcw" :size="16" /> Reset to Defaults
+            <AppIcon :icon="RotateCcw" :size="16" />
+            Reset to Defaults
           </button>
-          <button class="control-btn close-btn" data-tauri-drag-region="false" @click="closeWindow"><AppIcon :icon="X" :size="16" /></button>
+          <button class="control-btn close-btn" data-tauri-drag-region="false" @click="closeWindow">
+            <AppIcon :icon="X" :size="16" />
+          </button>
         </div>
       </div>
 
       <!-- Operations Grid -->
       <div class="operations-grid-container">
         <p class="drag-instructions">
-          Use arrow buttons to rearrange order â€¢ Click edit/delete icons to modify operations
+          Use arrow buttons to rearrange order • Click edit/delete icons to modify operations
         </p>
         <div class="operations-grid">
           <div
@@ -181,7 +185,16 @@
 <script setup lang="ts">
   import { ref, onMounted, onUnmounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
-  import { Pencil, Plus, RotateCcw, Trash2, TriangleAlert, X, ChevronUp, ChevronDown } from '@lucide/vue'
+  import {
+    Pencil,
+    Plus,
+    RotateCcw,
+    Trash2,
+    TriangleAlert,
+    X,
+    ChevronUp,
+    ChevronDown
+  } from '@lucide/vue'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import AppIcon from './AppIcon.vue'
   import AppToast from './AppToast.vue'

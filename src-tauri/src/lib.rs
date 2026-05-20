@@ -67,8 +67,6 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             // Utility commands
-            commands::greet,
-            commands::process_text,
             commands::simulate_paste,
             // AI commands
             commands::process_text_with_ai,

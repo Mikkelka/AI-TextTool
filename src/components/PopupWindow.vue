@@ -17,7 +17,10 @@
     <div v-else class="popup-content">
       <!-- Minimal Header -->
       <div class="popup-header" data-tauri-drag-region>
-        <span class="popup-title" data-tauri-drag-region><AppIcon :icon="Sparkles" :size="14" />AI Operations</span>
+        <span class="popup-title" data-tauri-drag-region>
+          <AppIcon :icon="Sparkles" :size="14" />
+          AI Operations
+        </span>
         <button
           class="popup-close-btn"
           title="Close (ESC)"
@@ -301,14 +304,9 @@
   // Lifecycle
   onMounted(() => {
     void loadOperations()
-
-    // Set up keyboard event listener for arrow key navigation
-    document.addEventListener('keydown', handleKeydown)
   })
 
   onUnmounted(() => {
-    // Cleanup keyboard event listener
-    document.removeEventListener('keydown', handleKeydown)
 
     // Clear sensitive data
     clipboardText.value = ''

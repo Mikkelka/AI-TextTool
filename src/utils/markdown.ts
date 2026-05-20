@@ -65,7 +65,7 @@ export function renderMarkdown(markdown: string): string {
       ],
       ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'data-copy-code', 'colspan', 'rowspan'],
       ALLOWED_URI_REGEXP:
-        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
     })
 
     return sanitized
