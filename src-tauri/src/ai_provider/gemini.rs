@@ -218,7 +218,7 @@ impl GeminiProvider {
             let response = self
                 .client
                 .post(&url)
-                .header("Authorization", format!("Bearer {}", &self.api_key))
+                .query(&[("key", &self.api_key)])
                 .json(&request)
                 .send()
                 .await;
@@ -384,7 +384,7 @@ impl GeminiProvider {
             let response = self
                 .client
                 .post(&url)
-                .header("Authorization", format!("Bearer {}", &self.api_key))
+                .query(&[("key", &self.api_key)])
                 .json(&request)
                 .send()
                 .await;

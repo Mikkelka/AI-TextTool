@@ -93,6 +93,7 @@ pub fn run() {
             data_manager::save_chat_entry,
             data_manager::load_chat_history,
             data_manager::clear_chat_history,
+            data_manager::clear_saved_conversations,
             data_manager::save_conversation,
             data_manager::load_saved_conversations,
             data_manager::delete_saved_conversation,

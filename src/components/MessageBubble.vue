@@ -229,7 +229,7 @@
   }
 
   .markdown-content {
-    color: #ffffff;
+    color: #333;
   }
 
   .markdown-content :deep(h1),
@@ -237,7 +237,7 @@
   .markdown-content :deep(h3),
   .markdown-content :deep(h4) {
     margin: 16px 0 8px 0;
-    color: #ffffff;
+    color: #1a1a2e;
   }
 
   .markdown-content :deep(p) {
@@ -291,10 +291,10 @@
   .markdown-content :deep(blockquote) {
     margin: 12px 0;
     padding: 12px 16px;
-    border-left: 4px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #4a90d9;
+    background: rgba(74, 144, 217, 0.08);
     border-radius: 4px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #555;
     font-style: italic;
   }
 
@@ -311,38 +311,38 @@
     border-collapse: collapse;
     width: 100%;
     margin: 12px 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
     border-radius: 4px;
     overflow: hidden;
   }
 
   .markdown-content :deep(thead) {
-    background: rgba(255, 255, 255, 0.1);
+    background: #f0f0f0;
   }
 
   .markdown-content :deep(th),
   .markdown-content :deep(td) {
     padding: 10px 12px;
     text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
   }
 
   .markdown-content :deep(th) {
     font-weight: 600;
-    color: #ffffff;
+    color: #1a1a2e;
   }
 
   .markdown-content :deep(tbody tr:hover) {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.03);
   }
 
   .markdown-content :deep(hr) {
     margin: 20px 0;
     border: none;
     height: 1px;
-    background: rgba(255, 255, 255, 0.2);
+    background: #e0e0e0;
   }
 
   .processing-indicator {

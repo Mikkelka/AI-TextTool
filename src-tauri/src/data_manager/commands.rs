@@ -52,6 +52,15 @@ pub async fn clear_chat_history(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn clear_saved_conversations(app: AppHandle) -> Result<(), String> {
+    let mut manager = load_data_manager(app).await?;
+    manager
+        .clear_saved_conversations()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn save_conversation(
     app: AppHandle,
     title: String,
