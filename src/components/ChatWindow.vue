@@ -184,7 +184,14 @@
   import AppToast from './AppToast.vue'
   import MessageBubble from './MessageBubble.vue'
   import InputArea from './InputArea.vue'
-  import type { AIResponse, ChatMessage, ChatWindowProps, Config, ModelName, SavedConversation } from '../types'
+  import type {
+    AIResponse,
+    ChatMessage,
+    ChatWindowProps,
+    Config,
+    ModelName,
+    SavedConversation
+  } from '../types'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {

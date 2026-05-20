@@ -307,7 +307,6 @@
   })
 
   onUnmounted(() => {
-
     // Clear sensitive data
     delete window.clipboardText
   })
