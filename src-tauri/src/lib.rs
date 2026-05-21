@@ -1,7 +1,7 @@
 use tauri::Manager;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
-use ai_provider::GlobalRateLimiter;
+use ai_provider::{GlobalRateLimiter, SharedHttpClient};
 
 mod ai_provider;
 mod commands;
@@ -16,6 +16,7 @@ pub fn run() {
     utils::logging::init_logging();
 
     let rate_limiter = GlobalRateLimiter::new(15);
+    let http_client = SharedHttpClient::new();
 
     let run_result = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -23,6 +24,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
         .manage(rate_limiter)
+        .manage(http_client)
         .setup(|app| {
             // Hide the main window immediately on startup
             if let Some(window) = app.get_webview_window("main") {

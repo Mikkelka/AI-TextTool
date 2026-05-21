@@ -3,7 +3,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use super::super::ai_provider::{
     ChatMessage, ChatResponse, Content, GeminiError, GeminiProvider, GenerationConfig,
-    GlobalRateLimiter, ThinkingConfig,
+    GlobalRateLimiter, SharedHttpClient, ThinkingConfig,
 };
 use super::super::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
 use super::super::ai_provider::gemini::RateLimiter;
@@ -51,8 +51,8 @@ fn gemini_error_to_user_message(error: GeminiError) -> String {
 
 /// Helper function to load and initialize DataManager
 /// Reduces code duplication across all AI commands
-async fn load_data_manager(app: tauri::AppHandle) -> Result<DataManager, String> {
-    let mut manager = DataManager::new(app);
+async fn load_data_manager(_app: tauri::AppHandle) -> Result<DataManager, String> {
+    let mut manager = DataManager::new();
     manager
         .initialize()
         .await
@@ -64,6 +64,11 @@ async fn load_data_manager(app: tauri::AppHandle) -> Result<DataManager, String>
 fn get_rate_limiter(app: &tauri::AppHandle) -> std::sync::Arc<tokio::sync::Mutex<RateLimiter>> {
     let global_limiter = app.state::<GlobalRateLimiter>();
     global_limiter.get_limiter()
+}
+
+/// Helper function to get the shared HTTP client from Tauri state
+fn get_http_client(app: &tauri::AppHandle) -> SharedHttpClient {
+    app.state::<SharedHttpClient>().inner().clone()
 }
 
 #[tauri::command]
@@ -93,9 +98,10 @@ pub async fn process_text_with_ai(
         );
     }
 
-    // Get shared rate limiter and create Gemini provider
+    // Get shared rate limiter and HTTP client, then create Gemini provider
     let rate_limiter = get_rate_limiter(&app);
-    let provider = GeminiProvider::new(config.api_key, rate_limiter)
+    let http_client = get_http_client(&app);
+    let provider = GeminiProvider::new(config.api_key, rate_limiter, &http_client)
         .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
@@ -159,9 +165,10 @@ pub async fn chat_with_ai(
         return Err("API key not configured".to_string());
     }
 
-    // Get shared rate limiter and create provider
+    // Get shared rate limiter and HTTP client, then create provider
     let rate_limiter = get_rate_limiter(&app);
-    let provider = GeminiProvider::new(config.api_key, rate_limiter)
+    let http_client = get_http_client(&app);
+    let provider = GeminiProvider::new(config.api_key, rate_limiter, &http_client)
         .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
@@ -230,7 +237,8 @@ pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     }
 
     let rate_limiter = get_rate_limiter(&app);
-    let provider = match GeminiProvider::new(config.api_key, rate_limiter) {
+    let http_client = get_http_client(&app);
+    let provider = match GeminiProvider::new(config.api_key, rate_limiter, &http_client) {
         Ok(provider) => provider,
         Err(_) => return Ok(false),
     };

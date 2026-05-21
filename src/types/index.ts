@@ -67,7 +67,7 @@ export interface ConversationMessage {
   timestamp: string
   thoughts?: string
   sources?: GroundingSource[]
-  searchQueries?: string[]
+  search_queries?: string[]
 }
 
 // Props interfaces for components

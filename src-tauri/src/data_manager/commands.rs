@@ -8,8 +8,8 @@ use super::types::*;
 // Tauri commands for chat history and conversation management
 
 /// Helper that initializes DataManager consistently across commands.
-async fn load_data_manager(app: AppHandle) -> Result<DataManager, String> {
-    let mut manager = DataManager::new(app);
+async fn load_data_manager(_app: AppHandle) -> Result<DataManager, String> {
+    let mut manager = DataManager::new();
     manager.initialize().await.map_err(|e| e.to_string())?;
     Ok(manager)
 }

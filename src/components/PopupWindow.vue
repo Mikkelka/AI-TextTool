@@ -195,7 +195,10 @@
         }
       }, 200)
     } catch (err) {
-      throw new Error(`Failed to process text: ${err}`)
+      const message = err instanceof Error ? err.message : String(err)
+      const error = new Error(`Failed to process text: ${message}`)
+      ;(error as Error & { cause?: unknown }).cause = err
+      throw error
     }
   }
 
@@ -223,7 +226,10 @@
       void closeWindow()
     } catch (err) {
       logger.error('Failed to open chat window:', err)
-      throw new Error(`Failed to open chat window: ${err}`)
+      const message = err instanceof Error ? err.message : String(err)
+      const error = new Error(`Failed to open chat window: ${message}`)
+      ;(error as Error & { cause?: unknown }).cause = err
+      throw error
     }
   }
 

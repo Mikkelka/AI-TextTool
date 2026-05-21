@@ -191,7 +191,7 @@
     Config,
     SavedConversation
   } from '../types'
-  import { CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES } from '../types'
+  import { CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES, type ModelName } from '../types'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {
@@ -250,11 +250,11 @@
   })
 
   const supportsThinking = computed(() => {
-    return MODEL_CAPABILITIES[state.selectedModel]?.thinking ?? false
+    return MODEL_CAPABILITIES[state.selectedModel as ModelName]?.thinking ?? false
   })
 
   const supportsGrounding = computed(() => {
-    return MODEL_CAPABILITIES[state.selectedModel]?.grounding ?? false
+    return MODEL_CAPABILITIES[state.selectedModel as ModelName]?.grounding ?? false
   })
 
   // Validation constants

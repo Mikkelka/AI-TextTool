@@ -5,10 +5,3 @@ declare module '*.vue' {
   const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>
   export default component
 }
-
-// Global Window interface extensions
-declare global {
-  interface Window {
-    clipboardText?: string
-  }
-}

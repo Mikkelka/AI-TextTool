@@ -20,6 +20,9 @@ IMPORTANT: Use markdown formatting in your responses to make them clear and well
 - Separators: --- for horizontal rules/breaks
 Always format your response professionally using these markdown features.";
 
+/// Default system instruction used when no custom instruction is provided
+const DEFAULT_SYSTEM_INSTRUCTION: &str = "You are a helpful AI assistant. Provide clear, accurate, and concise responses.";
+
 /// Rate limiting tracker
 #[derive(Debug)]
 pub(crate) struct RateLimiter {
@@ -97,16 +100,39 @@ pub struct GeminiProvider {
     max_retries: u32,
 }
 
+/// Shared HTTP client for reuse across providers (connection pooling)
+#[derive(Debug, Clone)]
+pub struct SharedHttpClient {
+    client: Client,
+}
+
+impl SharedHttpClient {
+    pub fn new() -> Self {
+        Self {
+            client: Client::builder()
+                .timeout(Duration::from_secs(120))
+                .build()
+                .expect("Failed to create HTTP client"),
+        }
+    }
+
+    pub fn client(&self) -> &Client {
+        &self.client
+    }
+}
+
 impl GeminiProvider {
-    /// Create a new Gemini provider instance with a shared rate limiter
-    pub fn new(api_key: String, rate_limiter: Arc<Mutex<RateLimiter>>) -> Result<Self, GeminiError> {
+    /// Create a new Gemini provider instance with a shared rate limiter and HTTP client
+    pub fn new(
+        api_key: String,
+        rate_limiter: Arc<Mutex<RateLimiter>>,
+        http_client: &SharedHttpClient,
+    ) -> Result<Self, GeminiError> {
         if api_key.trim().is_empty() {
             return Err(GeminiError::InvalidApiKey);
         }
 
-        let client = Client::builder()
-            .timeout(Duration::from_secs(120))
-            .build()?;
+        let client = http_client.client().clone();
 
         let default_safety_settings = vec![
             SafetySetting {
@@ -201,7 +227,10 @@ impl GeminiProvider {
                     None => FORMATTING_INSTRUCTION.to_string(),
                 }
             } else {
-                system_instruction.unwrap_or("").to_string()
+                system_instruction
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or(DEFAULT_SYSTEM_INSTRUCTION)
+                    .to_string()
             };
 
             let request = GeminiRequest {
@@ -363,7 +392,10 @@ impl GeminiProvider {
                     None => FORMATTING_INSTRUCTION.to_string(),
                 }
             } else {
-                system_instruction.unwrap_or("").to_string()
+                system_instruction
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or(DEFAULT_SYSTEM_INSTRUCTION)
+                    .to_string()
             };
 
             let request = GeminiRequest {

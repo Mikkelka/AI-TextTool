@@ -1,7 +1,6 @@
 use chrono::Utc;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tauri::AppHandle;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 
@@ -20,7 +19,7 @@ pub struct DataManager {
 impl DataManager {
 
     /// Create a new DataManager instance
-    pub fn new(_app_handle: AppHandle) -> Self {
+    pub fn new() -> Self {
         Self {
             data: AppData::default(),
             file_path: PathBuf::new(),
@@ -256,22 +255,21 @@ impl DataManager {
     }
 
     pub fn get_operations_sorted(&self) -> Vec<(String, Operation)> {
-        let mut operations_list: Vec<(String, Operation)> = self
-            .data
-            .operations
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
+        let mut operations_list: Vec<(&String, &Operation)> =
+            self.data.operations.iter().collect();
 
         operations_list.sort_by(|a, b| {
             let order_cmp = a.1.order.cmp(&b.1.order);
             if order_cmp == std::cmp::Ordering::Equal {
-                a.0.cmp(&b.0)
+                a.0.cmp(b.0)
             } else {
                 order_cmp
             }
         });
 
         operations_list
+            .into_iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect()
     }
 }

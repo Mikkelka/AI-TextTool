@@ -157,8 +157,8 @@
       // Update config with form values
       config.api_key = formData.value.apiKey
       config.chat_system_instruction = formData.value.systemInstruction
-      config.chat_model = formData.value.chatModel
-      config.text_model = formData.value.textModel
+      config.chat_model = formData.value.chatModel as ModelName
+      config.text_model = formData.value.textModel as ModelName
 
       // Ensure providers object exists (defensive: Rust may omit it)
       if (!config.providers) {
@@ -170,8 +170,8 @@
         config.providers.Gemini = {}
       }
       config.providers.Gemini.api_key = formData.value.apiKey
-      config.providers.Gemini.chat_model_name = formData.value.chatModel
-      config.providers.Gemini.text_model_name = formData.value.textModel
+      config.providers.Gemini.chat_model_name = formData.value.chatModel as ModelName
+      config.providers.Gemini.text_model_name = formData.value.textModel as ModelName
       config.providers.Gemini.chat_system_instruction = formData.value.systemInstruction
 
       // Save the updated configuration
