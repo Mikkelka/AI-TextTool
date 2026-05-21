@@ -2,7 +2,8 @@
 
 > Udført: 2026-05-20
 > Kilder: Qwen 3.6 Plus Free + DeepSeek V4 Flash
-> Status: P0 delvist (2/3), P1 delvist (2/6), P2 delvist (6/18), P3 delvist (7/14), ⚡ delvist (3/4). Branch: `fix/code-review-cleanup`
+> Status: P0 delvist (2/3), P1 delvist (3/6), P2 delvist (6/18), P3 delvist (7/14), ⚡ delvist (3/4). Branch: `fix/code-review-cleanup`
+> Opdateret: Hardcoded model names centraliseret i `GeminiModel` enum (Rust) og `ModelName` constants (TS)
 
 ---
 
@@ -51,10 +52,11 @@
 - **Problem:** `Config` har både flade felter (`api_key`, `chat_model`, `text_model`) OG en `providers` HashMap med samme data. `api_key` findes begge steder. `dm_switch_provider` kopierer ikke data fra ny provider.
 - **Fix:** Vælg én kilde til sandhed. Brug kun `providers` HashMap og udled top-level værdier derfra.
 
-### 8. Hardcodede modelnavne flere steder
-- **Filer:** `src-tauri/src/ai_provider/gemini.rs:519`, `src/components/ChatWindow.vue:242-252`
-- **Problem:** Modelnavne hardcodet i `get_available_models()` og i `supportsThinking`/`supportsGrounding` computed properties. Skal opdateres manuelt ved nye modeller.
-- **Fix:** Definer model-metadata ét sted (f.eks. `ModelInfo` struct) og eksportér til både Rust og frontend.
+### 8. Hardcodede modelnavne flere steder ✅ LØST
+- **Filer:** `src-tauri/src/ai_provider/gemini.rs`, `src/components/ChatWindow.vue`, `src/components/SettingsWindow.vue`, `src/components/OnboardingWindow.vue`
+- **Problem:** Modelnavne hardcodet i `get_available_models()`, `supportsThinking`/`supportsGrounding` computed properties, og flere Vue-komponenter. Skulle opdateres manuelt ved nye modeller.
+- **Fix:** Centraliseret model-metadata: `GeminiModel` enum i Rust med capability map (thinking/grounding support), og `ModelName` constants i TypeScript. Fjernet legacy normalization logic i DataManager.
+- **Commits:** `3dd7477`, `1c4e596`, `28a193d`
 
 ### 9. `reqwest::Client` oprettes forfra ved hvert kald
 - **Fil:** `src-tauri/src/ai_provider/gemini.rs:84-121`
@@ -307,6 +309,7 @@
 | P1 | 5 | Manglende ikonfiler | ⚠️ Invalid | — | — |
 | P1 | 6 | DataManager som Tauri state | Pending | Høj | Høj — ydeevne + race conditions |
 | P1 | 7 | Redundant config | Pending | Medium | Høj — dataintegritet |
+| P1 | 8 | Hardcodede modelnavne | ✅ Løst | Medium | Høj — vedligeholdelse |
 | P1 | 9 | reqwest::Client genbrug | Pending | Lav | Medium — ydeevne |
 | P1 | 10 | Hardcoded shortcut | Pending | Medium | Medium — funktionalitet |
 | P1 | 12 | clear_chat_history sideeffekt | ✅ Løst | Lav | Medium — UX |
