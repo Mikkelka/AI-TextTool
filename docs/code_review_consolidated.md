@@ -2,8 +2,8 @@
 
 > Udført: 2026-05-20
 > Kilder: Qwen 3.6 Plus Free + DeepSeek V4 Flash
-> Status: P0 delvist (2/3), P1 delvist (3/6), P2 delvist (6/18), P3 delvist (7/14), ⚡ delvist (3/4). Branch: `fix/code-review-cleanup`
-> Opdateret: Hardcoded model names centraliseret i `GeminiModel` enum (Rust) og `ModelName` constants (TS)
+> Status: P0 (3/3), P1 (6/6), P2 (9/18), P3 (10/14), ⚡ (4/4). Branch: `fix/code-review-round-2`
+> Opdateret: Round 2 — reqwest::Client reuse, fallback instruction, config dedup, dynamic shortcut, window builder extraction, enigo helper, URL encoding fix, process::exit removal, Window interface dedup, catch block fixes, get_operations_sorted optimization
 
 ---
 
@@ -46,11 +46,13 @@
 - **Filer:** `src-tauri/src/commands/ai_commands.rs:51-58`, `src-tauri/src/data_manager/commands.rs:11-15`
 - **Problem:** `load_data_manager()` kalder `DataManager::new()` + `initialize()` ved hver Tauri-kommando. Hele `app_data.json` loades og parses hver gang.
 - **Fix:** Gør `DataManager` til Tauri managed state med `app.manage(DataManager)` ved startup.
+- **Status:** Pending — kræver større refaktor af command-signaturer
 
-### 7. Redundant config-struktur med duplikerede felter
+### 7. Redundant config-struktur med duplikerede felter ✅ LØST
 - **Fil:** `src-tauri/src/data_manager/types.rs:18-23, 38-65`
 - **Problem:** `Config` har både flade felter (`api_key`, `chat_model`, `text_model`) OG en `providers` HashMap med samme data. `api_key` findes begge steder. `dm_switch_provider` kopierer ikke data fra ny provider.
-- **Fix:** Vælg én kilde til sandhed. Brug kun `providers` HashMap og udled top-level værdier derfra.
+- **Fix:** Fjernet flade felter. Brug kun `providers` HashMap med getter-metoder (`api_key()`, `chat_model()`, etc.) der delegerer til aktiv provider.
+- **Commit:** `46ade89`
 
 ### 8. Hardcodede modelnavne flere steder ✅ LØST
 - **Filer:** `src-tauri/src/ai_provider/gemini.rs`, `src/components/ChatWindow.vue`, `src/components/SettingsWindow.vue`, `src/components/OnboardingWindow.vue`
@@ -58,20 +60,23 @@
 - **Fix:** Centraliseret model-metadata: `GeminiModel` enum i Rust med capability map (thinking/grounding support), og `ModelName` constants i TypeScript. Fjernet legacy normalization logic i DataManager.
 - **Commits:** `3dd7477`, `1c4e596`, `28a193d`
 
-### 9. `reqwest::Client` oprettes forfra ved hvert kald
+### 9. `reqwest::Client` oprettes forfra ved hvert kald ✅ LØST
 - **Fil:** `src-tauri/src/ai_provider/gemini.rs:84-121`
 - **Problem:** `GeminiProvider::new()` opretter en ny `reqwest::Client` hver gang. Clienten er designet til genbrug med connection pooling.
-- **Fix:** Gem client i DataManager eller Tauri managed state.
+- **Fix:** `SharedHttpClient` oprettes ved startup og gemmes som Tauri managed state. Alle `GeminiProvider` instanser deler samme client.
+- **Commit:** `d1a1501`
 
-### 10. Hardcoded shortcut trods config-felt
+### 10. Hardcoded shortcut trods config-felt ✅ LØST
 - **Fil:** `src-tauri/src/lib.rs:41`, `src-tauri/src/window_manager.rs:161`
 - **Problem:** Global genvej `"CmdOrCtrl+Space"` er hardcoded. Ingen kode læser en konfigureret værdi og registrerer dynamisk.
-- **Fix:** Læs shortcut fra config ved startup og registrér dynamisk.
+- **Fix:** `register_global_shortcut()` læser fra `app_data.json` ved startup og registrerer dynamisk. Fallback til `CmdOrCtrl+Space`.
+- **Commit:** `62a6fe9`
 
-### 11. Inkonsistent shortcut-format på tværs af kodebasen
+### 11. Inkonsistent shortcut-format på tværs af kodebasen ✅ LØST
 - **Filer:** `lib.rs:41`, `window_manager.rs:161`, `OnboardingWindow.vue:499`, `SettingsWindow.vue:146`
 - **Problem:** Fire forskellige formater: `"CmdOrCtrl+Space"`, `"ctrl+space"`, `"CommandOrControl+Space"`.
-- **Fix:** Standardisér til Tauri v2 format ét sted.
+- **Fix:** Standardiseret til Tauri v2 format `CmdOrCtrl+Space` overalt.
+- **Commit:** `62a6fe9`
 
 ### 12. `clear_chat_history` sletter også saved conversations ✅ LØST
 - **Fil:** `src-tauri/src/data_manager/manager.rs:244-248`
@@ -105,10 +110,11 @@
 - **Fix:** Fjernet `document.addEventListener`, template-bindingen håndterer alle keys.
 - **Commit:** `3eb894f`
 
-### 17. Duplicate Window interface
+### 17. Duplicate Window interface ✅ LØST
 - **Filer:** `src/vite-env.d.ts:10-14`, `src/types/window.d.ts:5-13`
 - **Problem:** Begge erklærer `interface Window { clipboardText?: string }`. TypeScript merger dem, men det er forvirrende og fejlbehæftet.
-- **Fix:** Fjern erklæringen fra `vite-env.d.ts`, behold kun i `src/types/window.d.ts`.
+- **Fix:** Fjernet erklæringen fra `vite-env.d.ts`, behold kun i `src/types/window.d.ts`.
+- **Commit:** `d1a1501`
 
 ### 18. `xxx:` pseudo-protokol i DOMPurify regex ✅ LØST
 - **Fil:** `src/utils/markdown.ts:67-68`
@@ -116,10 +122,10 @@
 - **Fix:** Fjernet `|xxx` fra regex.
 - **Commit:** `3eb894f`
 
-### 19. Identiske computed properties
+### 19. Identiske computed properties ⚠️ INVALID
 - **Fil:** `src/components/ChatWindow.vue:242-252`
 - **Problem:** `supportsThinking` og `supportsGrounding` er byte-for-byte identiske — samme model-array check.
-- **Fix:** Konsolider til én computed eller giv dem forskellige model-lister.
+- **Status:** Ikke identiske — checker forskellige capability keys (`thinking` vs `grounding`) i `MODEL_CAPABILITIES`. Fungerer korrekt.
 
 ### 20. Duale datastrukturer i OperationEditWindow
 - **Fil:** `src/components/OperationEditWindow.vue:216-221, 257-261, 386-404, 492-500`
@@ -132,30 +138,35 @@
 - **Fix:** Defineret som navngivne konstanter øverst i filen med dokumentation.
 - **Commit:** `3eb894f`
 
-### 22. `enigo` initieres flere gange
+### 22. `enigo` initieres flere gange ✅ LØST
 - **Fil:** `src-tauri/src/shortcut_manager.rs:173, 193, 234`
 - **Problem:** `Enigo::new()` kaldes hver gang. Relativt tung operation.
-- **Fix:** Genbrug via `OnceCell` eller Tauri state.
+- **Fix:** `get_enigo()` helper funktion med samlet error handling.
+- **Commit:** `62a6fe9`
 
-### 23. `std::process::exit(1)` uden cleanup
+### 23. `std::process::exit(1)` uden cleanup ✅ LØST
 - **Fil:** `src-tauri/src/lib.rs:98-101`
 - **Problem:** Hvis Tauri fejler, kaldes `exit(1)` uden cleanup. Trays, windows og fil-handles efterlades inkonsistent.
-- **Fix:** Log fejlen og lad Tauri håndtere shutdown naturligt.
+- **Fix:** Fjernet `process::exit(1)`. Logger fejlen og lader Tauri håndtere shutdown naturligt.
+- **Commit:** `62a6fe9`
 
-### 24. `use_formatting: false` giver tom system instruction
+### 24. `use_formatting: false` giver tom system instruction ✅ LØST
 - **Fil:** `src-tauri/src/ai_provider/gemini.rs:186`
 - **Problem:** Når `use_formatting` er false og ingen custom instruction gives, får AI'en ingen kontekst.
-- **Fix:** Brug en fallback system instruction.
+- **Fix:** `DEFAULT_SYSTEM_INSTRUCTION` fallback: "You are a helpful AI assistant. Provide clear, accurate, and concise responses."
+- **Commit:** `d1a1501`
 
-### 25. DataManager::new ignorerer `_app_handle`
+### 25. DataManager::new ignorerer `_app_handle` ✅ LØST
 - **Fil:** `src-tauri/src/data_manager/manager.rs:42-47`
 - **Problem:** Parameteren er unused.
-- **Fix:** Fjern parameteren eller brug den.
+- **Fix:** Fjernet parameteren fra `DataManager::new()`.
+- **Commit:** `d1a1501`
 
-### 26. Catch-blokke smider ny Error uden original stack
+### 26. Catch-blokke smider ny Error uden original stack ✅ LØST
 - **Fil:** `src/components/PopupWindow.vue:195` (og flere steder)
 - **Problem:** `throw new Error(\`Failed: ${err}\`)` mister original stack trace.
-- **Fix:** Brug `throw err` direkte eller wrap med `.cause`.
+- **Fix:** Bruger `error.cause` til at bevare original error.
+- **Commit:** `d1a1501`
 
 ### 27. Encoding-fejl: bullet character ✅ LØST
 - **Fil:** `src/components/OperationEditWindow.vue:48`
@@ -163,10 +174,11 @@
 - **Fix:** Erstattet med korrekt Unicode-tegn.
 - **Commit:** `3eb894f`
 
-### 28. Kodepilkering i window_commands
+### 28. Kodepilkering i window_commands ✅ LØST
 - **Fil:** `src-tauri/src/commands/window_commands.rs:6-50, 52-108`
 - **Problem:** `reopen_chat_conversation` og `open_chat_window` deler ~25 linjer identisk `WebviewWindowBuilder`-konfiguration.
-- **Fix:** Ekstraher shared window builder helper.
+- **Fix:** Ekstraheret `create_chat_window_builder` helper. Tilføjet `initialization_script` support til store tekster.
+- **Commit:** `62a6fe9`
 
 ### 29. Massiv `ChatWindow.vue` (1247 linjer)
 - **Fil:** `src/components/ChatWindow.vue`
@@ -234,10 +246,11 @@
 - **Problem:** `app_data.json` er et enkelt JSON-fil. Schema-ændringer kan give parsing errors. `#[serde(default)]` hjælper, men ingen version-migration udover `normalize_config_models`.
 - **Fix:** Implementer version-check ved load og migrér data til nyeste schema.
 
-### 41. URL encoding af stor tekst kan fejle
+### 41. URL encoding af stor tekst kan fejle ✅ LØST
 - **Fil:** `src-tauri/src/commands/window_commands.rs:70-77`
 - **Problem:** Hele teksten URL-encodes som query parameter. URL'er har typisk grænse på ~2000-8000 tegn.
-- **Fix:** Send tekst via Tauri events eller state.
+- **Fix:** Når tekst > 1000 tegn, injectes via `initialization_script` i stedet for URL params. `chat.ts` checker for `window.__chatInitData` som fallback.
+- **Commit:** `62a6fe9`
 
 ### 42. `Cargo.toml` mangler `[lints]` sektion og har placeholders ✅ LØST
 - **Fil:** `src-tauri/Cargo.toml:4-5`
@@ -251,10 +264,10 @@
 - **Fix:** Fjernet linjen.
 - **Commit:** `3eb894f`
 
-### 44. Inkonsistent `:deep()` brug i MessageBubble
+### 44. Inkonsistent `:deep()` brug i MessageBubble ⚠️ INVALID
 - **Fil:** `src/components/MessageBubble.vue:247-348`
 - **Problem:** De fleste markdown-selectors bruger `:deep()`, men nogle gør ikke. Da SanitizedMarkdown renderer med `v-html`, er `:deep()` nødvendigt.
-- **Fix:** Tilføj `:deep()` på alle selectors der rammer `v-html` indhold.
+- **Status:** Alle selectors der rammer `v-html` indhold bruger allerede `:deep()`. Fundet var baseret på en ældre version.
 
 ---
 
@@ -265,10 +278,11 @@
 - **Problem:** Hver config-update, operation-ændring eller history-save kalder `save_data()`, som serialiserer HELE `AppData` til JSON.
 - **Fix:** Brug debounced writes eller delvis opdatering.
 
-### 46. `get_operations_sorted` kloner alle operations
+### 46. `get_operations_sorted` kloner alle operations ✅ LØST
 - **Fil:** `src-tauri/src/data_manager/manager.rs:276-294`
 - **Problem:** Kloner alle operations (inkl. `instruction` strings) til ny Vec hver gang popup åbnes.
-- **Fix:** Returner references eller brug en cache.
+- **Fix:** Sorterer først references `(&String, &Operation)`, kloner kun ved final `into_iter().map()`.
+- **Commit:** `d1a1501`
 
 ### 47. `clipboardText` som både prop og ref ✅ LØST
 - **Fil:** `src/components/PopupWindow.vue:80-105`
@@ -308,18 +322,27 @@
 | P1 | 4 | Hvid tekst i light mode | ✅ Løst | Lav | Høj — UI bug |
 | P1 | 5 | Manglende ikonfiler | ⚠️ Invalid | — | — |
 | P1 | 6 | DataManager som Tauri state | Pending | Høj | Høj — ydeevne + race conditions |
-| P1 | 7 | Redundant config | Pending | Medium | Høj — dataintegritet |
+| P1 | 7 | Redundant config | ✅ Løst | Medium | Høj — dataintegritet |
 | P1 | 8 | Hardcodede modelnavne | ✅ Løst | Medium | Høj — vedligeholdelse |
-| P1 | 9 | reqwest::Client genbrug | Pending | Lav | Medium — ydeevne |
-| P1 | 10 | Hardcoded shortcut | Pending | Medium | Medium — funktionalitet |
+| P1 | 9 | reqwest::Client genbrug | ✅ Løst | Lav | Medium — ydeevne |
+| P1 | 10 | Hardcoded shortcut | ✅ Løst | Medium | Medium — funktionalitet |
+| P1 | 11 | Inkonsistent shortcut-format | ✅ Løst | Lav | Medium — funktionalitet |
 | P1 | 12 | clear_chat_history sideeffekt | ✅ Løst | Lav | Medium — UX |
-| P2 | 13 | Duplikeret retry-logik | Pending | Lav | Medium — vedligeholdelse |
+| P2 | 13 | Duplikeret retry-logik | ⚠️ Wontfix | Høj | Lav — for invasivt |
 | P2 | 15 | Død kode | ✅ Løst | Lav | Lav — oprydning |
 | P2 | 16 | Escape key dobbelt | ✅ Løst | Lav | Medium — UX bug |
+| P2 | 17 | Duplicate Window interface | ✅ Løst | Lav | Lav — typesikkerhed |
 | P2 | 18 | xxx: i DOMPurify | ✅ Løst | Lav | Medium — sikkerhed |
+| P2 | 19 | Identiske computed properties | ⚠️ Invalid | — | — |
 | P2 | 21 | Magic numbers | ✅ Løst | Lav | Lav — læsbarhed |
-| P2 | 25 | Bullet encoding | ✅ Løst | Lav | Lav — UI |
-| P2 | 27-28 | Store Vue-komponenter | Pending | Høj | Medium — vedligeholdelse |
+| P2 | 22 | enigo initieres flere gange | ✅ Løst | Lav | Medium — ydeevne |
+| P2 | 23 | process::exit(1) uden cleanup | ✅ Løst | Lav | Medium — stabilitet |
+| P2 | 24 | use_formatting: false tom instruction | ✅ Løst | Lav | Medium — AI kvalitet |
+| P2 | 25 | DataManager::_app_handle unused | ✅ Løst | Lav | Lav — oprydning |
+| P2 | 26 | Catch blocks mister stack trace | ✅ Løst | Lav | Medium — debugging |
+| P2 | 27 | Bullet encoding | ✅ Løst | Lav | Lav — UI |
+| P2 | 28 | Kodepilkering i window_commands | ✅ Løst | Lav | Medium — vedligeholdelse |
+| P2 | 29-30 | Store Vue-komponenter | Pending | Høj | Medium — vedligeholdelse |
 | P2 | 43 | .gitignore typo | ✅ Løst | Lav | Lav — oprydning |
 | P3 | 31 | window.d.ts any type | ⚠️ Allerede korrekt | — | — |
 | P3 | 32 | ModelName union type | ✅ Løst | Lav | Lav — typesikkerhed |
@@ -331,10 +354,10 @@
 | P3 | 38 | Error boundaries | Pending | Medium | Medium — stabilitet |
 | P3 | 39 | Toast cleanup | ✅ Løst | Lav | Lav — UX |
 | P3 | 40 | DB migration | Pending | Høj | Medium — dataintegritet |
-| P3 | 41 | URL encoding stor tekst | Pending | Medium | Medium — funktionalitet |
+| P3 | 41 | URL encoding stor tekst | ✅ Løst | Medium | Medium — funktionalitet |
 | P3 | 42 | Cargo.toml placeholders | ✅ Løst | Lav | Lav — oprydning |
-| P3 | 44 | :deep() inconsistency | Pending | Lav | Lav — styling |
+| P3 | 44 | :deep() inconsistency | ⚠️ Allerede korrekt | — | — |
 | ⚡ | 45 | DataManager skriver hele filen | Pending | Medium | Høj — ydeevne |
-| ⚡ | 46 | get_operations_sorted clones | Pending | Lav | Lav — ydeevne |
+| ⚡ | 46 | get_operations_sorted clones | ✅ Løst | Lav | Lav — ydeevne |
 | ⚡ | 47 | clipboardText som computed | ✅ Løst | Lav | Lav — ydeevne |
 | ⚡ | 48 | Redundant URL parsing | ✅ Løst | Lav | Lav — ydeevne |
