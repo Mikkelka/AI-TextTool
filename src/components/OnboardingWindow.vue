@@ -497,7 +497,7 @@
           provider: 'Gemini',
           chat_model: CHAT_MODEL,
           text_model: TEXT_MODEL,
-          shortcut: 'ctrl+space',
+          shortcut: 'CmdOrCtrl+Space',
           locale: 'en',
           streaming: false,
           providers: {}

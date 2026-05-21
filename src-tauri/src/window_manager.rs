@@ -156,12 +156,8 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
                 log::error!("Failed to create tray after onboarding: {e:?}");
             }
 
-            // Register global shortcut after onboarding (hardcoded to ctrl+space)
-            use tauri_plugin_global_shortcut::GlobalShortcutExt;
-            match app_handle.global_shortcut().register("CmdOrCtrl+Space") {
-                Ok(()) => log::info!("Global shortcut registered after onboarding"),
-                Err(e) => log::error!("Failed to register shortcut after onboarding: {e:?}"),
-            }
+            // Register global shortcut using configured value
+            super::register_global_shortcut(&app_handle);
         }
     });
 

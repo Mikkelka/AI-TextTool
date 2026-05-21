@@ -22,6 +22,11 @@ const COPY_COMPLETION_DELAY_MS: u64 = 250;
 /// Additional delay before retrying a failed clipboard read (milliseconds)
 const CLIPBOARD_RETRY_DELAY_MS: u64 = 100;
 
+/// Shared enigo instance for keyboard/mouse operations
+fn get_enigo() -> Result<Enigo, String> {
+    Enigo::new(&Settings::default()).map_err(|e| format!("Failed to create enigo instance: {:?}", e))
+}
+
 /// Create and configure the global shortcut handler with debouncing
 pub fn create_shortcut_handler<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
     let last_trigger = Arc::new(Mutex::new(
@@ -184,11 +189,9 @@ async fn restore_clipboard<R: Runtime>(app_handle: &AppHandle<R>, original_clipb
 
 /// Show popup window with text operations
 async fn show_popup_with_text<R: Runtime>(app_handle: &AppHandle<R>, clipboard_text: String) {
-    // Get mouse position
-    let (mouse_x, mouse_y) = if let Ok(enigo_mouse) = Enigo::new(&Settings::default()) {
-        enigo_mouse.location().unwrap_or((100, 100))
-    } else {
-        (100, 100)
+    let (mouse_x, mouse_y) = match get_enigo() {
+        Ok(enigo) => enigo.location().unwrap_or((100, 100)),
+        Err(_) => (100, 100),
     };
 
     if let Err(e) =
@@ -204,36 +207,32 @@ async fn show_popup_with_text<R: Runtime>(app_handle: &AppHandle<R>, clipboard_t
 fn simulate_copy() -> Result<(), String> {
     log::debug!("Starting Ctrl+C simulation...");
 
-    match Enigo::new(&Settings::default()) {
-        Ok(mut enigo) => {
-            // Press and hold Ctrl
-            if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
-                return Err(format!("Failed to press Ctrl: {:?}", e));
-            }
+    let mut enigo = get_enigo()?;
 
-            // Small delay to ensure key is registered (hardware timing)
-            std::thread::sleep(std::time::Duration::from_millis(10));
-
-            // Click C key
-            if let Err(e) = enigo.key(Key::Unicode('c'), enigo::Direction::Click) {
-                // Make sure to release Ctrl even if C fails
-                let _ = enigo.key(Key::Control, enigo::Direction::Release);
-                return Err(format!("Failed to click C: {:?}", e));
-            }
-
-            // Small delay before releasing
-            std::thread::sleep(std::time::Duration::from_millis(10));
-
-            // Release Ctrl
-            if let Err(e) = enigo.key(Key::Control, enigo::Direction::Release) {
-                return Err(format!("Failed to release Ctrl: {:?}", e));
-            }
-
-            log::debug!("Ctrl+C simulation completed successfully");
-            Ok(())
-        }
-        Err(e) => Err(format!("Failed to create enigo instance: {:?}", e)),
+    // Press and hold Ctrl
+    if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
+        return Err(format!("Failed to press Ctrl: {:?}", e));
     }
+
+    // Small delay to ensure key is registered (hardware timing)
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    // Click C key
+    if let Err(e) = enigo.key(Key::Unicode('c'), enigo::Direction::Click) {
+        let _ = enigo.key(Key::Control, enigo::Direction::Release);
+        return Err(format!("Failed to click C: {:?}", e));
+    }
+
+    // Small delay before releasing
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    // Release Ctrl
+    if let Err(e) = enigo.key(Key::Control, enigo::Direction::Release) {
+        return Err(format!("Failed to release Ctrl: {:?}", e));
+    }
+
+    log::debug!("Ctrl+C simulation completed successfully");
+    Ok(())
 }
 
 /// Simulate Ctrl+V to paste text (used by the simulate_paste command)
@@ -242,24 +241,19 @@ fn simulate_copy() -> Result<(), String> {
 pub fn simulate_paste() -> Result<String, String> {
     log::debug!("Simulating Ctrl+V after popup closed...");
 
-    // Small delay to ensure focus has returned to original application (hardware timing)
     std::thread::sleep(std::time::Duration::from_millis(100));
 
-    // Use enigo to simulate Ctrl+V
-    match Enigo::new(&Settings::default()) {
-        Ok(mut enigo) => {
-            if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
-                return Err(format!("Failed to press Ctrl: {:?}", e));
-            }
-            if let Err(e) = enigo.key(Key::Unicode('v'), enigo::Direction::Click) {
-                return Err(format!("Failed to click V: {:?}", e));
-            }
-            if let Err(e) = enigo.key(Key::Control, enigo::Direction::Release) {
-                return Err(format!("Failed to release Ctrl: {:?}", e));
-            }
-            log::debug!("Ctrl+V simulation completed");
-            Ok("Paste completed".to_string())
-        }
-        Err(e) => Err(format!("Failed to create enigo instance: {:?}", e)),
+    let mut enigo = get_enigo()?;
+
+    if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
+        return Err(format!("Failed to press Ctrl: {:?}", e));
     }
+    if let Err(e) = enigo.key(Key::Unicode('v'), enigo::Direction::Click) {
+        return Err(format!("Failed to click V: {:?}", e));
+    }
+    if let Err(e) = enigo.key(Key::Control, enigo::Direction::Release) {
+        return Err(format!("Failed to release Ctrl: {:?}", e));
+    }
+    log::debug!("Ctrl+V simulation completed");
+    Ok("Paste completed".to_string())
 }

@@ -1,7 +1,7 @@
 use tauri::Manager;
-use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 use ai_provider::{GlobalRateLimiter, SharedHttpClient};
+use utils::file_paths;
 
 mod ai_provider;
 mod commands;
@@ -10,6 +10,39 @@ mod shortcut_manager;
 mod tray_manager;
 mod utils;
 mod window_manager;
+
+/// Default global shortcut (Tauri v2 format)
+const DEFAULT_SHORTCUT: &str = "CmdOrCtrl+Space";
+
+/// Register the global shortcut, reading from config if available
+pub fn register_global_shortcut<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+
+    let shortcut = get_configured_shortcut();
+    match app.global_shortcut().register(shortcut.as_str()) {
+        Ok(()) => log::info!("Global shortcut '{}' registered successfully", shortcut),
+        Err(e) => log::error!("Failed to register global shortcut '{}': {e:?}", shortcut),
+    }
+}
+
+/// Read the configured shortcut from app_data.json, falling back to default
+fn get_configured_shortcut() -> String {
+    let config_path = file_paths::get_app_data_path();
+    if config_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&config_path) {
+            if let Ok(data) = serde_json::from_str::<serde_json::Value>(&content) {
+                if let Some(shortcut) = data.get("config").and_then(|c| c.get("shortcut")) {
+                    if let Some(s) = shortcut.as_str() {
+                        if !s.is_empty() {
+                            return s.to_string();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    DEFAULT_SHORTCUT.to_string()
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -43,12 +76,7 @@ pub fn run() {
             } else {
                 log::info!("app_data.json found - setting up tray and global shortcut");
                 tray_manager::create_tray(app.handle())?;
-
-                // Register global shortcut (hardcoded to ctrl+space)
-                match app.handle().global_shortcut().register("CmdOrCtrl+Space") {
-                    Ok(()) => log::info!("Global shortcut 'Ctrl+Space' registered successfully"),
-                    Err(e) => log::error!("Failed to register global shortcut: {e:?}"),
-                }
+                register_global_shortcut(app.handle());
             }
 
             Ok(())
@@ -103,6 +131,5 @@ pub fn run() {
 
     if let Err(e) = run_result {
         log::error!("Error while running tauri application: {e:?}");
-        std::process::exit(1);
     }
 }
