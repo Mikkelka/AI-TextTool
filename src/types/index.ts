@@ -32,11 +32,7 @@ export interface ProviderSettings {
 }
 
 export interface Config {
-  api_key: string
-  chat_system_instruction: string
   provider: string
-  chat_model: ModelName
-  text_model: ModelName
   shortcut: string
   locale: string
   streaming: boolean

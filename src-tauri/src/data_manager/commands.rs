@@ -205,7 +205,9 @@ pub async fn dm_update_api_key(app: AppHandle, api_key: String) -> Result<(), St
     let mut manager = load_data_manager(app).await?;
 
     let mut config = manager.get_config().clone();
-    config.api_key = api_key;
+    if let Some(provider) = config.providers.get_mut(&config.provider) {
+        provider.api_key = api_key;
+    }
 
     manager
         .update_config(config)

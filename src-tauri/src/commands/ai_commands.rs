@@ -92,7 +92,7 @@ pub async fn process_text_with_ai(
     let config = manager.get_config().clone();
 
     // Check if API key is configured
-    if config.api_key.trim().is_empty() {
+    if config.api_key().trim().is_empty() {
         return Err(
             "API key not configured. Please configure your Gemini API key in settings.".to_string(),
         );
@@ -101,7 +101,7 @@ pub async fn process_text_with_ai(
     // Get shared rate limiter and HTTP client, then create Gemini provider
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider = GeminiProvider::new(config.api_key, rate_limiter, &http_client)
+    let provider = GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client)
         .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
@@ -121,7 +121,7 @@ pub async fn process_text_with_ai(
     let contents = vec![Content::user(full_prompt)];
     let result = match provider
         .generate_content_with_formatting(
-            &config.text_model,
+            config.text_model(),
             contents,
             Some(&operation_details.instruction),
             None,
@@ -161,14 +161,14 @@ pub async fn chat_with_ai(
     let manager = load_data_manager(app.clone()).await?;
     let config = manager.get_config().clone();
 
-    if config.api_key.trim().is_empty() {
+    if config.api_key().trim().is_empty() {
         return Err("API key not configured".to_string());
     }
 
     // Get shared rate limiter and HTTP client, then create provider
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider = GeminiProvider::new(config.api_key, rate_limiter, &http_client)
+    let provider = GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client)
         .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
@@ -176,13 +176,12 @@ pub async fn chat_with_ai(
     messages.push(ChatMessage::user(message));
 
     // Use custom instruction if provided, otherwise use config default
-    let system_instruction = custom_instruction
-        .as_ref()
-        .unwrap_or(&config.chat_system_instruction);
+    let default_instruction = config.chat_system_instruction().to_string();
+    let system_instruction = custom_instruction.as_ref().unwrap_or(&default_instruction);
     let selected_model = selected_model
         .map(|model| model.trim().to_string())
         .filter(|model| !model.is_empty())
-        .unwrap_or_else(|| config.chat_model.clone());
+        .unwrap_or_else(|| config.chat_model().to_string());
     let enable_grounding = enable_grounding.unwrap_or(false);
 
     if enable_grounding && !GeminiProvider::supports_google_search_grounding(&selected_model) {
@@ -232,13 +231,13 @@ pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     let manager = load_data_manager(app.clone()).await?;
     let config = manager.get_config().clone();
 
-    if config.api_key.trim().is_empty() {
+    if config.api_key().trim().is_empty() {
         return Ok(false);
     }
 
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider = match GeminiProvider::new(config.api_key, rate_limiter, &http_client) {
+    let provider = match GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client) {
         Ok(provider) => provider,
         Err(_) => return Ok(false),
     };

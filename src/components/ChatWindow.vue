@@ -293,8 +293,9 @@
   const loadCurrentChatModel = async () => {
     try {
       const config = await invoke<Config>('dm_load_config')
-      if (config.chat_model) {
-        state.selectedModel = config.chat_model
+      const active = config.providers?.[config.provider]
+      if (active?.chat_model_name) {
+        state.selectedModel = active.chat_model_name as ModelName
       }
     } catch (err) {
       logger.warn('Failed to load current chat model:', err)

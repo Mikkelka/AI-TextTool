@@ -35,16 +35,44 @@ impl Default for ProviderConfig {
 }
 
 /// Application configuration
+/// Single source of truth: all provider-specific data lives in `providers` HashMap.
+/// Top-level getters delegate to the active provider.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub providers: HashMap<String, ProviderConfig>,
     pub locale: String,
     pub streaming: bool,
     pub provider: String,
-    pub api_key: String,
-    pub chat_model: String,
-    pub text_model: String,
-    pub chat_system_instruction: String,
+    pub shortcut: String,
+}
+
+impl Config {
+    /// Get the active provider's configuration
+    pub fn active_provider(&self) -> &ProviderConfig {
+        self.providers
+            .get(&self.provider)
+            .unwrap_or_else(|| self.providers.values().next().expect("no providers configured"))
+    }
+
+    /// Get the API key for the active provider
+    pub fn api_key(&self) -> &str {
+        &self.active_provider().api_key
+    }
+
+    /// Get the chat model for the active provider
+    pub fn chat_model(&self) -> &str {
+        &self.active_provider().chat_model_name
+    }
+
+    /// Get the text model for the active provider
+    pub fn text_model(&self) -> &str {
+        &self.active_provider().text_model_name
+    }
+
+    /// Get the chat system instruction for the active provider
+    pub fn chat_system_instruction(&self) -> &str {
+        &self.active_provider().chat_system_instruction
+    }
 }
 
 impl Default for Config {
@@ -57,10 +85,7 @@ impl Default for Config {
             locale: "en".to_string(),
             streaming: false,
             provider: "Gemini".to_string(),
-            api_key: String::new(),
-            chat_model: CHAT_MODEL.to_string(),
-            text_model: TEXT_MODEL.to_string(),
-            chat_system_instruction: ProviderConfig::default().chat_system_instruction,
+            shortcut: "CmdOrCtrl+Space".to_string(),
         }
     }
 }

@@ -492,11 +492,7 @@
       } catch {
         // If no config exists, create a default one
         config = {
-          api_key: '',
-          chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: CHAT_MODEL,
-          text_model: TEXT_MODEL,
           shortcut: 'CmdOrCtrl+Space',
           locale: 'en',
           streaming: false,
@@ -504,11 +500,7 @@
         }
       }
 
-      // Update config with form data
-      config.api_key = formData.value.apiKey
-      config.chat_system_instruction = formData.value.systemInstruction
-
-      // Ensure provider config exists
+      // Ensure provider config exists and update with form data
       if (!config.providers.Gemini) {
         config.providers.Gemini = {
           api_key: formData.value.apiKey,

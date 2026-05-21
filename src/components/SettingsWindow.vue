@@ -99,12 +99,13 @@
       logger.debug('Loading existing configuration...')
       const config = await invoke<Config>('dm_load_config')
 
-      // Populate form with existing config
+      // Read from active provider
+      const active = config.providers?.[config.provider]
       formData.value = {
-        apiKey: config.api_key || '',
-        chatModel: config.chat_model || CHAT_MODEL,
-        textModel: config.text_model || TEXT_MODEL,
-        systemInstruction: config.chat_system_instruction || 'You are a helpful AI assistant.'
+        apiKey: active?.api_key || '',
+        chatModel: (active?.chat_model_name as ModelName) || CHAT_MODEL,
+        textModel: (active?.text_model_name as ModelName) || TEXT_MODEL,
+        systemInstruction: active?.chat_system_instruction || 'You are a helpful AI assistant.'
       }
 
       logger.debug('Configuration loaded successfully')
@@ -142,23 +143,13 @@
       } catch {
         // Create default config if none exists
         config = {
-          api_key: '',
-          chat_system_instruction: '',
           provider: 'Gemini',
-          chat_model: CHAT_MODEL,
-          text_model: TEXT_MODEL,
           shortcut: 'CmdOrCtrl+Space',
           locale: 'en',
           streaming: false,
           providers: {}
         }
       }
-
-      // Update config with form values
-      config.api_key = formData.value.apiKey
-      config.chat_system_instruction = formData.value.systemInstruction
-      config.chat_model = formData.value.chatModel as ModelName
-      config.text_model = formData.value.textModel as ModelName
 
       // Ensure providers object exists (defensive: Rust may omit it)
       if (!config.providers) {
