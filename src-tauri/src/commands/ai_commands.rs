@@ -114,7 +114,10 @@ pub async fn process_text_with_ai(
             config.text_model(),
             contents,
             Some(&operation_details.instruction),
-            None,
+            Some(GenerationConfig {
+                temperature: Some(0.0),
+                ..Default::default()
+            }),
             false, // Disable formatting for direct text operations
         )
         .await

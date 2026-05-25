@@ -61,3 +61,17 @@
 
 - [ ] **#18 – Types duplicated between TS and Rust**  
   `src/types/index.ts` vs `src-tauri/src/data_manager/types.rs` — `Config`, `Operation`, `ConversationMessage` defined in both. Consider generating TS types from Rust.
+
+## Language preservation fix (2026-05-25)
+
+### Before
+- Text operations (proofread, rewrite, etc.) used `temperature: 0.7` (default `GenerationConfig`), passed as `None` in `ai_commands.rs:118`.
+- Language instruction buried mid-prompt: `"IMPORTANT: Maintain the original language of the text..."`
+
+### Changed
+- Text operations now pass `temperature: 0.0` for deterministic output.
+- Language instruction moved to **front** of each operation instruction as the first sentence: `"CRITICAL: Keep the text in its original language. Do NOT translate."`
+
+### Files changed
+- `src-tauri/src/commands/ai_commands.rs:118` — added low-temp `GenerationConfig`
+- `src-tauri/src/data_manager/types.rs:185,193,209,217,225` — strengthened Proofread, Rewrite, Concise, Friendly, Professional instructions
