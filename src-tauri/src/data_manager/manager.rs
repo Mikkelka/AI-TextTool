@@ -67,10 +67,17 @@ impl DataManager {
         file.flush().await?;
         file.sync_all().await?;
 
-        if self.file_path.exists() {
-            let _ = fs::remove_file(&self.file_path).await;
+        match fs::rename(&temp_path, &self.file_path).await {
+            Ok(()) => {}
+            Err(e) => {
+                log::error!("Failed to atomically save data file, falling back to direct write: {e}");
+                let mut file = fs::File::create(&self.file_path).await?;
+                file.write_all(json_content.as_bytes()).await?;
+                file.flush().await?;
+                file.sync_all().await?;
+                let _ = fs::remove_file(&temp_path).await;
+            }
         }
-        fs::rename(&temp_path, &self.file_path).await?;
 
         Ok(())
     }

@@ -7,7 +7,7 @@ use super::super::ai_provider::{
 };
 use super::super::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
 use super::super::ai_provider::gemini::RateLimiter;
-use super::super::data_manager::DataManager;
+use super::super::data_manager::SharedDataManager;
 use super::super::utils::validation;
 
 /// Convert GeminiError to user-friendly error message
@@ -49,17 +49,6 @@ fn gemini_error_to_user_message(error: GeminiError) -> String {
     }
 }
 
-/// Helper function to load and initialize DataManager
-/// Reduces code duplication across all AI commands
-async fn load_data_manager(_app: tauri::AppHandle) -> Result<DataManager, String> {
-    let mut manager = DataManager::new();
-    manager
-        .initialize()
-        .await
-        .map_err(|e| format!("Failed to initialize data: {}", e))?;
-    Ok(manager)
-}
-
 /// Helper function to get the shared rate limiter from Tauri state
 fn get_rate_limiter(app: &tauri::AppHandle) -> std::sync::Arc<tokio::sync::Mutex<RateLimiter>> {
     let global_limiter = app.state::<GlobalRateLimiter>();
@@ -88,7 +77,8 @@ pub async fn process_text_with_ai(
     validation::validate_operation_name(&operation)?;
 
     // Load configuration to get API key and model settings
-    let manager = load_data_manager(app.clone()).await?;
+    let state = app.state::<SharedDataManager>();
+    let manager = state.0.lock().await;
     let config = manager.get_config().clone();
 
     // Check if API key is configured
@@ -158,7 +148,8 @@ pub async fn chat_with_ai(
     validation::validate_message_input(&message)?;
 
     // Load configuration
-    let manager = load_data_manager(app.clone()).await?;
+    let state = app.state::<SharedDataManager>();
+    let manager = state.0.lock().await;
     let config = manager.get_config().clone();
 
     if config.api_key().trim().is_empty() {
@@ -228,7 +219,8 @@ pub async fn chat_with_ai(
 pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     log::info!("Testing AI connection...");
 
-    let manager = load_data_manager(app.clone()).await?;
+    let state = app.state::<SharedDataManager>();
+    let manager = state.0.lock().await;
     let config = manager.get_config().clone();
 
     if config.api_key().trim().is_empty() {

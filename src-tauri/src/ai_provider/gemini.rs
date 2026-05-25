@@ -220,11 +220,12 @@ impl GeminiProvider {
                 rate_limiter.check_rate_limit().await?;
             }
 
-            // Combine formatting instruction with custom system instruction (only if formatting is enabled)
             let combined_instruction = if use_formatting {
                 match system_instruction {
-                    Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
-                    None => FORMATTING_INSTRUCTION.to_string(),
+                    Some(instruction) if !instruction.is_empty() => {
+                        format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction)
+                    }
+                    _ => FORMATTING_INSTRUCTION.to_string(),
                 }
             } else {
                 system_instruction
@@ -269,14 +270,12 @@ impl GeminiProvider {
                             message: "No content in response".to_string(),
                         })
                     } else {
-                        // Handle different error status codes
                         match status.as_u16() {
                             401 => Err(GeminiError::InvalidApiKey),
                             404 => Err(GeminiError::ModelNotFound {
                                 model: model.to_string(),
                             }),
                             429 => {
-                                // Rate limit exceeded - implement exponential backoff
                                 if retry_count < self.max_retries {
                                     let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
                                     log::warn!("Rate limited, retrying after {:?}", delay);
@@ -298,7 +297,6 @@ impl GeminiProvider {
                                 }
                             }
                             500..=599 => {
-                                // Server error - retry with exponential backoff
                                 if retry_count < self.max_retries {
                                     let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
                                     log::warn!("Server error, retrying after {:?}", delay);
@@ -318,7 +316,6 @@ impl GeminiProvider {
                                 }
                             }
                             _ => {
-                                // Try to parse error response
                                 if let Ok(error_resp) = resp.json::<GeminiErrorResponse>().await {
                                     Err(GeminiError::ApiError {
                                         status: status.as_u16(),
@@ -377,7 +374,7 @@ impl GeminiProvider {
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<ChatResponse, GeminiError>> + Send + 'a>,
     > {
-        let use_formatting = true; // Chat responses should always use formatting
+        let _use_formatting = true; // Chat responses should always use formatting
         Box::pin(async move {
             // Check rate limits
             {
@@ -385,17 +382,11 @@ impl GeminiProvider {
                 rate_limiter.check_rate_limit().await?;
             }
 
-            // Combine formatting instruction with custom system instruction (only if formatting is enabled)
-            let combined_instruction = if use_formatting {
-                match system_instruction {
-                    Some(instruction) => format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction),
-                    None => FORMATTING_INSTRUCTION.to_string(),
+            let combined_instruction = match system_instruction {
+                Some(instruction) if !instruction.is_empty() => {
+                    format!("{}\n\n{}", FORMATTING_INSTRUCTION, instruction)
                 }
-            } else {
-                system_instruction
-                    .filter(|s| !s.is_empty())
-                    .unwrap_or(DEFAULT_SYSTEM_INSTRUCTION)
-                    .to_string()
+                _ => FORMATTING_INSTRUCTION.to_string(),
             };
 
             let request = GeminiRequest {
@@ -575,7 +566,7 @@ impl GeminiProvider {
     }
 
     /// Check if a model supports thinking mode (for advanced reasoning)
-    #[cfg(test)]
+    #[allow(dead_code)]
     pub fn supports_thinking_mode(model: &str) -> bool {
         model == CHAT_MODEL
     }

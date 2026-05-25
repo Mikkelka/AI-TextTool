@@ -65,6 +65,7 @@
   import { logger } from '../utils/logger'
   import type { Config, ModelName } from '../types'
   import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL } from '../types'
+  import { formatModelName } from '../utils/formatters'
 
   const formData = ref({
     apiKey: '',
@@ -83,15 +84,6 @@
     setTimeout(() => {
       message.value = ''
     }, 3000)
-  }
-
-  const formatModelName = (model: ModelName): string => {
-    return model
-      .replace('gemini-', 'Gemini ')
-      .replace('-', ' ')
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
   }
 
   const loadConfig = async () => {
@@ -325,13 +317,6 @@
 
   .save-btn:hover {
     background: #218838;
-  }
-
-  .restart-notice {
-    text-align: center;
-    color: #888;
-    font-size: 12px;
-    margin-top: 10px;
   }
 
   .save-btn:disabled {

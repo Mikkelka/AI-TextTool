@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 use ai_provider::{GlobalRateLimiter, SharedHttpClient};
+use data_manager::SharedDataManager;
 use utils::file_paths;
 
 mod ai_provider;
@@ -15,7 +16,7 @@ mod window_manager;
 const DEFAULT_SHORTCUT: &str = "CmdOrCtrl+Space";
 
 /// Register the global shortcut, reading from config if available
-pub fn register_global_shortcut<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+pub(crate) fn register_global_shortcut<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
     let shortcut = get_configured_shortcut();
@@ -59,6 +60,11 @@ pub fn run() {
         .manage(rate_limiter)
         .manage(http_client)
         .setup(|app| {
+            // Initialize shared data manager (blocking on async init)
+            let dm = tauri::async_runtime::block_on(SharedDataManager::new())
+                .expect("Failed to initialize data manager");
+            app.manage(dm);
+
             // Hide the main window immediately on startup
             if let Some(window) = app.get_webview_window("main") {
                 match window.hide() {

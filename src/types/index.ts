@@ -25,10 +25,10 @@ export interface Operation {
 
 // Provider configuration settings
 export interface ProviderSettings {
-  api_key?: string
-  chat_model_name?: ModelName
-  text_model_name?: ModelName
-  chat_system_instruction?: string
+  api_key: string
+  chat_model_name: ModelName
+  text_model_name: ModelName
+  chat_system_instruction: string
 }
 
 export interface Config {

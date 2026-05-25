@@ -425,10 +425,8 @@
     }
 
     try {
-      // Clear the history using the dedicated command
-      await invoke('clear_chat_history')
+      await Promise.all([invoke('clear_chat_history'), invoke('clear_saved_conversations')])
 
-      // Clear local state to show empty state immediately
       entries.value = []
       conversations.value = []
       showToast('Chat history cleared', 'success')

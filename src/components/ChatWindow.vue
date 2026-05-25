@@ -302,14 +302,7 @@
     }
   }
 
-  const formatModelName = (model: string): string => {
-    return model
-      .replace('gemini-', 'Gemini ')
-      .replace('-', ' ')
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-  }
+  import { formatModelName } from '../utils/formatters'
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     toastMessage.value = message

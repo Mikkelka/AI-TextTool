@@ -182,16 +182,20 @@
         processedText: result
       })
 
-      // Close window first
-      void closeWindow()
+      // Hide window first to let focus return to original app
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const w = getCurrentWindow()
+      await w.hide()
 
-      // Small delay then simulate paste to replace original text
+      // Small delay then simulate paste, then close
       setTimeout(async () => {
         try {
           await invoke('simulate_paste')
           logger.debug('Auto-paste completed')
         } catch (pasteError) {
           logger.error('Auto-paste failed:', pasteError)
+        } finally {
+          await w.close()
         }
       }, 200)
     } catch (err) {
