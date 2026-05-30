@@ -165,41 +165,39 @@
     box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
   }
 
-  @media (prefers-color-scheme: dark) {
-    .dialog-overlay {
-      background: rgba(2, 6, 23, 0.6);
-    }
+  .dialog-overlay {
+    background: rgba(2, 6, 23, 0.6);
+  }
 
-    .prompt-dialog {
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
-      border-color: rgba(148, 163, 184, 0.22);
-      box-shadow:
-        0 14px 38px rgba(2, 6, 23, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
+  .prompt-dialog {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow:
+      0 14px 38px rgba(2, 6, 23, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
 
-    .dialog-title {
-      color: #e2e8f0;
-    }
+  .dialog-title {
+    color: #e2e8f0;
+  }
 
-    .dialog-message {
-      color: #cbd5e1;
-    }
+  .dialog-message {
+    color: #cbd5e1;
+  }
 
-    .dialog-input {
-      background: rgba(15, 23, 42, 0.75);
-      border-color: #475569;
-      color: #e2e8f0;
-    }
+  .dialog-input {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: #475569;
+    color: #e2e8f0;
+  }
 
-    .dialog-input:focus {
-      border-color: #60a5fa;
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22);
-    }
+  .dialog-input:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22);
+  }
 
-    .cancel-button {
-      background: #334155;
-      color: #e2e8f0;
-    }
+  .cancel-button {
+    background: #334155;
+    color: #e2e8f0;
   }
 </style>

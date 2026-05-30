@@ -582,38 +582,35 @@
     }
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .popup-container {
-      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    }
+  .popup-container {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  }
 
-    .loading-text {
-      color: #a0aec0;
-    }
+  .loading-text {
+    color: #a0aec0;
+  }
 
-    .operation-button {
-      background: rgba(45, 55, 72, 0.8);
-      color: #e2e8f0;
-    }
+  .operation-button {
+    background: rgba(45, 55, 72, 0.8);
+    color: #e2e8f0;
+  }
 
-    .operation-button--chat {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%);
-      border-color: rgba(59, 130, 246, 0.4);
-    }
+  .operation-button--chat {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
 
-    .operation-button--direct {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%);
-      border-color: rgba(139, 92, 246, 0.4);
-    }
+  .operation-button--direct {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
 
-    .operation-label {
-      color: #e2e8f0;
-    }
+  .operation-label {
+    color: #e2e8f0;
+  }
 
-    .fade-overlay {
-      background: rgba(45, 55, 72, 0.8);
-    }
+  .fade-overlay {
+    background: rgba(45, 55, 72, 0.8);
   }
 
   /* Responsive adjustments */

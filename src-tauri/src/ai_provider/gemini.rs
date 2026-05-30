@@ -374,7 +374,6 @@ impl GeminiProvider {
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<ChatResponse, GeminiError>> + Send + 'a>,
     > {
-        let _use_formatting = true; // Chat responses should always use formatting
         Box::pin(async move {
             // Check rate limits
             {

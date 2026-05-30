@@ -39,13 +39,6 @@ export interface Config {
   providers: Record<string, ProviderSettings>
 }
 
-export interface ChatHistoryEntry {
-  timestamp: string
-  original_text: string
-  ai_option: string
-  processed_text: string
-}
-
 export interface SavedConversation {
   id: string
   title: string
@@ -96,11 +89,4 @@ export interface AIResponse {
   thoughts?: string
   sources?: GroundingSource[]
   search_queries?: string[]
-}
-
-// Error types
-export interface AppError {
-  message: string
-  code?: string
-  details?: Record<string, string | number | boolean | null>
 }

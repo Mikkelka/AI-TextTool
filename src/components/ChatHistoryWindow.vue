@@ -967,22 +967,6 @@
     color: #333;
   }
 
-  .processed-text .code-block {
-    background: #f4f4f4;
-    padding: 12px;
-    border-radius: 4px;
-    margin: 8px 0;
-    overflow-x: auto;
-  }
-
-  .processed-text .inline-code {
-    background: #f4f4f4;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 13px;
-  }
-
   /* Markdown Headings */
   .processed-text :deep(.markdown-heading) {
     margin: 16px 0 8px 0;
@@ -1141,152 +1125,149 @@
     }
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .chat-history-window {
-      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    }
+  .chat-history-window {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  }
 
-    .history-header {
-      background: rgba(45, 55, 72, 0.95);
-      border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
+  .history-header {
+    background: rgba(45, 55, 72, 0.95);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .history-title {
-      color: #e2e8f0;
-    }
+  .history-title {
+    color: #e2e8f0;
+  }
 
-    .history-subtitle {
-      color: #a0aec0;
-    }
+  .history-subtitle {
+    color: #a0aec0;
+  }
 
-    .refresh-btn,
-    .clear-btn,
-    .close-btn {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .refresh-btn,
+  .clear-btn,
+  .close-btn {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .search-section {
-      background: rgba(45, 55, 72, 0.8);
-      border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
+  .search-section {
+    background: rgba(45, 55, 72, 0.8);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .search-input {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .search-input {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .operation-filter {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .operation-filter {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .history-entry {
-      background: rgba(45, 55, 72, 0.8);
-    }
+  .history-entry {
+    background: rgba(45, 55, 72, 0.8);
+  }
 
-    .entry-header {
-      background: #2d3748;
-      border-bottom-color: #4a5568;
-    }
+  .entry-header {
+    background: #2d3748;
+    border-bottom-color: #4a5568;
+  }
 
-    .entry-timestamp {
-      color: #a0aec0;
-    }
+  .entry-timestamp {
+    color: #a0aec0;
+  }
 
-    .copy-btn,
-    .reprocess-btn {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .copy-btn,
+  .reprocess-btn {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .text-label {
-      color: #a0aec0;
-    }
+  .text-label {
+    color: #a0aec0;
+  }
 
-    .original-text {
-      background: #2d3748;
-      color: #e2e8f0;
-      border-left-color: #3182ce;
-    }
+  .original-text {
+    background: #2d3748;
+    color: #e2e8f0;
+    border-left-color: #3182ce;
+  }
 
-    .processed-text {
-      color: #e2e8f0;
-    }
+  .processed-text {
+    color: #e2e8f0;
+  }
 
-    /* Dark mode markdown headings */
-    .processed-text :deep(.markdown-h1) {
-      color: #e2e8f0;
-      border-bottom-color: #4a5568;
-    }
+  /* Dark mode markdown headings */
+  .processed-text :deep(.markdown-h1) {
+    color: #e2e8f0;
+    border-bottom-color: #4a5568;
+  }
 
-    .processed-text :deep(.markdown-h2) {
-      color: #e2e8f0;
-    }
+  .processed-text :deep(.markdown-h2) {
+    color: #e2e8f0;
+  }
 
-    .processed-text :deep(.markdown-h3) {
-      color: #cbd5e0;
-    }
+  .processed-text :deep(.markdown-h3) {
+    color: #cbd5e0;
+  }
 
-    .processed-text :deep(.markdown-h4) {
-      color: #a0aec0;
-    }
+  .processed-text :deep(.markdown-h4) {
+    color: #a0aec0;
+  }
 
-    .processed-text :deep(.markdown-h5) {
-      color: #a0aec0;
-    }
+  .processed-text :deep(.markdown-h5) {
+    color: #a0aec0;
+  }
 
-    .processed-text :deep(.markdown-h6) {
-      color: #a0aec0;
-    }
+  .processed-text :deep(.markdown-h6) {
+    color: #a0aec0;
+  }
 
-    /* Dark mode tables */
-    .processed-text :deep(.markdown-table) {
-      border-color: #4a5568;
-    }
+  /* Dark mode tables */
+  .processed-text :deep(.markdown-table) {
+    border-color: #4a5568;
+  }
 
-    .processed-text :deep(.markdown-table th) {
-      background: #4a5568;
-      color: #e2e8f0;
-      border-bottom-color: #2d3748;
-      border-right-color: #2d3748;
-    }
+  .processed-text :deep(.markdown-table th) {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-bottom-color: #2d3748;
+    border-right-color: #2d3748;
+  }
 
-    .processed-text :deep(.markdown-table td) {
-      border-bottom-color: #4a5568;
-      border-right-color: #4a5568;
-      color: #e2e8f0;
-    }
+  .processed-text :deep(.markdown-table td) {
+    border-bottom-color: #4a5568;
+    border-right-color: #4a5568;
+    color: #e2e8f0;
+  }
 
-    .processed-text :deep(.markdown-table tr:nth-child(even)) {
-      background: rgba(74, 85, 104, 0.3);
-    }
+  .processed-text :deep(.markdown-table tr:nth-child(even)) {
+    background: rgba(74, 85, 104, 0.3);
+  }
 
-    /* Dark mode blockquotes */
-    .processed-text :deep(.markdown-blockquote) {
-      border-left-color: #3182ce;
-      background: rgba(49, 130, 206, 0.1);
-      color: #cbd5e0;
-    }
+  /* Dark mode blockquotes */
+  .processed-text :deep(.markdown-blockquote) {
+    border-left-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+    color: #cbd5e0;
+  }
 
-    /* Dark mode horizontal rules */
-    .processed-text :deep(hr) {
-      border-top-color: #4a5568;
-    }
+  /* Dark mode horizontal rules */
+  .processed-text :deep(hr) {
+    border-top-color: #4a5568;
+  }
 
-    .stats-footer {
-      background: rgba(45, 55, 72, 0.8);
-      border-top-color: rgba(255, 255, 255, 0.1);
-    }
+  .stats-footer {
+    background: rgba(45, 55, 72, 0.8);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .stats-info {
-      color: #a0aec0;
-    }
+  .stats-info {
+    color: #a0aec0;
   }
 
   /* Responsive */
@@ -1507,70 +1488,67 @@
     text-align: center;
   }
 
-  /* Dark mode support for new elements */
-  @media (prefers-color-scheme: dark) {
-    .tab-navigation {
-      background: rgba(45, 55, 72, 0.9);
-      border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
+  .tab-navigation {
+    background: rgba(45, 55, 72, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .tab-btn {
-      color: #a0aec0;
-    }
+  .tab-btn {
+    color: #a0aec0;
+  }
 
-    .tab-btn:hover {
-      color: #3182ce;
-      background: rgba(49, 130, 206, 0.1);
-    }
+  .tab-btn:hover {
+    color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+  }
 
-    .tab-btn--active {
-      color: #3182ce;
-      border-bottom-color: #3182ce;
-      background: rgba(49, 130, 206, 0.1);
-    }
+  .tab-btn--active {
+    color: #3182ce;
+    border-bottom-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+  }
 
-    .conversation-entry {
-      background: rgba(45, 55, 72, 0.8);
-    }
+  .conversation-entry {
+    background: rgba(45, 55, 72, 0.8);
+  }
 
-    .conversation-header {
-      background: #2d3748;
-      border-bottom-color: #4a5568;
-    }
+  .conversation-header {
+    background: #2d3748;
+    border-bottom-color: #4a5568;
+  }
 
-    .conversation-title {
-      color: #e2e8f0;
-    }
+  .conversation-title {
+    color: #e2e8f0;
+  }
 
-    .conversation-timestamp,
-    .conversation-message-count {
-      color: #a0aec0;
-    }
+  .conversation-timestamp,
+  .conversation-message-count {
+    color: #a0aec0;
+  }
 
-    .conversation-message-count {
-      background: rgba(255, 255, 255, 0.1);
-    }
+  .conversation-message-count {
+    background: rgba(255, 255, 255, 0.1);
+  }
 
-    .reopen-btn,
-    .export-btn,
-    .delete-btn {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .reopen-btn,
+  .export-btn,
+  .delete-btn {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .preview-message.user {
-      color: #e2e8f0;
-    }
+  .preview-message.user {
+    color: #e2e8f0;
+  }
 
-    .preview-message.assistant {
-      color: #cbd5e0;
-      background: rgba(49, 130, 206, 0.1);
-    }
+  .preview-message.assistant {
+    color: #cbd5e0;
+    background: rgba(49, 130, 206, 0.1);
+  }
 
-    .more-messages {
-      color: #718096;
-    }
+  .more-messages {
+    color: #718096;
   }
 
   /* Responsive adjustments for new elements */

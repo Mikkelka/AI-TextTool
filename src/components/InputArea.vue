@@ -79,12 +79,9 @@
   const handleInputKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
       event.preventDefault()
-      if (canSend.value) {
-        const message = currentMessage.value.trim()
-        if (message) {
-          // Emit the send event (parent will handle clearing)
-          emit('send')
-        }
+      if (canSend.value && currentMessage.value.trim()) {
+        // Emit the send event (parent will handle clearing)
+        emit('send')
       }
     } else if (event.key === 'Enter' && event.ctrlKey) {
       // Allow new line
@@ -96,12 +93,9 @@
   }
 
   const handleSendClick = () => {
-    if (canSend.value) {
-      const message = currentMessage.value.trim()
-      if (message) {
-        // Emit the send event (parent will handle clearing)
-        emit('send')
-      }
+    if (canSend.value && currentMessage.value.trim()) {
+      // Emit the send event (parent will handle clearing)
+      emit('send')
     }
   }
 
@@ -229,27 +223,24 @@
     opacity: 0.7;
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .chat-input-area {
-      background: rgba(45, 55, 72, 0.95);
-      border-top-color: rgba(255, 255, 255, 0.1);
-    }
+  .chat-input-area {
+    background: rgba(45, 55, 72, 0.95);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .message-input {
-      background: #4a5568;
-      color: #e2e8f0;
-      border-color: #2d3748;
-    }
+  .message-input {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-color: #2d3748;
+  }
 
-    .message-input:focus {
-      border-color: #3182ce;
-    }
+  .message-input:focus {
+    border-color: #3182ce;
+  }
 
-    .character-count,
-    .input-hints {
-      color: #a0aec0;
-    }
+  .character-count,
+  .input-hints {
+    color: #a0aec0;
   }
 
   /* Responsive */

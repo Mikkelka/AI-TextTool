@@ -127,30 +127,28 @@
     box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4);
   }
 
-  @media (prefers-color-scheme: dark) {
-    .dialog-overlay {
-      background: rgba(2, 6, 23, 0.6);
-    }
+  .dialog-overlay {
+    background: rgba(2, 6, 23, 0.6);
+  }
 
-    .confirm-dialog {
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
-      border-color: rgba(148, 163, 184, 0.22);
-      box-shadow:
-        0 14px 38px rgba(2, 6, 23, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
+  .confirm-dialog {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
+    border-color: rgba(148, 163, 184, 0.22);
+    box-shadow:
+      0 14px 38px rgba(2, 6, 23, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
 
-    .dialog-title {
-      color: #e2e8f0;
-    }
+  .dialog-title {
+    color: #e2e8f0;
+  }
 
-    .dialog-message {
-      color: #cbd5e1;
-    }
+  .dialog-message {
+    color: #cbd5e1;
+  }
 
-    .cancel-button {
-      background: #334155;
-      color: #e2e8f0;
-    }
+  .cancel-button {
+    background: #334155;
+    color: #e2e8f0;
   }
 </style>

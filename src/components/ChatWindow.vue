@@ -946,9 +946,6 @@
   .clear-btn {
     color: #f44336;
   }
-  .zoom-btn {
-    color: #2196f3;
-  }
   .close-btn {
     color: #666;
   }
@@ -1094,68 +1091,65 @@
     justify-content: center;
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .chat-window {
-      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    }
+  .chat-window {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  }
 
-    .chat-header {
-      background: rgba(45, 55, 72, 0.95);
-      border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
+  .chat-header {
+    background: rgba(45, 55, 72, 0.95);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .chat-title {
-      color: #e2e8f0;
-    }
+  .chat-title {
+    color: #e2e8f0;
+  }
 
-    .operation-badge {
-      background: rgba(59, 130, 246, 0.2);
-      color: #93c5fd;
-    }
+  .operation-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
 
-    .model-dropdown {
-      background: #4a5568;
-      color: #e2e8f0;
-      border-color: #2d3748;
-    }
+  .model-dropdown {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-color: #2d3748;
+  }
 
-    .toggle-label {
-      background: rgba(45, 55, 72, 0.9);
-      border-color: rgba(148, 163, 184, 0.2);
-    }
+  .toggle-label {
+    background: rgba(45, 55, 72, 0.9);
+    border-color: rgba(148, 163, 184, 0.2);
+  }
 
-    .thinking-icon {
-      color: #a0aec0;
-    }
+  .thinking-icon {
+    color: #a0aec0;
+  }
 
-    .action-btn {
-      background: rgba(45, 55, 72, 0.8);
-      color: #cbd5e0;
-    }
+  .action-btn {
+    background: rgba(45, 55, 72, 0.8);
+    color: #cbd5e0;
+  }
 
-    .typing-bubble {
-      background: rgba(45, 55, 72, 0.9);
-      color: #cbd5e0;
-    }
+  .typing-bubble {
+    background: rgba(45, 55, 72, 0.9);
+    color: #cbd5e0;
+  }
 
-    .initial-text-preview {
-      background: rgba(45, 55, 72, 0.8);
-      border-left-color: #3182ce;
-    }
+  .initial-text-preview {
+    background: rgba(45, 55, 72, 0.8);
+    border-left-color: #3182ce;
+  }
 
-    .initial-text {
-      background: #2d3748;
-      color: #e2e8f0;
-    }
+  .initial-text {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .welcome-content {
-      color: #cbd5e0;
-    }
+  .welcome-content {
+    color: #cbd5e0;
+  }
 
-    .welcome-heading {
-      color: #e2e8f0;
-    }
+  .welcome-heading {
+    color: #e2e8f0;
   }
 
   /* Responsive */

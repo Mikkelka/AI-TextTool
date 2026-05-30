@@ -225,11 +225,11 @@
   }
 
   .user-content {
-    color: #333;
+    color: #e2e8f0;
   }
 
   .markdown-content {
-    color: #333;
+    color: #e2e8f0;
   }
 
   .markdown-content :deep(h1),
@@ -237,7 +237,7 @@
   .markdown-content :deep(h3),
   .markdown-content :deep(h4) {
     margin: 16px 0 8px 0;
-    color: #1a1a2e;
+    color: #e2e8f0;
   }
 
   .markdown-content :deep(p) {
@@ -326,12 +326,12 @@
     padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid #e0e0e0;
-    color: #333;
+    color: #e2e8f0;
   }
 
   .markdown-content :deep(th) {
     font-weight: 600;
-    color: #1a1a2e;
+    color: #e2e8f0;
   }
 
   .markdown-content :deep(tbody tr:hover) {
@@ -481,120 +481,78 @@
     border-color: rgba(173, 216, 230, 0.3);
   }
 
-  @media (prefers-color-scheme: dark) {
-    .message-assistant {
-      background: rgba(45, 55, 72, 0.95);
-      color: #e2e8f0;
-    }
-
-    .message-user {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.4) 100%);
-      color: #e2e8f0;
-    }
-
-    .message-role,
-    .message-time {
-      color: #a0aec0;
-    }
-
-    .user-content,
-    .markdown-content {
-      color: #e2e8f0;
-    }
-
-    .markdown-content :deep(pre) {
-      background: #2d3748;
-      border-color: #4a5568;
-    }
-
-    .markdown-content :deep(.inline-code) {
-      background: #4a5568;
-    }
-
-    .markdown-content :deep(blockquote) {
-      border-left-color: rgba(148, 163, 184, 0.5);
-      background: rgba(74, 85, 104, 0.2);
-      color: #cbd5e0;
-    }
-
-    .markdown-content :deep(table) {
-      background: rgba(74, 85, 104, 0.3);
-      border-color: rgba(74, 85, 104, 0.5);
-    }
-
-    .markdown-content :deep(thead) {
-      background: rgba(74, 85, 104, 0.5);
-    }
-
-    .markdown-content :deep(th),
-    .markdown-content :deep(td) {
-      border-bottom-color: rgba(74, 85, 104, 0.3);
-    }
-
-    .markdown-content :deep(tbody tr:hover) {
-      background: rgba(74, 85, 104, 0.4);
-    }
-
-    .markdown-content :deep(hr) {
-      background: rgba(148, 163, 184, 0.3);
-    }
-
-    .thoughts-details {
-      background: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    .sources-section {
-      border-top-color: rgba(148, 163, 184, 0.2);
-    }
-
-    .sources-header {
-      color: #94a3b8;
-    }
-
-    .source-chip {
-      background: rgba(59, 130, 246, 0.15);
-      border-color: rgba(59, 130, 246, 0.28);
-      color: #bfdbfe;
-    }
-
-    .source-chip:hover {
-      background: rgba(59, 130, 246, 0.22);
-    }
-
-    .thoughts-header {
-      background: rgba(59, 130, 246, 0.2);
-      color: #93c5fd;
-    }
-
-    .thoughts-header:hover {
-      background: rgba(59, 130, 246, 0.3);
-    }
-
-    .thoughts-markdown {
-      color: white;
-    }
-
-    .thoughts-markdown :deep(code) {
-      background: rgba(59, 130, 246, 0.2);
-      color: #93c5fd;
-    }
-
-    .thoughts-markdown :deep(pre) {
-      background: rgba(59, 130, 246, 0.15);
-      border-color: rgba(59, 130, 246, 0.3);
-    }
+  .message-assistant {
+    background: rgba(45, 55, 72, 0.95);
+    color: #e2e8f0;
   }
 
-  @media (max-width: 768px) {
-    .message-bubble {
-      max-width: 95%;
-    }
+  .message-user {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.4) 100%);
+    color: #e2e8f0;
   }
 
-  @media (max-width: 480px) {
-    .message-bubble {
-      padding: 12px;
-    }
+  .message-role,
+  .message-time {
+    color: #a0aec0;
+  }
+
+  .markdown-content :deep(pre) {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .markdown-content :deep(.inline-code) {
+    background: #4a5568;
+  }
+
+  .markdown-content :deep(blockquote) {
+    border-left-color: rgba(148, 163, 184, 0.5);
+    background: rgba(74, 85, 104, 0.2);
+    color: #cbd5e0;
+  }
+
+  .markdown-content :deep(table) {
+    background: rgba(74, 85, 104, 0.3);
+    border-color: rgba(74, 85, 104, 0.5);
+  }
+
+  .markdown-content :deep(thead) {
+    background: rgba(74, 85, 104, 0.5);
+  }
+
+  .markdown-content :deep(th),
+  .markdown-content :deep(td) {
+    border-bottom-color: rgba(74, 85, 104, 0.3);
+  }
+
+  .markdown-content :deep(tbody tr:hover) {
+    background: rgba(74, 85, 104, 0.4);
+  }
+
+  .markdown-content :deep(hr) {
+    background: rgba(148, 163, 184, 0.3);
+  }
+
+  .thoughts-details {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .sources-section {
+    border-top-color: rgba(148, 163, 184, 0.2);
+  }
+
+  .sources-header {
+    color: #94a3b8;
+  }
+
+  .source-chip {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.28);
+    color: #bfdbfe;
+  }
+
+  .source-chip:hover {
+    background: rgba(59, 130, 246, 0.22);
   }
 </style>

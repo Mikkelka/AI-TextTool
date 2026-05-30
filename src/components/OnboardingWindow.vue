@@ -274,15 +274,6 @@
   import type { Config } from '../types'
   import { CHAT_MODEL, TEXT_MODEL } from '../types'
 
-  // Props
-  interface Props {
-    visible?: boolean
-  }
-
-  withDefaults(defineProps<Props>(), {
-    visible: true
-  })
-
   // Emits
   interface Emits {
     (e: 'setup-complete'): void
@@ -1188,138 +1179,135 @@
     }
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .onboarding-window {
-      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    }
+  .onboarding-window {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  }
 
-    .onboarding-header {
-      background: rgba(45, 55, 72, 0.95);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
+  .onboarding-header {
+    background: rgba(45, 55, 72, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
-    .close-btn {
-      color: #a0aec0;
-    }
+  .close-btn {
+    color: #a0aec0;
+  }
 
-    .close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #e2e8f0;
-    }
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+  }
 
-    .welcome-title {
-      color: #e2e8f0;
-    }
+  .welcome-title {
+    color: #e2e8f0;
+  }
 
-    .welcome-subtitle {
-      color: #a0aec0;
-    }
+  .welcome-subtitle {
+    color: #a0aec0;
+  }
 
-    .step-label {
-      color: #a0aec0;
-    }
+  .step-label {
+    color: #a0aec0;
+  }
 
-    .step-title {
-      color: #e2e8f0;
-    }
+  .step-title {
+    color: #e2e8f0;
+  }
 
-    .step-description {
-      color: #cbd5e0;
-    }
+  .step-description {
+    color: #cbd5e0;
+  }
 
-    .onboarding-content {
-      background: rgba(45, 55, 72, 0.95);
-      color: #e2e8f0;
-    }
+  .onboarding-content {
+    background: rgba(45, 55, 72, 0.95);
+    color: #e2e8f0;
+  }
 
-    .form-label {
-      color: #e2e8f0;
-    }
+  .form-label {
+    color: #e2e8f0;
+  }
 
-    .form-input,
-    .form-textarea {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .form-input,
+  .form-textarea {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .form-input:focus,
-    .form-textarea:focus {
-      border-color: #3182ce;
-    }
+  .form-input:focus,
+  .form-textarea:focus {
+    border-color: #3182ce;
+  }
 
-    .field-hint {
-      color: #a0aec0;
-    }
+  .field-hint {
+    color: #a0aec0;
+  }
 
-    .api-key-help {
-      background: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.2);
-    }
+  .api-key-help {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+  }
 
-    .help-text {
-      color: #a0aec0;
-    }
+  .help-text {
+    color: #a0aec0;
+  }
 
-    .instruction-presets {
-      background: #2d3748;
-    }
+  .instruction-presets {
+    background: #2d3748;
+  }
 
-    .presets-title {
-      color: #e2e8f0;
-    }
+  .presets-title {
+    color: #e2e8f0;
+  }
 
-    .preset-button {
-      background: #4a5568;
-      border-color: #2d3748;
-      color: #e2e8f0;
-    }
+  .preset-button {
+    background: #4a5568;
+    border-color: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .preset-button:hover {
-      border-color: #3182ce;
-      background: rgba(49, 130, 206, 0.1);
-    }
+  .preset-button:hover {
+    border-color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+  }
 
-    .preset-button--active {
-      border-color: #3182ce;
-      background: rgba(49, 130, 206, 0.2);
-    }
+  .preset-button--active {
+    border-color: #3182ce;
+    background: rgba(49, 130, 206, 0.2);
+  }
 
-    .test-item {
-      background: #2d3748;
-    }
+  .test-item {
+    background: #2d3748;
+  }
 
-    .test-name {
-      color: #e2e8f0;
-    }
+  .test-name {
+    color: #e2e8f0;
+  }
 
-    .test-status {
-      color: #cbd5e0;
-    }
+  .test-status {
+    color: #cbd5e0;
+  }
 
-    .nav-button--secondary {
-      background: rgba(45, 55, 72, 0.8);
-      color: #e2e8f0;
-      border-color: #2d3748;
-    }
+  .nav-button--secondary {
+    background: rgba(45, 55, 72, 0.8);
+    color: #e2e8f0;
+    border-color: #2d3748;
+  }
 
-    .nav-button--secondary:hover:not(:disabled) {
-      background: #4a5568;
-      border-color: #3182ce;
-    }
+  .nav-button--secondary:hover:not(:disabled) {
+    background: #4a5568;
+    border-color: #3182ce;
+  }
 
-    .skip-button {
-      color: #a0aec0;
-    }
+  .skip-button {
+    color: #a0aec0;
+  }
 
-    .skip-button:hover {
-      color: #cbd5e0;
-    }
+  .skip-button:hover {
+    color: #cbd5e0;
+  }
 
-    .loading-text {
-      color: #a0aec0;
-    }
+  .loading-text {
+    color: #a0aec0;
   }
 
   /* Responsive */

@@ -208,13 +208,6 @@
 
   withDefaults(defineProps<Props>(), {})
 
-  // Emits
-  interface Emits {
-    (e: 'close'): void
-  }
-
-  defineEmits<Emits>()
-
   // Types
 
   interface EditForm {
@@ -993,74 +986,71 @@
     }
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .edit-window-container {
-      background: #2d3748;
-    }
+  .edit-window-container {
+    background: #2d3748;
+  }
 
-    .header {
-      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-    }
+  .header {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+  }
 
-    .title,
-    .subtitle {
-      color: #e2e8f0;
-    }
+  .title,
+  .subtitle {
+    color: #e2e8f0;
+  }
 
-    .operations-grid-container {
-      background: rgba(45, 55, 72, 0.5);
-    }
+  .operations-grid-container {
+    background: rgba(45, 55, 72, 0.5);
+  }
 
-    .operation-button {
-      background: rgba(45, 55, 72, 0.8);
-      border-color: rgba(255, 255, 255, 0.1);
-      color: #e2e8f0;
-    }
+  .operation-button {
+    background: rgba(45, 55, 72, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+  }
 
-    .operation-name {
-      color: #e2e8f0;
-    }
+  .operation-name {
+    color: #e2e8f0;
+  }
 
-    .operation-type {
-      color: #a0aec0;
-    }
+  .operation-type {
+    color: #a0aec0;
+  }
 
-    .bottom-buttons {
-      background: rgba(26, 32, 44, 0.8);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
+  .bottom-buttons {
+    background: rgba(26, 32, 44, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 
-    .confirm-dialog,
-    .edit-dialog {
-      background: #2d3748;
-      color: #e2e8f0;
-    }
+  .confirm-dialog,
+  .edit-dialog {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
 
-    .dialog-title,
-    .dialog-message {
-      color: #e2e8f0;
-    }
+  .dialog-title,
+  .dialog-message {
+    color: #e2e8f0;
+  }
 
-    .form-input,
-    .form-textarea {
-      background: #4a5568;
-      border-color: #718096;
-      color: #e2e8f0;
-    }
+  .form-input,
+  .form-textarea {
+    background: #4a5568;
+    border-color: #718096;
+    color: #e2e8f0;
+  }
 
-    .form-label,
-    .checkbox-label {
-      color: #e2e8f0;
-    }
+  .form-label,
+  .checkbox-label {
+    color: #e2e8f0;
+  }
 
-    .loading-text {
-      color: #a0aec0;
-    }
+  .loading-text {
+    color: #a0aec0;
+  }
 
-    .drag-instructions {
-      color: #a0aec0;
-    }
+  .drag-instructions {
+    color: #a0aec0;
   }
 
   /* Responsive adjustments */
