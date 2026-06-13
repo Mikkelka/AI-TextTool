@@ -63,7 +63,7 @@
   import { openUrl } from '@tauri-apps/plugin-opener'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { logger } from '../utils/logger'
-  import type { Config, ModelName } from '../types'
+  import type { Config, ModelName, ProviderSettings } from '../types'
   import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL } from '../types'
   import { formatModelName } from '../utils/formatters'
 
@@ -150,7 +150,7 @@
 
       // Ensure provider config exists and is updated
       if (!config.providers.Gemini) {
-        config.providers.Gemini = {}
+        config.providers.Gemini = {} as ProviderSettings
       }
       config.providers.Gemini.api_key = formData.value.apiKey
       config.providers.Gemini.chat_model_name = formData.value.chatModel as ModelName
