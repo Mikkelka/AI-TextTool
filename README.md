@@ -184,7 +184,6 @@ npm run security-check   # Run npm audit with moderate threshold
 
 - **[docs/INDEX.md](docs/INDEX.md)** - Documentation index and navigation guide
 - **[docs/TAURI_REFERENCE.md](docs/TAURI_REFERENCE.md)** - Tauri-specific implementation notes and working patterns
-- **[docs/CODE_OPTIMIZATION_2026-02-12.md](docs/CODE_OPTIMIZATION_2026-02-12.md)** - Optimization roadmap and status snapshot
 
 ## 🤝 Contributing
 
