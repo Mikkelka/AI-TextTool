@@ -1,4 +1,5 @@
 import { createApp, type App, type Component } from 'vue'
+import './styles/tokens.css'
 
 interface WindowBootstrapOptions {
   props?: Record<string, unknown>
