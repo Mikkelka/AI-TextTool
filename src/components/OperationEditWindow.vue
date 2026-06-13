@@ -855,13 +855,15 @@
 
   .confirm-dialog,
   .edit-dialog {
-    background: var(--color-bg-elevated);
+    background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg-app));
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-xl);
     padding: var(--space-6);
     max-width: 90vw;
     max-height: 90vh;
-    box-shadow: var(--shadow-lg);
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     overflow-y: auto;
   }
 
@@ -870,28 +872,34 @@
   }
 
   .edit-dialog {
-    width: 500px;
+    width: 520px;
   }
 
   .dialog-title {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
-    margin: 0 0 var(--space-4) 0;
+    margin: 0 0 var(--space-2) 0;
+    padding-bottom: var(--space-4);
     text-align: center;
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .dialog-message {
-    color: var(--color-text-tertiary);
-    margin: 0 0 var(--space-6) 0;
+    color: var(--color-text-secondary);
+    margin: var(--space-4) 0 var(--space-6) 0;
     text-align: center;
-    line-height: 1.4;
+    line-height: 1.5;
+    font-size: var(--font-size-base);
   }
 
   .dialog-buttons {
     display: flex;
     gap: var(--space-3);
-    justify-content: center;
+    justify-content: flex-end;
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border-subtle);
   }
 
   .dialog-button {
@@ -939,61 +947,80 @@
 
   /* Form Styles */
   .form-group {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
   }
 
   .form-label {
     display: block;
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
-    margin-bottom: var(--space-1);
+    margin-bottom: var(--space-2);
+    letter-spacing: 0.01em;
   }
 
   .form-input,
   .form-textarea {
     width: 100%;
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--input-border);
-    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     font-size: var(--font-size-base);
-    background: var(--input-bg);
-    color: var(--input-text);
+    background: var(--color-bg-app);
+    color: var(--color-text-primary);
     box-sizing: border-box;
+    font-family: inherit;
     transition:
       border-color var(--transition-base),
-      box-shadow var(--transition-base);
+      box-shadow var(--transition-base),
+      background var(--transition-base);
+  }
+
+  .form-input::placeholder,
+  .form-textarea::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .form-input:hover:not(:disabled),
+  .form-textarea:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
   }
 
   .form-input:focus,
   .form-textarea:focus {
     outline: none;
-    border-color: var(--input-border-focus);
+    border-color: var(--color-accent);
     box-shadow: var(--shadow-focus);
+    background: var(--color-bg-surface);
   }
 
   .form-input:disabled {
-    background: var(--color-bg-elevated);
+    background: var(--color-bg-surface);
     color: var(--color-text-muted);
+    cursor: not-allowed;
   }
 
   .form-textarea {
     resize: vertical;
-    min-height: 60px;
+    min-height: 80px;
+    line-height: 1.5;
   }
 
   .checkbox-label {
     display: flex;
     align-items: center;
+    gap: var(--space-2);
     font-size: var(--font-size-base);
     color: var(--color-text-primary);
     cursor: pointer;
+    padding: var(--space-2) 0;
   }
 
   .form-checkbox {
-    margin-right: var(--space-2);
     width: 16px;
     height: 16px;
+    margin: 0;
+    accent-color: var(--color-accent);
   }
 
   @keyframes spin {
