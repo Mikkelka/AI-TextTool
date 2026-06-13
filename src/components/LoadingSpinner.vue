@@ -1,7 +1,7 @@
 <template>
   <span
     class="spinner"
-    :class="{ 'spinner--with-margin': withMargin }"
+    :class="{ 'spinner--with-margin': margin }"
     :style="spinnerStyle"
     role="status"
     aria-label="Loading"
