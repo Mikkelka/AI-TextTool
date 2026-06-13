@@ -2,7 +2,7 @@
   <div class="edit-window-container" tabindex="0" @keydown="handleKeydown">
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+      <LoadingSpinner :margin="true" />
       <p class="loading-text">Loading operations...</p>
     </div>
 
@@ -198,6 +198,7 @@
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import AppIcon from './AppIcon.vue'
   import AppToast from './AppToast.vue'
+  import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { Operation } from '../types'
 
@@ -553,16 +554,6 @@
     justify-content: center;
     height: 50vh;
     text-align: center;
-  }
-
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--color-border);
-    border-top: 3px solid var(--color-accent);
-    border-radius: var(--radius-full);
-    animation: spin 1s linear infinite;
-    margin-bottom: var(--space-4);
   }
 
   .loading-text {
@@ -1021,15 +1012,6 @@
     height: 16px;
     margin: 0;
     accent-color: var(--color-accent);
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
   }
 
   /* Responsive adjustments */

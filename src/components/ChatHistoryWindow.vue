@@ -38,7 +38,7 @@
 
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+      <LoadingSpinner :margin="true" />
       <p class="loading-text">Loading chat history...</p>
     </div>
 
@@ -258,6 +258,7 @@
   import AppConfirmDialog from './AppConfirmDialog.vue'
   import AppToast from './AppToast.vue'
   import SanitizedMarkdown from './SanitizedMarkdown.vue'
+  import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { SavedConversation } from '../types'
 
@@ -706,16 +707,6 @@
     padding: var(--space-10);
   }
 
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--color-border);
-    border-top: 3px solid var(--color-accent);
-    border-radius: var(--radius-full);
-    animation: spin 1s linear infinite;
-    margin-bottom: var(--space-4);
-  }
-
   .loading-text {
     color: var(--color-text-tertiary);
     font-size: var(--font-size-base);
@@ -1126,15 +1117,6 @@
   .stats-info {
     font-size: var(--font-size-xs);
     color: var(--color-text-tertiary);
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
   }
 
   /* Tabs */

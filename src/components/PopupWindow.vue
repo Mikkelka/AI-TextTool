@@ -2,7 +2,7 @@
   <div class="popup-container" tabindex="0" @keydown="handleKeydown">
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+      <LoadingSpinner :margin="true" />
       <p class="loading-text">Loading operations...</p>
     </div>
 
@@ -62,7 +62,12 @@
 
       <!-- Processing Indicator -->
       <div v-if="processingOperation" class="processing-indicator">
-        <div class="processing-spinner"></div>
+        <LoadingSpinner
+          :size="16"
+          :thickness="2"
+          color="rgba(255, 255, 255, 0.3)"
+          accent-color="white"
+        />
         <p>Processing with AI...</p>
       </div>
     </div>
@@ -77,6 +82,7 @@
   import { invoke } from '@tauri-apps/api/core'
   import { Sparkles, TriangleAlert, X } from '@lucide/vue'
   import AppIcon from './AppIcon.vue'
+  import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import { getOperationIcon } from '../utils/operationIcons'
   import type { Operation, PopupWindowProps } from '../types'
@@ -349,17 +355,6 @@
     text-align: center;
   }
 
-  .loading-spinner,
-  .processing-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--color-border);
-    border-top: 3px solid var(--color-accent);
-    border-radius: var(--radius-full);
-    animation: spin 1s linear infinite;
-    margin-bottom: var(--space-4);
-  }
-
   .loading-text {
     color: var(--color-text-tertiary);
     font-size: var(--font-size-base);
@@ -558,7 +553,7 @@
     z-index: 20;
   }
 
-  .processing-indicator .processing-spinner {
+  .processing-indicator :deep(.spinner) {
     width: 16px;
     height: 16px;
     border-width: 2px;
@@ -581,15 +576,6 @@
 
   .fade-overlay--hidden {
     opacity: 0;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
   }
 
   /* Responsive adjustments */

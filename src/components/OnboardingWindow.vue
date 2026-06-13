@@ -47,7 +47,7 @@
 
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+      <LoadingSpinner :margin="true" />
       <p class="loading-text">{{ loadingMessage }}</p>
     </div>
 
@@ -270,6 +270,7 @@
   import { invoke } from '@tauri-apps/api/core'
   import { openUrl } from '@tauri-apps/plugin-opener'
   import AppConfirmDialog from './AppConfirmDialog.vue'
+  import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { Config } from '../types'
   import { CHAT_MODEL, TEXT_MODEL } from '../types'
@@ -1179,15 +1180,6 @@
   }
 
   /* Animations */
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
   /* Responsive */
   @media (max-width: 768px) {
     .onboarding-window {
