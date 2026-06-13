@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build & release (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust (stable, MSVC)
+        run: |
+          rustup default stable-x86_64-pc-windows-msvc
+          rustup show active-toolchain
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Tauri app & publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'AI TextTool ${{ github.ref_name }} — Initial release'
+          releaseBody: |
+            # AI TextTool ${{ github.ref_name }} — Initial release
+
+            First stable release of **AI TextTool**, a system-tray AI text-editing tool powered by Google Gemini.
+
+            ## Highlights
+            - System tray app with global shortcuts
+            - AI text operations (rewrite, translate, summarize, custom prompts)
+            - Chat window with persistent conversation history
+            - Onboarding flow for first-time API key setup
+            - Local data storage (single `app_data.json` next to the executable)
+
+            ## Install
+            1. Download the `.msi` (Windows Installer) **or** the `.exe` (NSIS) below.
+            2. Run the installer — the app lives in the system tray.
+            3. First launch will guide you through Gemini API key setup.
+
+            See the [README](https://github.com/Mikkelka/AI-TextTool) for full documentation.
+          releaseDraft: true
+          prerelease: false
+          args: ''
