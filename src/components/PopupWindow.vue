@@ -52,6 +52,7 @@
           @mouseenter="selectedIndex = index"
         >
           <div class="operation-button-content">
+            <AppIcon :icon="getOperationIcon(operation.icon)" :size="18" class="operation-icon" />
             <div class="operation-label">
               {{ processingOperation === key ? 'Processing...' : key }}
             </div>
@@ -77,6 +78,7 @@
   import { Sparkles, TriangleAlert, X } from '@lucide/vue'
   import AppIcon from './AppIcon.vue'
   import { logger } from '../utils/logger'
+  import { getOperationIcon } from '../utils/operationIcons'
   import type { Operation, PopupWindowProps } from '../types'
 
   // Props
@@ -514,8 +516,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     width: 100%;
     height: 100%;
+  }
+
+  .operation-icon {
+    color: #a855f7;
+  }
+
+  .operation-button--chat .operation-icon {
+    color: #3b82f6;
   }
 
   .operation-label {
@@ -603,6 +614,14 @@
   .operation-button--direct {
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%);
     border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  .operation-icon {
+    color: #c084fc;
+  }
+
+  .operation-button--chat .operation-icon {
+    color: #60a5fa;
   }
 
   .operation-label {
