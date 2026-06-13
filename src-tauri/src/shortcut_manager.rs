@@ -24,7 +24,8 @@ const CLIPBOARD_RETRY_DELAY_MS: u64 = 100;
 
 /// Shared enigo instance for keyboard/mouse operations
 fn get_enigo() -> Result<Enigo, String> {
-    Enigo::new(&Settings::default()).map_err(|e| format!("Failed to create enigo instance: {:?}", e))
+    Enigo::new(&Settings::default())
+        .map_err(|e| format!("Failed to create enigo instance: {:?}", e))
 }
 
 /// Create and configure the global shortcut handler with debouncing
@@ -68,7 +69,7 @@ fn handle_global_shortcut<R: Runtime>(app: AppHandle<R>, last_trigger: Arc<Mutex
 /// Process the shortcut trigger: copy text, analyze clipboard, and show appropriate window
 async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Small initial delay to let any ongoing operations (like Ctrl+A) complete
-        sleep(std::time::Duration::from_millis(CLIPBOARD_WRITE_DELAY_MS)).await;
+    sleep(std::time::Duration::from_millis(CLIPBOARD_WRITE_DELAY_MS)).await;
 
     // First, get current clipboard content to compare later
     let original_clipboard = app_handle
@@ -81,10 +82,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     );
 
     // Clear clipboard with a unique marker to ensure we can detect any change
-    let unique_marker = format!(
-        "AI_TOOL_MARKER_{}",
-        time::get_current_timestamp_millis()
-    );
+    let unique_marker = format!("AI_TOOL_MARKER_{}", time::get_current_timestamp_millis());
 
     if let Err(e) = app_handle.clipboard().write_text(&unique_marker) {
         log::warn!(
@@ -94,7 +92,7 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     } else {
         log::debug!("Clipboard cleared with marker: {}", unique_marker);
         // Small delay to ensure clipboard write completes
-    sleep(std::time::Duration::from_millis(INITIAL_DELAY_MS)).await;
+        sleep(std::time::Duration::from_millis(INITIAL_DELAY_MS)).await;
     }
 
     // Simulate Ctrl+C to copy any selected text
@@ -158,11 +156,15 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     log::debug!("Detection results:");
     log::debug!(
         "  clipboard_changed={}, has_meaningful_content={}, is_not_marker={}",
-        clipboard_changed, has_meaningful_content, is_not_marker
+        clipboard_changed,
+        has_meaningful_content,
+        is_not_marker
     );
     log::debug!(
         "  traditional_detection={}, substantial_content={}, duplicate_but_meaningful={}",
-        text_was_selected_traditional, has_substantial_content, is_duplicate_but_meaningful
+        text_was_selected_traditional,
+        has_substantial_content,
+        is_duplicate_but_meaningful
     );
     log::debug!("  final_result: text_was_selected={}", text_was_selected);
 

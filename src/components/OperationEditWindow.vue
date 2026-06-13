@@ -536,12 +536,13 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    background: #ffffff;
+    background: linear-gradient(135deg, var(--color-bg-surface) 0%, var(--color-bg-app) 100%);
     box-sizing: border-box;
     outline: none;
     overflow: auto;
     display: flex;
     flex-direction: column;
+    font-family: var(--font-family-base);
   }
 
   .loading-container,
@@ -557,55 +558,56 @@
   .loading-spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #2196f3;
-    border-radius: 50%;
+    border: 3px solid var(--color-border);
+    border-top: 3px solid var(--color-accent);
+    border-radius: var(--radius-full);
     animation: spin 1s linear infinite;
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .loading-text {
-    color: #666;
-    font-size: 14px;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-base);
     margin: 0;
   }
 
   .error-container {
-    color: #d32f2f;
+    color: var(--color-danger);
   }
 
   .error-icon {
     font-size: 32px;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
   }
 
   .error-message {
-    margin: 8px 0;
-    font-size: 14px;
+    margin: var(--space-2) 0;
+    font-size: var(--font-size-base);
   }
 
   .retry-button {
-    background: #2196f3;
+    background: var(--color-accent);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.2s;
+    font-size: var(--font-size-xs);
+    transition: background-color var(--transition-base);
   }
 
   .retry-button:hover {
-    background: #1976d2;
+    background: var(--color-accent-hover);
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    padding: var(--space-5);
+    background: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border-subtle);
+    color: var(--color-text-primary);
   }
 
   .header-left {
@@ -614,97 +616,99 @@
 
   .header-controls {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
   }
 
   .title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--space-2) 0;
   }
 
   .subtitle {
-    font-size: 14px;
+    font-size: var(--font-size-base);
     margin: 0;
-    opacity: 0.9;
+    color: var(--color-text-tertiary);
   }
 
   .control-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border: none;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 500;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     color: white;
     min-height: 32px;
   }
 
   .control-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-sm);
   }
 
   .add-btn {
-    background: #4caf50;
+    background: var(--color-success);
   }
 
   .add-btn:hover {
-    background: #45a049;
+    background: var(--color-success-hover);
   }
 
   .reset-btn {
-    background: #f44336;
+    background: var(--color-danger);
   }
 
   .reset-btn:hover {
-    background: #da190b;
+    background: var(--color-danger-hover);
   }
 
   .close-btn {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-bg-elevated);
     width: 32px;
     height: 32px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    border: 1px solid var(--color-border);
   }
 
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--color-border);
   }
 
   .operations-grid-container {
-    padding: 20px;
+    padding: var(--space-5);
+    background: var(--color-bg-app);
   }
 
   .drag-instructions {
     font-size: 13px;
-    color: #666;
+    color: var(--color-text-tertiary);
     text-align: center;
-    margin: 0 0 16px 0;
+    margin: 0 0 var(--space-4) 0;
     font-style: italic;
   }
 
   .operations-grid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
   }
 
   .operation-item {
     position: relative;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
   }
 
   .operation-button {

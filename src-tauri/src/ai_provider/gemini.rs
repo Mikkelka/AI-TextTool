@@ -21,7 +21,8 @@ IMPORTANT: Use markdown formatting in your responses to make them clear and well
 Always format your response professionally using these markdown features.";
 
 /// Default system instruction used when no custom instruction is provided
-const DEFAULT_SYSTEM_INSTRUCTION: &str = "You are a helpful AI assistant. Provide clear, accurate, and concise responses.";
+const DEFAULT_SYSTEM_INSTRUCTION: &str =
+    "You are a helpful AI assistant. Provide clear, accurate, and concise responses.";
 
 /// Rate limiting tracker
 #[derive(Debug)]
@@ -613,8 +614,8 @@ impl GeminiProvider {
         }
 
         let sources = (!sources.is_empty()).then_some(sources);
-        let search_queries = (!metadata.web_search_queries.is_empty())
-            .then(|| metadata.web_search_queries.clone());
+        let search_queries =
+            (!metadata.web_search_queries.is_empty()).then(|| metadata.web_search_queries.clone());
 
         (sources, search_queries)
     }

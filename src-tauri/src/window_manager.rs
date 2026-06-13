@@ -74,7 +74,8 @@ pub fn create_window<R: Runtime>(
 
     log::info!(
         "Creating window '{}' with title '{}'",
-        config.window_id, config.title
+        config.window_id,
+        config.title
     );
 
     // Build the window
@@ -176,7 +177,8 @@ pub fn create_popup_window<R: Runtime>(
 
     log::info!(
         "Creating popup window at mouse position: ({}, {})",
-        mouse_x, mouse_y
+        mouse_x,
+        mouse_y
     );
 
     let config = WindowConfig {
@@ -188,8 +190,8 @@ pub fn create_popup_window<R: Runtime>(
         min_width: None,
         min_height: None,
         position: WindowPosition::Coordinates {
-            x: mouse_x as f64 - 150.0,  // Center horizontally (width / 2)
-            y: mouse_y as f64 - 300.0,  // Position above mouse (height + margin)
+            x: mouse_x as f64 - 150.0, // Center horizontally (width / 2)
+            y: mouse_y as f64 - 300.0, // Position above mouse (height + margin)
         },
         resizable: false,
         maximizable: false,
@@ -221,7 +223,10 @@ pub fn create_direct_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri
 
     let config = WindowConfig {
         window_id: format!("chat_direct_{}", time::get_current_timestamp_millis()),
-        url: format!("windows/chat.html?operation=Chat&title=AI Chat&t={}", time::get_current_timestamp_millis()),
+        url: format!(
+            "windows/chat.html?operation=Chat&title=AI Chat&t={}",
+            time::get_current_timestamp_millis()
+        ),
         title: "AI TextTool - Chat".to_string(),
         width: 900.0,
         height: 700.0,
@@ -248,7 +253,10 @@ pub fn create_fallback_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tau
 
     let config = WindowConfig {
         window_id: format!("chat_fallback_{}", time::get_current_timestamp_millis()),
-        url: format!("windows/chat.html?operation=Chat&title=AI Chat&t={}", time::get_current_timestamp_millis()),
+        url: format!(
+            "windows/chat.html?operation=Chat&title=AI Chat&t={}",
+            time::get_current_timestamp_millis()
+        ),
         title: "AI TextTool - Chat".to_string(),
         width: 900.0,
         height: 700.0,
@@ -275,7 +283,10 @@ pub fn create_tray_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::
 
     let config = WindowConfig {
         window_id: format!("chat_tray_{}", time::get_current_timestamp_millis()),
-        url: format!("windows/chat.html?operation=Chat&title=AI Chat&t={}", time::get_current_timestamp_millis()),
+        url: format!(
+            "windows/chat.html?operation=Chat&title=AI Chat&t={}",
+            time::get_current_timestamp_millis()
+        ),
         title: "AI TextTool - Chat".to_string(),
         width: 900.0,
         height: 700.0,
