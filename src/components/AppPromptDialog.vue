@@ -71,56 +71,58 @@
   .dialog-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: var(--color-bg-overlay);
     backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2200;
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .prompt-dialog {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(243, 246, 251, 0.94));
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    border-radius: 14px;
+    background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg-app));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xl);
     width: min(500px, 100%);
-    padding: 22px;
+    padding: var(--space-5);
     box-shadow:
-      0 14px 38px rgba(15, 23, 42, 0.32),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      var(--shadow-lg),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .dialog-title {
-    margin: 0 0 8px 0;
-    color: #1e293b;
-    font-size: 18px;
-    font-weight: 700;
+    margin: 0 0 var(--space-2) 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
   }
 
   .dialog-message {
-    margin: 0 0 14px 0;
-    color: #475569;
+    margin: 0 0 var(--space-4) 0;
+    color: var(--color-text-secondary);
     line-height: 1.45;
   }
 
   .dialog-input {
     width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 14px;
-    margin-bottom: 14px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-3);
+    font-size: var(--font-size-base);
+    margin-bottom: var(--space-4);
     box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.9);
-    color: #0f172a;
-    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+    background: var(--input-bg-elevated);
+    color: var(--input-text);
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base);
   }
 
   .dialog-input:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+    border-color: var(--input-border-focus);
+    box-shadow: var(--shadow-focus);
   }
 
   .dialog-buttons {
@@ -131,15 +133,15 @@
 
   .dialog-button {
     border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 14px;
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-base);
     cursor: pointer;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     transition:
-      transform 0.15s ease,
-      box-shadow 0.2s ease,
-      background-color 0.2s ease;
+      transform var(--transition-fast),
+      box-shadow var(--transition-base),
+      background-color var(--transition-base);
   }
 
   .dialog-button:hover {
@@ -147,57 +149,21 @@
   }
 
   .cancel-button {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
   }
 
   .cancel-button:hover {
-    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
+    background: var(--color-border);
   }
 
   .confirm-button {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-active));
     color: #fff;
-    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.32);
+    box-shadow: 0 8px 16px var(--color-accent-soft);
   }
 
   .confirm-button:hover {
-    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
-  }
-
-  .dialog-overlay {
-    background: rgba(2, 6, 23, 0.6);
-  }
-
-  .prompt-dialog {
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
-    border-color: rgba(148, 163, 184, 0.22);
-    box-shadow:
-      0 14px 38px rgba(2, 6, 23, 0.6),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  .dialog-title {
-    color: #e2e8f0;
-  }
-
-  .dialog-message {
-    color: #cbd5e1;
-  }
-
-  .dialog-input {
-    background: rgba(15, 23, 42, 0.75);
-    border-color: #475569;
-    color: #e2e8f0;
-  }
-
-  .dialog-input:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22);
-  }
-
-  .cancel-button {
-    background: #334155;
-    color: #e2e8f0;
+    box-shadow: 0 10px 20px var(--color-accent-focus-ring);
   }
 </style>

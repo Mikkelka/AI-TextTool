@@ -708,13 +708,13 @@
   }
 
   .operation-button {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-    border: 2px solid rgba(156, 39, 176, 0.3);
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
     cursor: default;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
     position: relative;
     min-height: 60px;
     display: flex;
@@ -724,17 +724,18 @@
 
   .operation-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-accent);
   }
 
   .operation-button.chat-operation {
-    background: rgba(69, 85, 112, 0.8);
-    border-color: rgba(183, 198, 211, 0.3);
+    background: linear-gradient(135deg, var(--color-accent-soft), rgba(37, 99, 235, 0.2));
+    border-color: rgba(59, 130, 246, 0.4);
   }
 
   .reorder-controls {
     position: absolute;
-    left: 8px;
+    left: var(--space-2);
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -745,23 +746,23 @@
   .arrow-button {
     width: 20px;
     height: 20px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    background: white;
-    color: #666;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-surface);
+    color: var(--color-text-tertiary);
     font-size: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     padding: 0;
   }
 
   .arrow-button:hover:not(:disabled) {
-    background: #f0f0f0;
-    border-color: #999;
-    color: #333;
+    background: var(--color-border);
+    border-color: var(--color-text-muted);
+    color: var(--color-text-primary);
     transform: scale(1.1);
   }
 
@@ -772,67 +773,66 @@
 
   .operation-content {
     flex: 1;
-    padding-left: 50px; /* Space for horizontal arrow controls */
-    padding-right: 60px; /* Space for icons */
+    padding-left: 50px;
+    padding-right: 60px;
   }
 
   .operation-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 4px;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
   }
 
   .operation-type {
-    font-size: 12px;
-    color: #666;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
     font-style: italic;
   }
 
   .operation-icons {
     position: absolute;
     top: 50%;
-    right: 12px;
+    right: var(--space-3);
     transform: translateY(-50%);
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .icon-button {
     width: 28px;
     height: 28px;
     border: none;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-full);
+    background: var(--color-bg-surface);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
   }
 
   .icon-button:hover {
-    background: rgba(255, 255, 255, 1);
     transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
   }
 
   .edit-icon {
-    color: #3b82f6;
+    color: var(--color-accent);
   }
 
   .edit-icon:hover {
-    background: #e3f2fd;
+    background: var(--color-accent-soft);
   }
 
   .delete-icon {
-    color: #ef4444;
+    color: var(--color-danger);
   }
 
   .delete-icon:hover {
-    background: #ffebee;
+    background: var(--color-danger-soft);
   }
 
   /* Dialog Styles */
@@ -842,7 +842,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-bg-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -851,12 +851,13 @@
 
   .confirm-dialog,
   .edit-dialog {
-    background: white;
-    border-radius: 8px;
-    padding: 24px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
     max-width: 90vw;
     max-height: 90vh;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
     overflow-y: auto;
   }
 
@@ -869,101 +870,107 @@
   }
 
   .dialog-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 16px 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-4) 0;
     text-align: center;
   }
 
   .dialog-message {
-    color: #666;
-    margin: 0 0 24px 0;
+    color: var(--color-text-tertiary);
+    margin: 0 0 var(--space-6) 0;
     text-align: center;
     line-height: 1.4;
   }
 
   .dialog-buttons {
     display: flex;
-    gap: 12px;
+    gap: var(--space-3);
     justify-content: center;
   }
 
   .dialog-button {
-    padding: 8px 20px;
+    padding: var(--space-2) var(--space-5);
     border: none;
-    border-radius: 4px;
-    font-size: 14px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     min-width: 80px;
   }
 
   .cancel-button {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
   }
 
   .cancel-button:hover {
-    background: #d0d0d0;
+    background: var(--color-border);
   }
 
   .confirm-button {
-    background: #f44336;
+    background: var(--color-danger);
     color: white;
   }
 
   .confirm-button:hover {
-    background: #da190b;
+    background: var(--color-danger-hover);
   }
 
   .save-button {
-    background: #4caf50;
+    background: var(--color-success);
     color: white;
   }
 
   .save-button:hover:not(:disabled) {
-    background: #45a049;
+    background: var(--color-success-hover);
   }
 
   .save-button:disabled {
-    background: #ccc;
+    background: var(--color-border);
+    color: var(--color-text-muted);
     cursor: not-allowed;
   }
 
   /* Form Styles */
   .form-group {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .form-label {
     display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 4px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
   }
 
   .form-input,
   .form-textarea {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    background: var(--input-bg);
+    color: var(--input-text);
     box-sizing: border-box;
-    transition: border-color 0.2s ease;
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base);
   }
 
   .form-input:focus,
   .form-textarea:focus {
     outline: none;
-    border-color: #2196f3;
+    border-color: var(--input-border-focus);
+    box-shadow: var(--shadow-focus);
   }
 
   .form-input:disabled {
-    background: #f5f5f5;
-    color: #999;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-muted);
   }
 
   .form-textarea {
@@ -974,13 +981,13 @@
   .checkbox-label {
     display: flex;
     align-items: center;
-    font-size: 14px;
-    color: #333;
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
     cursor: pointer;
   }
 
   .form-checkbox {
-    margin-right: 8px;
+    margin-right: var(--space-2);
     width: 16px;
     height: 16px;
   }
@@ -992,73 +999,6 @@
     100% {
       transform: rotate(360deg);
     }
-  }
-
-  .edit-window-container {
-    background: #2d3748;
-  }
-
-  .header {
-    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-  }
-
-  .title,
-  .subtitle {
-    color: #e2e8f0;
-  }
-
-  .operations-grid-container {
-    background: rgba(45, 55, 72, 0.5);
-  }
-
-  .operation-button {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
-  }
-
-  .operation-name {
-    color: #e2e8f0;
-  }
-
-  .operation-type {
-    color: #a0aec0;
-  }
-
-  .bottom-buttons {
-    background: rgba(26, 32, 44, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .confirm-dialog,
-  .edit-dialog {
-    background: #2d3748;
-    color: #e2e8f0;
-  }
-
-  .dialog-title,
-  .dialog-message {
-    color: #e2e8f0;
-  }
-
-  .form-input,
-  .form-textarea {
-    background: #4a5568;
-    border-color: #718096;
-    color: #e2e8f0;
-  }
-
-  .form-label,
-  .checkbox-label {
-    color: #e2e8f0;
-  }
-
-  .loading-text {
-    color: #a0aec0;
-  }
-
-  .drag-instructions {
-    color: #a0aec0;
   }
 
   /* Responsive adjustments */
@@ -1094,7 +1034,7 @@
     }
 
     .operation-name {
-      font-size: 14px;
+      font-size: var(--font-size-base);
     }
 
     .operation-type {
