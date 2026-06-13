@@ -17,7 +17,6 @@ pub struct DataManager {
 }
 
 impl DataManager {
-
     /// Create a new DataManager instance
     pub fn new() -> Self {
         Self {
@@ -70,7 +69,9 @@ impl DataManager {
         match fs::rename(&temp_path, &self.file_path).await {
             Ok(()) => {}
             Err(e) => {
-                log::error!("Failed to atomically save data file, falling back to direct write: {e}");
+                log::error!(
+                    "Failed to atomically save data file, falling back to direct write: {e}"
+                );
                 let mut file = fs::File::create(&self.file_path).await?;
                 file.write_all(json_content.as_bytes()).await?;
                 file.flush().await?;
@@ -262,8 +263,7 @@ impl DataManager {
     }
 
     pub fn get_operations_sorted(&self) -> Vec<(String, Operation)> {
-        let mut operations_list: Vec<(&String, &Operation)> =
-            self.data.operations.iter().collect();
+        let mut operations_list: Vec<(&String, &Operation)> = self.data.operations.iter().collect();
 
         operations_list.sort_by(|a, b| {
             let order_cmp = a.1.order.cmp(&b.1.order);

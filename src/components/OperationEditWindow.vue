@@ -2,7 +2,7 @@
   <div class="edit-window-container" tabindex="0" @keydown="handleKeydown">
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+      <LoadingSpinner :margin="true" />
       <p class="loading-text">Loading operations...</p>
     </div>
 
@@ -107,18 +107,15 @@
     </div>
 
     <!-- Confirmation Dialog -->
-    <div v-if="showConfirmDialog" class="dialog-overlay" @click="cancelConfirm">
-      <div class="confirm-dialog" @click.stop>
-        <h3 class="dialog-title">{{ confirmTitle }}</h3>
-        <p class="dialog-message">{{ confirmMessage }}</p>
-        <div class="dialog-buttons">
-          <button class="dialog-button cancel-button" @click="cancelConfirm">Cancel</button>
-          <button class="dialog-button confirm-button" @click="confirmAction">
-            {{ confirmButtonText }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AppConfirmDialog
+      :visible="showConfirmDialog"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :confirm-text="confirmButtonText"
+      :danger="confirmDanger"
+      @confirm="confirmAction"
+      @cancel="cancelConfirm"
+    />
 
     <!-- Edit Dialog -->
     <div v-if="showEditDialog" class="dialog-overlay" @click="cancelEdit">
@@ -197,7 +194,9 @@
   } from '@lucide/vue'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import AppIcon from './AppIcon.vue'
+  import AppConfirmDialog from './AppConfirmDialog.vue'
   import AppToast from './AppToast.vue'
+  import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { Operation } from '../types'
 
@@ -228,11 +227,11 @@
 
   // Dialog states
   const showConfirmDialog = ref(false)
-  const showEditDialog = ref(false)
   const confirmTitle = ref('')
   const confirmMessage = ref('')
   const confirmButtonText = ref('Confirm')
-  const confirmCallback = ref<(() => void) | null>(null)
+  const confirmDanger = ref(false)
+  let pendingConfirmAction: (() => void | Promise<void>) | null = null
 
   const toastVisible = ref(false)
   const toastMessage = ref('')
@@ -240,6 +239,7 @@
   let toastTimer: ReturnType<typeof setTimeout> | null = null
 
   // Edit form state
+  const showEditDialog = ref(false)
   const editForm = ref<EditForm>({
     name: '',
     prefix: '',
@@ -306,12 +306,42 @@
     showEditDialog.value = true
   }
 
-  const deleteOperation = (operationKey: string) => {
-    confirmTitle.value = 'Confirm Delete'
-    confirmMessage.value = `Are you sure you want to delete the '${operationKey}' operation?`
-    confirmButtonText.value = 'Delete'
-    confirmCallback.value = () => void performDelete(operationKey)
+  const requestConfirm = (
+    title: string,
+    message: string,
+    buttonText: string,
+    danger: boolean,
+    action: () => void | Promise<void>
+  ) => {
+    confirmTitle.value = title
+    confirmMessage.value = message
+    confirmButtonText.value = buttonText
+    confirmDanger.value = danger
+    pendingConfirmAction = action
     showConfirmDialog.value = true
+  }
+
+  const confirmAction = async () => {
+    const action = pendingConfirmAction
+    cancelConfirm()
+    if (action) {
+      await action()
+    }
+  }
+
+  const cancelConfirm = () => {
+    showConfirmDialog.value = false
+    pendingConfirmAction = null
+  }
+
+  const deleteOperation = (operationKey: string) => {
+    requestConfirm(
+      'Confirm Delete',
+      `Are you sure you want to delete the '${operationKey}' operation?`,
+      'Delete',
+      true,
+      () => performDelete(operationKey)
+    )
   }
 
   const performDelete = async (operationKey: string) => {
@@ -345,12 +375,13 @@
   }
 
   const resetToDefaults = () => {
-    confirmTitle.value = 'Reset to Defaults'
-    confirmMessage.value =
-      'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.'
-    confirmButtonText.value = 'Reset'
-    confirmCallback.value = () => void performReset()
-    showConfirmDialog.value = true
+    requestConfirm(
+      'Reset to Defaults',
+      'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.',
+      'Reset',
+      false,
+      () => performReset()
+    )
   }
 
   const performReset = async () => {
@@ -426,18 +457,6 @@
     showEditDialog.value = false
     editingOperation.value = null
     isEditingExisting.value = false
-  }
-
-  const confirmAction = () => {
-    if (confirmCallback.value) {
-      confirmCallback.value()
-    }
-    cancelConfirm()
-  }
-
-  const cancelConfirm = () => {
-    showConfirmDialog.value = false
-    confirmCallback.value = null
   }
 
   const closeWindow = async () => {
@@ -536,12 +555,13 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    background: #ffffff;
+    background: linear-gradient(135deg, var(--color-bg-surface) 0%, var(--color-bg-app) 100%);
     box-sizing: border-box;
     outline: none;
     overflow: auto;
     display: flex;
     flex-direction: column;
+    font-family: var(--font-family-base);
   }
 
   .loading-container,
@@ -554,58 +574,49 @@
     text-align: center;
   }
 
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #2196f3;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-  }
-
   .loading-text {
-    color: #666;
-    font-size: 14px;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-base);
     margin: 0;
   }
 
   .error-container {
-    color: #d32f2f;
+    color: var(--color-danger);
   }
 
   .error-icon {
     font-size: 32px;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
   }
 
   .error-message {
-    margin: 8px 0;
-    font-size: 14px;
+    margin: var(--space-2) 0;
+    font-size: var(--font-size-base);
   }
 
   .retry-button {
-    background: #2196f3;
+    background: var(--color-accent);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.2s;
+    font-size: var(--font-size-xs);
+    transition: background-color var(--transition-base);
   }
 
   .retry-button:hover {
-    background: #1976d2;
+    background: var(--color-accent-hover);
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    padding: var(--space-5);
+    background: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border-subtle);
+    color: var(--color-text-primary);
   }
 
   .header-left {
@@ -614,107 +625,109 @@
 
   .header-controls {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
   }
 
   .title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--space-2) 0;
   }
 
   .subtitle {
-    font-size: 14px;
+    font-size: var(--font-size-base);
     margin: 0;
-    opacity: 0.9;
+    color: var(--color-text-tertiary);
   }
 
   .control-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border: none;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 500;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     color: white;
     min-height: 32px;
   }
 
   .control-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-sm);
   }
 
   .add-btn {
-    background: #4caf50;
+    background: var(--color-success);
   }
 
   .add-btn:hover {
-    background: #45a049;
+    background: var(--color-success-hover);
   }
 
   .reset-btn {
-    background: #f44336;
+    background: var(--color-danger);
   }
 
   .reset-btn:hover {
-    background: #da190b;
+    background: var(--color-danger-hover);
   }
 
   .close-btn {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-bg-elevated);
     width: 32px;
     height: 32px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    border: 1px solid var(--color-border);
   }
 
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--color-border);
   }
 
   .operations-grid-container {
-    padding: 20px;
+    padding: var(--space-5);
+    background: var(--color-bg-app);
   }
 
   .drag-instructions {
     font-size: 13px;
-    color: #666;
+    color: var(--color-text-tertiary);
     text-align: center;
-    margin: 0 0 16px 0;
+    margin: 0 0 var(--space-4) 0;
     font-style: italic;
   }
 
   .operations-grid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
   }
 
   .operation-item {
     position: relative;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
   }
 
   .operation-button {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-    border: 2px solid rgba(156, 39, 176, 0.3);
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
     cursor: default;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
     position: relative;
     min-height: 60px;
     display: flex;
@@ -724,17 +737,18 @@
 
   .operation-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-accent);
   }
 
   .operation-button.chat-operation {
-    background: rgba(69, 85, 112, 0.8);
-    border-color: rgba(183, 198, 211, 0.3);
+    background: linear-gradient(135deg, var(--color-accent-soft), rgba(37, 99, 235, 0.2));
+    border-color: rgba(59, 130, 246, 0.4);
   }
 
   .reorder-controls {
     position: absolute;
-    left: 8px;
+    left: var(--space-2);
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -745,23 +759,23 @@
   .arrow-button {
     width: 20px;
     height: 20px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    background: white;
-    color: #666;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-surface);
+    color: var(--color-text-tertiary);
     font-size: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     padding: 0;
   }
 
   .arrow-button:hover:not(:disabled) {
-    background: #f0f0f0;
-    border-color: #999;
-    color: #333;
+    background: var(--color-border);
+    border-color: var(--color-text-muted);
+    color: var(--color-text-primary);
     transform: scale(1.1);
   }
 
@@ -772,67 +786,66 @@
 
   .operation-content {
     flex: 1;
-    padding-left: 50px; /* Space for horizontal arrow controls */
-    padding-right: 60px; /* Space for icons */
+    padding-left: 50px;
+    padding-right: 60px;
   }
 
   .operation-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 4px;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
   }
 
   .operation-type {
-    font-size: 12px;
-    color: #666;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
     font-style: italic;
   }
 
   .operation-icons {
     position: absolute;
     top: 50%;
-    right: 12px;
+    right: var(--space-3);
     transform: translateY(-50%);
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .icon-button {
     width: 28px;
     height: 28px;
     border: none;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-full);
+    background: var(--color-bg-surface);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
   }
 
   .icon-button:hover {
-    background: rgba(255, 255, 255, 1);
     transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
   }
 
   .edit-icon {
-    color: #3b82f6;
+    color: var(--color-accent);
   }
 
   .edit-icon:hover {
-    background: #e3f2fd;
+    background: var(--color-accent-soft);
   }
 
   .delete-icon {
-    color: #ef4444;
+    color: var(--color-danger);
   }
 
   .delete-icon:hover {
-    background: #ffebee;
+    background: var(--color-danger-soft);
   }
 
   /* Dialog Styles */
@@ -842,223 +855,156 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-bg-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
   }
 
-  .confirm-dialog,
   .edit-dialog {
-    background: white;
-    border-radius: 8px;
-    padding: 24px;
+    background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg-app));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
     max-width: 90vw;
     max-height: 90vh;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     overflow-y: auto;
-  }
-
-  .confirm-dialog {
-    width: 400px;
-  }
-
-  .edit-dialog {
-    width: 500px;
+    width: 520px;
   }
 
   .dialog-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 16px 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
+    padding-bottom: var(--space-4);
     text-align: center;
-  }
-
-  .dialog-message {
-    color: #666;
-    margin: 0 0 24px 0;
-    text-align: center;
-    line-height: 1.4;
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .dialog-buttons {
     display: flex;
-    gap: 12px;
-    justify-content: center;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border-subtle);
   }
 
   .dialog-button {
-    padding: 8px 20px;
+    padding: var(--space-2) var(--space-5);
     border: none;
-    border-radius: 4px;
-    font-size: 14px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     min-width: 80px;
   }
 
   .cancel-button {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
   }
 
   .cancel-button:hover {
-    background: #d0d0d0;
-  }
-
-  .confirm-button {
-    background: #f44336;
-    color: white;
-  }
-
-  .confirm-button:hover {
-    background: #da190b;
+    background: var(--color-border);
   }
 
   .save-button {
-    background: #4caf50;
+    background: var(--color-success);
     color: white;
   }
 
   .save-button:hover:not(:disabled) {
-    background: #45a049;
+    background: var(--color-success-hover);
   }
 
   .save-button:disabled {
-    background: #ccc;
+    background: var(--color-border);
+    color: var(--color-text-muted);
     cursor: not-allowed;
   }
 
   /* Form Styles */
   .form-group {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-5);
   }
 
   .form-label {
     display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 4px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+    letter-spacing: 0.01em;
   }
 
   .form-input,
   .form-textarea {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    background: var(--color-bg-app);
+    color: var(--color-text-primary);
     box-sizing: border-box;
-    transition: border-color 0.2s ease;
+    font-family: inherit;
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base),
+      background var(--transition-base);
+  }
+
+  .form-input::placeholder,
+  .form-textarea::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .form-input:hover:not(:disabled),
+  .form-textarea:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
   }
 
   .form-input:focus,
   .form-textarea:focus {
     outline: none;
-    border-color: #2196f3;
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-focus);
+    background: var(--color-bg-surface);
   }
 
   .form-input:disabled {
-    background: #f5f5f5;
-    color: #999;
+    background: var(--color-bg-surface);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
   }
 
   .form-textarea {
     resize: vertical;
-    min-height: 60px;
+    min-height: 80px;
+    line-height: 1.5;
   }
 
   .checkbox-label {
     display: flex;
     align-items: center;
-    font-size: 14px;
-    color: #333;
+    gap: var(--space-2);
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
     cursor: pointer;
+    padding: var(--space-2) 0;
   }
 
   .form-checkbox {
-    margin-right: 8px;
     width: 16px;
     height: 16px;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
-  .edit-window-container {
-    background: #2d3748;
-  }
-
-  .header {
-    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-  }
-
-  .title,
-  .subtitle {
-    color: #e2e8f0;
-  }
-
-  .operations-grid-container {
-    background: rgba(45, 55, 72, 0.5);
-  }
-
-  .operation-button {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
-  }
-
-  .operation-name {
-    color: #e2e8f0;
-  }
-
-  .operation-type {
-    color: #a0aec0;
-  }
-
-  .bottom-buttons {
-    background: rgba(26, 32, 44, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .confirm-dialog,
-  .edit-dialog {
-    background: #2d3748;
-    color: #e2e8f0;
-  }
-
-  .dialog-title,
-  .dialog-message {
-    color: #e2e8f0;
-  }
-
-  .form-input,
-  .form-textarea {
-    background: #4a5568;
-    border-color: #718096;
-    color: #e2e8f0;
-  }
-
-  .form-label,
-  .checkbox-label {
-    color: #e2e8f0;
-  }
-
-  .loading-text {
-    color: #a0aec0;
-  }
-
-  .drag-instructions {
-    color: #a0aec0;
+    margin: 0;
+    accent-color: var(--color-accent);
   }
 
   /* Responsive adjustments */
@@ -1094,7 +1040,7 @@
     }
 
     .operation-name {
-      font-size: 14px;
+      font-size: var(--font-size-base);
     }
 
     .operation-type {

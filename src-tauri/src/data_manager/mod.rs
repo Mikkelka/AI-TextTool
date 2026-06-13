@@ -2,9 +2,9 @@ pub mod commands;
 pub mod manager;
 pub mod types;
 
+use manager::DataManager;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use manager::DataManager;
 
 pub struct SharedDataManager(pub Arc<Mutex<DataManager>>);
 

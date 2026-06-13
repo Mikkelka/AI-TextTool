@@ -197,14 +197,14 @@
 
 <style scoped>
   .settings-window {
-    padding: 20px;
-    background: #1a1a1a;
-    color: #ffffff;
+    padding: var(--space-5);
+    background: var(--color-bg-app);
+    color: var(--color-text-primary);
     height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-family-base);
   }
 
   .header {
@@ -217,36 +217,36 @@
   .close-btn {
     background: none;
     border: none;
-    color: #ccc;
+    color: var(--color-text-tertiary);
     font-size: 18px;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 4px;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
     width: 32px;
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all var(--transition-base);
   }
 
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: var(--color-border-subtle);
+    color: var(--color-text-primary);
   }
 
   h1 {
     text-align: center;
     margin: 0;
-    font-size: 24px;
-    font-weight: 600;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
     flex: 1;
   }
 
   h2 {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     margin-bottom: 15px;
-    color: #ffffff;
+    color: var(--color-text-primary);
   }
 
   .form-section {
@@ -256,29 +256,32 @@
   label {
     display: block;
     margin-bottom: 5px;
-    font-size: 14px;
-    color: #cccccc;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
   }
 
   .form-input,
   .form-select,
   .form-textarea {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #444;
-    border-radius: 6px;
-    background: #2a2a2a;
-    color: #ffffff;
-    font-size: 14px;
+    padding: var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    color: var(--input-text);
+    font-size: var(--font-size-base);
     margin-bottom: 15px;
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base);
   }
 
   .form-input:focus,
   .form-select:focus,
   .form-textarea:focus {
     outline: none;
-    border-color: #4a9eff;
-    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    border-color: var(--input-border-focus);
+    box-shadow: var(--shadow-focus);
   }
 
   .form-textarea {
@@ -287,36 +290,38 @@
   }
 
   .get-api-key-btn {
-    background: #4a9eff;
+    background: var(--color-accent);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     margin-bottom: 15px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    transition: background var(--transition-base);
   }
 
   .get-api-key-btn:hover {
-    background: #3d8ae6;
+    background: var(--color-accent-hover);
   }
 
   .save-btn {
     width: 100%;
-    background: #28a745;
+    background: var(--color-success);
     color: white;
     border: none;
     padding: 15px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
     margin-top: 20px;
+    transition: background var(--transition-base);
   }
 
   .save-btn:hover {
-    background: #218838;
+    background: var(--color-success-hover);
   }
 
   .save-btn:disabled {
@@ -326,22 +331,22 @@
 
   .message {
     margin-top: 15px;
-    padding: 12px 16px;
-    border-radius: 6px;
-    font-size: 14px;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
     text-align: center;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
   }
 
   .message.success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border: 1px solid var(--color-success);
   }
 
   .message.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
   }
 </style>

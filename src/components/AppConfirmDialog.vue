@@ -45,36 +45,36 @@
   .dialog-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: var(--color-bg-overlay);
     backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2100;
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .confirm-dialog {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(243, 246, 251, 0.94));
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    border-radius: 14px;
+    background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg-app));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xl);
     width: min(460px, 100%);
-    padding: 22px;
+    padding: var(--space-5);
     box-shadow:
-      0 14px 38px rgba(15, 23, 42, 0.32),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      var(--shadow-lg),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .dialog-title {
-    margin: 0 0 8px 0;
-    color: #1e293b;
-    font-size: 18px;
-    font-weight: 700;
+    margin: 0 0 var(--space-2) 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
   }
 
   .dialog-message {
-    margin: 0 0 16px 0;
-    color: #475569;
+    margin: 0 0 var(--space-4) 0;
+    color: var(--color-text-secondary);
     line-height: 1.45;
     white-space: pre-line;
   }
@@ -87,15 +87,15 @@
 
   .dialog-button {
     border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 14px;
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-base);
     cursor: pointer;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     transition:
-      transform 0.15s ease,
-      box-shadow 0.2s ease,
-      background-color 0.2s ease;
+      transform var(--transition-fast),
+      box-shadow var(--transition-base),
+      background-color var(--transition-base);
   }
 
   .dialog-button:hover {
@@ -103,52 +103,31 @@
   }
 
   .cancel-button {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+  }
+
+  .cancel-button:hover {
+    background: var(--color-border);
   }
 
   .confirm-button {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-active));
     color: #fff;
-    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.32);
+    box-shadow: 0 8px 16px var(--color-accent-soft);
   }
 
   .confirm-button-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, var(--color-danger), #dc2626);
     color: #fff;
-    box-shadow: 0 8px 16px rgba(220, 38, 38, 0.32);
+    box-shadow: 0 8px 16px var(--color-danger-soft);
   }
 
   .confirm-button:hover {
-    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 10px 20px var(--color-accent-focus-ring);
   }
 
   .confirm-button-danger:hover {
-    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4);
-  }
-
-  .dialog-overlay {
-    background: rgba(2, 6, 23, 0.6);
-  }
-
-  .confirm-dialog {
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
-    border-color: rgba(148, 163, 184, 0.22);
-    box-shadow:
-      0 14px 38px rgba(2, 6, 23, 0.6),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  .dialog-title {
-    color: #e2e8f0;
-  }
-
-  .dialog-message {
-    color: #cbd5e1;
-  }
-
-  .cancel-button {
-    background: #334155;
-    color: #e2e8f0;
+    box-shadow: 0 10px 20px var(--color-danger-soft);
   }
 </style>

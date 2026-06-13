@@ -238,4 +238,3 @@ pub async fn dm_switch_provider(app: AppHandle, provider_name: String) -> Result
         Err(format!("Provider '{}' not found", provider_name))
     }
 }
-

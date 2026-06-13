@@ -1,8 +1,8 @@
-﻿use chrono::Utc;
+use crate::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
+use crate::ai_provider::GroundingSource;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::ai_provider::GroundingSource;
-use crate::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
 
 /// Custom error types for data management
 #[derive(Debug, thiserror::Error)]
@@ -49,9 +49,12 @@ pub struct Config {
 impl Config {
     /// Get the active provider's configuration
     pub fn active_provider(&self) -> &ProviderConfig {
-        self.providers
-            .get(&self.provider)
-            .unwrap_or_else(|| self.providers.values().next().expect("no providers configured"))
+        self.providers.get(&self.provider).unwrap_or_else(|| {
+            self.providers
+                .values()
+                .next()
+                .expect("no providers configured")
+        })
     }
 
     /// Get the API key for the active provider
@@ -268,4 +271,3 @@ impl AppData {
         operations
     }
 }
-

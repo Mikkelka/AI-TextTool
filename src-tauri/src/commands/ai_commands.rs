@@ -1,12 +1,12 @@
 use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
+use super::super::ai_provider::gemini::RateLimiter;
+use super::super::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
 use super::super::ai_provider::{
     ChatMessage, ChatResponse, Content, GeminiError, GeminiProvider, GenerationConfig,
     GlobalRateLimiter, SharedHttpClient, ThinkingConfig,
 };
-use super::super::ai_provider::types::{CHAT_MODEL, TEXT_MODEL};
-use super::super::ai_provider::gemini::RateLimiter;
 use super::super::data_manager::SharedDataManager;
 use super::super::utils::validation;
 
@@ -22,7 +22,9 @@ fn gemini_error_to_user_message(error: GeminiError) -> String {
         GeminiError::ServiceUnavailable => {
             "Gemini service is currently unavailable. Please try again later.".to_string()
         }
-        GeminiError::RateLimitExceeded { retry_after_seconds } => {
+        GeminiError::RateLimitExceeded {
+            retry_after_seconds,
+        } => {
             format!(
                 "Rate limit exceeded. Please try again in {} seconds.",
                 retry_after_seconds
@@ -232,10 +234,11 @@ pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
 
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider = match GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client) {
-        Ok(provider) => provider,
-        Err(_) => return Ok(false),
-    };
+    let provider =
+        match GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client) {
+            Ok(provider) => provider,
+            Err(_) => return Ok(false),
+        };
 
     match provider.test_connection().await {
         Ok(connected) => {

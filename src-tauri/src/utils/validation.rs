@@ -31,7 +31,10 @@ pub fn validate_text_input(text: &str) -> Result<(), String> {
     }
 
     if trimmed.len() < MIN_TEXT_LENGTH {
-        return Err(format!("Text must be at least {} character(s)", MIN_TEXT_LENGTH));
+        return Err(format!(
+            "Text must be at least {} character(s)",
+            MIN_TEXT_LENGTH
+        ));
     }
 
     if trimmed.len() > MAX_TEXT_LENGTH {
@@ -87,7 +90,10 @@ pub fn validate_operation_name(operation: &str) -> Result<(), String> {
     }
 
     if trimmed.len() > MAX_OPERATION_NAME_LENGTH {
-        return Err(format!("Operation name cannot exceed {} characters", MAX_OPERATION_NAME_LENGTH));
+        return Err(format!(
+            "Operation name cannot exceed {} characters",
+            MAX_OPERATION_NAME_LENGTH
+        ));
     }
 
     // Check for valid characters (alphanumeric, spaces, hyphens, underscores)

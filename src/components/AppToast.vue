@@ -19,26 +19,26 @@
 <style scoped>
   .toast {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
+    right: var(--space-4);
+    bottom: var(--space-4);
     z-index: 2300;
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: #fff;
-    font-size: 13px;
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: white;
+    font-size: var(--font-size-sm);
     max-width: min(420px, calc(100vw - 32px));
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-md);
   }
 
   .toast-info {
-    background: #2563eb;
+    background: var(--color-accent);
   }
 
   .toast-success {
-    background: #16a34a;
+    background: var(--color-success);
   }
 
   .toast-error {
-    background: #dc2626;
+    background: var(--color-danger);
   }
 </style>

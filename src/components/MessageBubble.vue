@@ -151,23 +151,26 @@
 
   .message-bubble {
     max-width: 80%;
-    padding: 16px;
+    padding: var(--space-4);
     border-radius: 18px;
     position: relative;
     word-wrap: break-word;
+    color: var(--color-text-primary);
   }
 
   .message-user {
     align-self: flex-end;
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    background: linear-gradient(135deg, var(--color-accent-soft) 0%, rgba(37, 99, 235, 0.4) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     border-bottom-right-radius: 6px;
   }
 
   .message-assistant {
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
     border-bottom-left-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
   }
 
   .message-processing {
@@ -178,20 +181,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 12px;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .message-role {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-weight: 600;
-    color: #666;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-tertiary);
   }
 
   .message-time {
-    color: #999;
+    color: var(--color-text-muted);
   }
 
   .message-actions {
@@ -208,16 +211,18 @@
     border: none;
     cursor: pointer;
     padding: 2px 4px;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
     opacity: 0.6;
-    transition: opacity 0.2s;
+    transition: all var(--transition-base);
   }
 
   .copy-btn:hover,
   .regenerate-btn:hover {
     opacity: 1;
-    background: rgba(0, 0, 0, 0.05);
+    color: var(--color-text-primary);
+    background: var(--color-border-subtle);
   }
 
   .message-content {
@@ -225,32 +230,32 @@
   }
 
   .user-content {
-    color: #e2e8f0;
+    color: var(--color-text-primary);
   }
 
   .markdown-content {
-    color: #e2e8f0;
+    color: var(--color-text-primary);
   }
 
   .markdown-content :deep(h1),
   .markdown-content :deep(h2),
   .markdown-content :deep(h3),
   .markdown-content :deep(h4) {
-    margin: 16px 0 8px 0;
-    color: #e2e8f0;
+    margin: var(--space-4) 0 var(--space-2) 0;
+    color: var(--color-text-primary);
   }
 
   .markdown-content :deep(p) {
-    margin: 8px 0;
+    margin: var(--space-2) 0;
   }
 
   .markdown-content :deep(pre) {
     position: relative;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 12px;
-    margin: 12px 0;
+    background: var(--color-bg-app);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    margin: var(--space-3) 0;
     overflow-x: auto;
   }
 
@@ -258,11 +263,12 @@
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     padding: 4px 8px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
     cursor: pointer;
   }
 
@@ -272,16 +278,17 @@
   }
 
   .markdown-content :deep(.inline-code) {
-    background: #f1f3f4;
+    background: var(--color-bg-elevated);
     padding: 2px 4px;
     border-radius: 3px;
     font-size: 13px;
+    color: var(--color-text-primary);
   }
 
   .markdown-content :deep(ul),
   .markdown-content :deep(ol) {
-    margin: 12px 0;
-    padding-left: 24px;
+    margin: var(--space-3) 0;
+    padding-left: var(--space-6);
   }
 
   .markdown-content :deep(li) {
@@ -289,17 +296,17 @@
   }
 
   .markdown-content :deep(blockquote) {
-    margin: 12px 0;
-    padding: 12px 16px;
-    border-left: 4px solid #4a90d9;
-    background: rgba(74, 144, 217, 0.08);
-    border-radius: 4px;
-    color: #555;
+    margin: var(--space-3) 0;
+    padding: var(--space-3) var(--space-4);
+    border-left: 4px solid var(--color-accent);
+    background: var(--color-accent-soft);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--color-text-secondary);
     font-style: italic;
   }
 
   .markdown-content :deep(a) {
-    color: #1976d2;
+    color: var(--color-accent);
     text-decoration: none;
   }
 
@@ -310,69 +317,69 @@
   .markdown-content :deep(table) {
     border-collapse: collapse;
     width: 100%;
-    margin: 12px 0;
-    background: #fafafa;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    margin: var(--space-3) 0;
+    background: var(--color-bg-app);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     overflow: hidden;
   }
 
   .markdown-content :deep(thead) {
-    background: #f0f0f0;
+    background: var(--color-bg-elevated);
   }
 
   .markdown-content :deep(th),
   .markdown-content :deep(td) {
-    padding: 10px 12px;
+    padding: 10px var(--space-3);
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
-    color: #e2e8f0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
   }
 
   .markdown-content :deep(th) {
-    font-weight: 600;
-    color: #e2e8f0;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
   }
 
   .markdown-content :deep(tbody tr:hover) {
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--color-border-subtle);
   }
 
   .markdown-content :deep(hr) {
-    margin: 20px 0;
+    margin: var(--space-5) 0;
     border: none;
     height: 1px;
-    background: #e0e0e0;
+    background: var(--color-border);
   }
 
   .processing-indicator {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    color: #666;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    color: var(--color-text-tertiary);
     font-size: 13px;
   }
 
   .sources-section {
     margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border-subtle);
   }
 
   .sources-header {
-    margin-bottom: 8px;
-    font-size: 12px;
-    font-weight: 700;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--color-text-muted);
   }
 
   .sources-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .source-chip {
@@ -380,16 +387,18 @@
     align-items: center;
     max-width: 100%;
     padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(25, 118, 210, 0.08);
-    color: #0f5ca8;
-    font-size: 12px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: var(--font-size-xs);
     text-decoration: none;
-    border: 1px solid rgba(25, 118, 210, 0.14);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    transition: all var(--transition-base);
   }
 
   .source-chip:hover {
-    background: rgba(25, 118, 210, 0.14);
+    background: rgba(59, 130, 246, 0.22);
+    text-decoration: none;
   }
 
   .thinking-dots {
@@ -400,8 +409,8 @@
   .thinking-dots span {
     width: 6px;
     height: 6px;
-    background: #999;
-    border-radius: 50%;
+    background: var(--color-text-muted);
+    border-radius: var(--radius-full);
     animation: thinking 1.4s infinite ease-in-out;
   }
 
@@ -427,23 +436,23 @@
   }
 
   .thoughts-section {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
   }
 
   .thoughts-details {
-    background: rgba(173, 216, 230, 0.1);
-    border: 1px solid rgba(173, 216, 230, 0.3);
-    border-radius: 8px;
+    background: var(--color-accent-soft);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: var(--radius-md);
     overflow: hidden;
   }
 
   .thoughts-header {
-    background: rgba(173, 216, 230, 0.2);
-    padding: 8px 12px;
+    background: rgba(59, 130, 246, 0.18);
+    padding: var(--space-2) var(--space-3);
     cursor: pointer;
     font-size: 13px;
-    font-weight: 500;
-    color: #4682b4;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-accent);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -453,17 +462,17 @@
   }
 
   .thoughts-header:hover {
-    background: rgba(173, 216, 230, 0.3);
+    background: rgba(59, 130, 246, 0.28);
   }
 
   .thoughts-content {
-    padding: 12px;
+    padding: var(--space-3);
     font-size: 13px;
     line-height: 1.5;
   }
 
   .thoughts-markdown {
-    color: white;
+    color: var(--color-text-primary);
     font-style: italic;
   }
 
@@ -472,87 +481,12 @@
   }
 
   .thoughts-markdown :deep(code) {
-    background: rgba(173, 216, 230, 0.2);
-    color: #4682b4;
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--color-accent);
   }
 
   .thoughts-markdown :deep(pre) {
-    background: rgba(173, 216, 230, 0.15);
-    border-color: rgba(173, 216, 230, 0.3);
-  }
-
-  .message-assistant {
-    background: rgba(45, 55, 72, 0.95);
-    color: #e2e8f0;
-  }
-
-  .message-user {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.4) 100%);
-    color: #e2e8f0;
-  }
-
-  .message-role,
-  .message-time {
-    color: #a0aec0;
-  }
-
-  .markdown-content :deep(pre) {
-    background: #2d3748;
-    border-color: #4a5568;
-  }
-
-  .markdown-content :deep(.inline-code) {
-    background: #4a5568;
-  }
-
-  .markdown-content :deep(blockquote) {
-    border-left-color: rgba(148, 163, 184, 0.5);
-    background: rgba(74, 85, 104, 0.2);
-    color: #cbd5e0;
-  }
-
-  .markdown-content :deep(table) {
-    background: rgba(74, 85, 104, 0.3);
-    border-color: rgba(74, 85, 104, 0.5);
-  }
-
-  .markdown-content :deep(thead) {
-    background: rgba(74, 85, 104, 0.5);
-  }
-
-  .markdown-content :deep(th),
-  .markdown-content :deep(td) {
-    border-bottom-color: rgba(74, 85, 104, 0.3);
-  }
-
-  .markdown-content :deep(tbody tr:hover) {
-    background: rgba(74, 85, 104, 0.4);
-  }
-
-  .markdown-content :deep(hr) {
-    background: rgba(148, 163, 184, 0.3);
-  }
-
-  .thoughts-details {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-  }
-
-  .sources-section {
-    border-top-color: rgba(148, 163, 184, 0.2);
-  }
-
-  .sources-header {
-    color: #94a3b8;
-  }
-
-  .source-chip {
     background: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.28);
-    color: #bfdbfe;
-  }
-
-  .source-chip:hover {
-    background: rgba(59, 130, 246, 0.22);
+    border-color: rgba(59, 130, 246, 0.3);
   }
 </style>
