@@ -819,8 +819,16 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
 
+  .edit-icon {
+    color: #3b82f6;
+  }
+
   .edit-icon:hover {
     background: #e3f2fd;
+  }
+
+  .delete-icon {
+    color: #ef4444;
   }
 
   .delete-icon:hover {
