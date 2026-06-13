@@ -107,18 +107,15 @@
     </div>
 
     <!-- Confirmation Dialog -->
-    <div v-if="showConfirmDialog" class="dialog-overlay" @click="cancelConfirm">
-      <div class="confirm-dialog" @click.stop>
-        <h3 class="dialog-title">{{ confirmTitle }}</h3>
-        <p class="dialog-message">{{ confirmMessage }}</p>
-        <div class="dialog-buttons">
-          <button class="dialog-button cancel-button" @click="cancelConfirm">Cancel</button>
-          <button class="dialog-button confirm-button" @click="confirmAction">
-            {{ confirmButtonText }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AppConfirmDialog
+      :visible="showConfirmDialog"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :confirm-text="confirmButtonText"
+      :danger="confirmDanger"
+      @confirm="confirmAction"
+      @cancel="cancelConfirm"
+    />
 
     <!-- Edit Dialog -->
     <div v-if="showEditDialog" class="dialog-overlay" @click="cancelEdit">
@@ -197,6 +194,7 @@
   } from '@lucide/vue'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import AppIcon from './AppIcon.vue'
+  import AppConfirmDialog from './AppConfirmDialog.vue'
   import AppToast from './AppToast.vue'
   import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
@@ -229,11 +227,11 @@
 
   // Dialog states
   const showConfirmDialog = ref(false)
-  const showEditDialog = ref(false)
   const confirmTitle = ref('')
   const confirmMessage = ref('')
   const confirmButtonText = ref('Confirm')
-  const confirmCallback = ref<(() => void) | null>(null)
+  const confirmDanger = ref(false)
+  let pendingConfirmAction: (() => void | Promise<void>) | null = null
 
   const toastVisible = ref(false)
   const toastMessage = ref('')
@@ -241,6 +239,7 @@
   let toastTimer: ReturnType<typeof setTimeout> | null = null
 
   // Edit form state
+  const showEditDialog = ref(false)
   const editForm = ref<EditForm>({
     name: '',
     prefix: '',
@@ -307,12 +306,42 @@
     showEditDialog.value = true
   }
 
-  const deleteOperation = (operationKey: string) => {
-    confirmTitle.value = 'Confirm Delete'
-    confirmMessage.value = `Are you sure you want to delete the '${operationKey}' operation?`
-    confirmButtonText.value = 'Delete'
-    confirmCallback.value = () => void performDelete(operationKey)
+  const requestConfirm = (
+    title: string,
+    message: string,
+    buttonText: string,
+    danger: boolean,
+    action: () => void | Promise<void>
+  ) => {
+    confirmTitle.value = title
+    confirmMessage.value = message
+    confirmButtonText.value = buttonText
+    confirmDanger.value = danger
+    pendingConfirmAction = action
     showConfirmDialog.value = true
+  }
+
+  const confirmAction = async () => {
+    const action = pendingConfirmAction
+    cancelConfirm()
+    if (action) {
+      await action()
+    }
+  }
+
+  const cancelConfirm = () => {
+    showConfirmDialog.value = false
+    pendingConfirmAction = null
+  }
+
+  const deleteOperation = (operationKey: string) => {
+    requestConfirm(
+      'Confirm Delete',
+      `Are you sure you want to delete the '${operationKey}' operation?`,
+      'Delete',
+      true,
+      () => performDelete(operationKey)
+    )
   }
 
   const performDelete = async (operationKey: string) => {
@@ -346,12 +375,13 @@
   }
 
   const resetToDefaults = () => {
-    confirmTitle.value = 'Reset to Defaults'
-    confirmMessage.value =
-      'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.'
-    confirmButtonText.value = 'Reset'
-    confirmCallback.value = () => void performReset()
-    showConfirmDialog.value = true
+    requestConfirm(
+      'Reset to Defaults',
+      'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.',
+      'Reset',
+      false,
+      () => performReset()
+    )
   }
 
   const performReset = async () => {
@@ -427,18 +457,6 @@
     showEditDialog.value = false
     editingOperation.value = null
     isEditingExisting.value = false
-  }
-
-  const confirmAction = () => {
-    if (confirmCallback.value) {
-      confirmCallback.value()
-    }
-    cancelConfirm()
-  }
-
-  const cancelConfirm = () => {
-    showConfirmDialog.value = false
-    confirmCallback.value = null
   }
 
   const closeWindow = async () => {
@@ -844,7 +862,6 @@
     z-index: 1000;
   }
 
-  .confirm-dialog,
   .edit-dialog {
     background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg-app));
     border: 1px solid var(--color-border-subtle);
@@ -856,13 +873,6 @@
       var(--shadow-lg),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
     overflow-y: auto;
-  }
-
-  .confirm-dialog {
-    width: 400px;
-  }
-
-  .edit-dialog {
     width: 520px;
   }
 
@@ -874,14 +884,6 @@
     padding-bottom: var(--space-4);
     text-align: center;
     border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .dialog-message {
-    color: var(--color-text-secondary);
-    margin: var(--space-4) 0 var(--space-6) 0;
-    text-align: center;
-    line-height: 1.5;
-    font-size: var(--font-size-base);
   }
 
   .dialog-buttons {
@@ -910,15 +912,6 @@
 
   .cancel-button:hover {
     background: var(--color-border);
-  }
-
-  .confirm-button {
-    background: var(--color-danger);
-    color: white;
-  }
-
-  .confirm-button:hover {
-    background: var(--color-danger-hover);
   }
 
   .save-button {
