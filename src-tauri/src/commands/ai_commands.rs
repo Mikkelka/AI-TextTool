@@ -98,9 +98,12 @@ pub async fn process_text_with_ai(
     // Get shared rate limiter and HTTP client, then create Gemini provider
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider =
-        GeminiProvider::new(provider_config.api_key.to_string(), rate_limiter, &http_client)
-            .map_err(gemini_error_to_user_message)?;
+    let provider = GeminiProvider::new(
+        provider_config.api_key.to_string(),
+        rate_limiter,
+        &http_client,
+    )
+    .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
     let operation_details = manager
@@ -175,9 +178,12 @@ pub async fn chat_with_ai(
     // Get shared rate limiter and HTTP client, then create provider
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider =
-        GeminiProvider::new(provider_config.api_key.to_string(), rate_limiter, &http_client)
-            .map_err(gemini_error_to_user_message)?;
+    let provider = GeminiProvider::new(
+        provider_config.api_key.to_string(),
+        rate_limiter,
+        &http_client,
+    )
+    .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
     let mut messages = history;
@@ -252,11 +258,14 @@ pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
 
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider =
-        match GeminiProvider::new(provider_config.api_key.to_string(), rate_limiter, &http_client) {
-            Ok(provider) => provider,
-            Err(_) => return Ok(false),
-        };
+    let provider = match GeminiProvider::new(
+        provider_config.api_key.to_string(),
+        rate_limiter,
+        &http_client,
+    ) {
+        Ok(provider) => provider,
+        Err(_) => return Ok(false),
+    };
 
     match provider.test_connection().await {
         Ok(connected) => {
