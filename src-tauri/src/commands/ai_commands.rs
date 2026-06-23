@@ -7,6 +7,7 @@ use super::super::ai_provider::{
     ChatMessage, ChatResponse, Content, GeminiError, GeminiProvider, GenerationConfig,
     GlobalRateLimiter, SharedHttpClient, ThinkingConfig,
 };
+use super::super::data_manager::types::ProviderConfig;
 use super::super::data_manager::SharedDataManager;
 use super::super::utils::validation;
 
@@ -62,6 +63,76 @@ fn get_http_client(app: &tauri::AppHandle) -> SharedHttpClient {
     app.state::<SharedHttpClient>().inner().clone()
 }
 
+/// Error returned when the active provider or its API key is missing.
+const NO_PROVIDER_MSG: &str =
+    "No AI provider configured. Please complete setup in onboarding or settings.";
+const NO_API_KEY_MSG: &str =
+    "API key not configured. Please configure your Gemini API key in settings.";
+
+/// Load the active provider config and construct a `GeminiProvider`.
+/// Returns the provider config (borrowed clone) alongside the provider so callers
+/// can access `chat_model_name` / `text_model_name` / `chat_system_instruction`.
+///
+/// Returns `Err` with a user-friendly message when no provider is configured
+/// or the API key is empty. Returns `Ok(None)` only from `test_ai_connection`,
+/// which prefers `Ok(false)` over an error — use [`try_create_provider`] there.
+async fn create_provider(
+    app: &tauri::AppHandle,
+) -> Result<(GeminiProvider, ProviderConfig), String> {
+    let state = app.state::<SharedDataManager>();
+    let manager = state.0.lock().await;
+    let config = manager.get_config().clone();
+
+    let provider_config = config
+        .active_provider()
+        .ok_or_else(|| NO_PROVIDER_MSG.to_string())?
+        .clone();
+
+    if provider_config.api_key.trim().is_empty() {
+        return Err(NO_API_KEY_MSG.to_string());
+    }
+
+    let rate_limiter = get_rate_limiter(app);
+    let http_client = get_http_client(app);
+    let provider = GeminiProvider::new(
+        provider_config.api_key.to_string(),
+        rate_limiter,
+        &http_client,
+    )
+    .map_err(gemini_error_to_user_message)?;
+
+    Ok((provider, provider_config))
+}
+
+/// Like [`create_provider`] but returns `Ok(None)` instead of `Err` when no
+/// provider is configured or the API key is empty. Used by `test_ai_connection`,
+/// which treats those states as "not connected" rather than errors.
+async fn try_create_provider(app: &tauri::AppHandle) -> Result<Option<GeminiProvider>, String> {
+    let state = app.state::<SharedDataManager>();
+    let manager = state.0.lock().await;
+    let config = manager.get_config().clone();
+
+    let provider_config = match config.active_provider() {
+        Some(p) => p,
+        None => return Ok(None),
+    };
+
+    if provider_config.api_key.trim().is_empty() {
+        return Ok(None);
+    }
+
+    let rate_limiter = get_rate_limiter(app);
+    let http_client = get_http_client(app);
+    match GeminiProvider::new(
+        provider_config.api_key.to_string(),
+        rate_limiter,
+        &http_client,
+    ) {
+        Ok(provider) => Ok(Some(provider)),
+        Err(_) => Ok(None),
+    }
+}
+
 #[tauri::command]
 pub async fn process_text_with_ai(
     text: String,
@@ -78,34 +149,12 @@ pub async fn process_text_with_ai(
     validation::validate_text_input(&text)?;
     validation::validate_operation_name(&operation)?;
 
-    // Load configuration to get API key and model settings
+    // Construct provider (loads config, checks API key, builds GeminiProvider)
+    let (provider, provider_config) = create_provider(&app).await?;
+
+    // Get operation details (needs the data manager)
     let state = app.state::<SharedDataManager>();
     let manager = state.0.lock().await;
-    let config = manager.get_config().clone();
-
-    // Get the active provider configuration (fails gracefully if none configured)
-    let provider_config = config.active_provider().ok_or_else(|| {
-        "No AI provider configured. Please complete setup in onboarding or settings.".to_string()
-    })?;
-
-    // Check if API key is configured
-    if provider_config.api_key.trim().is_empty() {
-        return Err(
-            "API key not configured. Please configure your Gemini API key in settings.".to_string(),
-        );
-    }
-
-    // Get shared rate limiter and HTTP client, then create Gemini provider
-    let rate_limiter = get_rate_limiter(&app);
-    let http_client = get_http_client(&app);
-    let provider = GeminiProvider::new(
-        provider_config.api_key.to_string(),
-        rate_limiter,
-        &http_client,
-    )
-    .map_err(gemini_error_to_user_message)?;
-
-    // Get operation details
     let operation_details = manager
         .get_operation(&operation)
         .cloned()
@@ -161,29 +210,8 @@ pub async fn chat_with_ai(
     // Validate input
     validation::validate_message_input(&message)?;
 
-    // Load configuration
-    let state = app.state::<SharedDataManager>();
-    let manager = state.0.lock().await;
-    let config = manager.get_config().clone();
-
-    // Get the active provider configuration (fails gracefully if none configured)
-    let provider_config = config.active_provider().ok_or_else(|| {
-        "No AI provider configured. Please complete setup in onboarding or settings.".to_string()
-    })?;
-
-    if provider_config.api_key.trim().is_empty() {
-        return Err("API key not configured".to_string());
-    }
-
-    // Get shared rate limiter and HTTP client, then create provider
-    let rate_limiter = get_rate_limiter(&app);
-    let http_client = get_http_client(&app);
-    let provider = GeminiProvider::new(
-        provider_config.api_key.to_string(),
-        rate_limiter,
-        &http_client,
-    )
-    .map_err(gemini_error_to_user_message)?;
+    // Construct provider (loads config, checks API key, builds GeminiProvider)
+    let (provider, provider_config) = create_provider(&app).await?;
 
     // Prepare messages
     let mut messages = history;
@@ -242,29 +270,10 @@ pub async fn chat_with_ai(
 pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     log::info!("Testing AI connection...");
 
-    let state = app.state::<SharedDataManager>();
-    let manager = state.0.lock().await;
-    let config = manager.get_config().clone();
-
-    // No provider configured is equivalent to "not connected"
-    let provider_config = match config.active_provider() {
+    // No provider / empty API key both map to "not connected"
+    let provider = match try_create_provider(&app).await? {
         Some(p) => p,
         None => return Ok(false),
-    };
-
-    if provider_config.api_key.trim().is_empty() {
-        return Ok(false);
-    }
-
-    let rate_limiter = get_rate_limiter(&app);
-    let http_client = get_http_client(&app);
-    let provider = match GeminiProvider::new(
-        provider_config.api_key.to_string(),
-        rate_limiter,
-        &http_client,
-    ) {
-        Ok(provider) => provider,
-        Err(_) => return Ok(false),
     };
 
     match provider.test_connection().await {
