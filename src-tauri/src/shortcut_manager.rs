@@ -22,6 +22,17 @@ const COPY_COMPLETION_DELAY_MS: u64 = 250;
 /// Additional delay before retrying a failed clipboard read (milliseconds)
 const CLIPBOARD_RETRY_DELAY_MS: u64 = 100;
 
+/// Minimum trimmed length for clipboard content to count as "substantial"
+/// (Strategy 2: catches Ctrl+A-style selections that don't change the clipboard).
+const SUBSTANTIAL_TEXT_THRESHOLD: usize = 10;
+
+/// Minimum trimmed length for a duplicate clipboard to count as meaningful
+/// (Strategy 3: catches Ctrl+A when the clipboard already held the same text).
+const DUPLICATE_MIN_LEN: usize = 5;
+
+/// Prefix used to mark the clipboard so we can detect whether Ctrl+C changed it.
+const CLIPBOARD_MARKER_PREFIX: &str = "AI_TOOL_MARKER_";
+
 /// Shared enigo instance for keyboard/mouse operations
 fn get_enigo() -> Result<Enigo, String> {
     Enigo::new(&Settings::default())
@@ -66,6 +77,29 @@ fn handle_global_shortcut<R: Runtime>(app: AppHandle<R>, last_trigger: Arc<Mutex
     });
 }
 
+/// Strategy 1: clipboard changed and now holds meaningful, non-marker content.
+fn changed_meaningfully(new_clipboard: &str, original_clipboard: &str) -> bool {
+    let clipboard_changed = new_clipboard != original_clipboard;
+    let has_meaningful_content = !new_clipboard.trim().is_empty();
+    let is_not_marker = !new_clipboard.starts_with(CLIPBOARD_MARKER_PREFIX);
+    clipboard_changed && has_meaningful_content && is_not_marker
+}
+
+/// Strategy 2: clipboard holds substantial non-marker text, even if unchanged.
+/// Catches Ctrl+A-style selections that don't change the clipboard.
+fn has_substantial_content(new_clipboard: &str) -> bool {
+    let is_not_marker = !new_clipboard.starts_with(CLIPBOARD_MARKER_PREFIX);
+    new_clipboard.trim().len() >= SUBSTANTIAL_TEXT_THRESHOLD && is_not_marker
+}
+
+/// Strategy 3: clipboard is identical to the original but holds meaningful text.
+/// Catches Ctrl+A when the clipboard already contained the same text.
+fn duplicate_but_meaningful(new_clipboard: &str, original_clipboard: &str) -> bool {
+    new_clipboard == original_clipboard
+        && !new_clipboard.trim().is_empty()
+        && new_clipboard.trim().len() >= DUPLICATE_MIN_LEN
+}
+
 /// Process the shortcut trigger: copy text, analyze clipboard, and show appropriate window
 async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     // Small initial delay to let any ongoing operations (like Ctrl+A) complete
@@ -82,7 +116,11 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
     );
 
     // Clear clipboard with a unique marker to ensure we can detect any change
-    let unique_marker = format!("AI_TOOL_MARKER_{}", time::get_current_timestamp_millis());
+    let unique_marker = format!(
+        "{}{}",
+        CLIPBOARD_MARKER_PREFIX,
+        time::get_current_timestamp_millis()
+    );
 
     if let Err(e) = app_handle.clipboard().write_text(&unique_marker) {
         log::warn!(
@@ -131,40 +169,18 @@ async fn process_shortcut_trigger<R: Runtime>(app_handle: AppHandle<R>) {
 
     log::debug!("New clipboard content length: {}", new_clipboard.len());
 
-    // Enhanced detection logic with multiple strategies
-    let clipboard_changed = new_clipboard != original_clipboard;
-    let has_meaningful_content = !new_clipboard.trim().is_empty();
-    let is_not_marker = !new_clipboard.starts_with("AI_TOOL_MARKER_");
-
-    // Strategy 1: Traditional change detection
-    let text_was_selected_traditional =
-        clipboard_changed && has_meaningful_content && is_not_marker;
-
-    // Strategy 2: If clipboard contains substantial text (likely from Ctrl+A scenarios)
-    let substantial_text_threshold = 10; // Characters
-    let has_substantial_content =
-        new_clipboard.trim().len() >= substantial_text_threshold && is_not_marker;
-
-    // Strategy 3: Check if clipboard is exactly same as original (Ctrl+A duplicate scenario)
-    let is_duplicate_but_meaningful = new_clipboard == original_clipboard
-        && has_meaningful_content
-        && new_clipboard.trim().len() >= 5;
-
-    let text_was_selected =
-        text_was_selected_traditional || has_substantial_content || is_duplicate_but_meaningful;
+    // Run the three detection strategies
+    let traditional = changed_meaningfully(&new_clipboard, &original_clipboard);
+    let substantial = has_substantial_content(&new_clipboard);
+    let duplicate = duplicate_but_meaningful(&new_clipboard, &original_clipboard);
+    let text_was_selected = traditional || substantial || duplicate;
 
     log::debug!("Detection results:");
     log::debug!(
-        "  clipboard_changed={}, has_meaningful_content={}, is_not_marker={}",
-        clipboard_changed,
-        has_meaningful_content,
-        is_not_marker
-    );
-    log::debug!(
-        "  traditional_detection={}, substantial_content={}, duplicate_but_meaningful={}",
-        text_was_selected_traditional,
-        has_substantial_content,
-        is_duplicate_but_meaningful
+        "  traditional={}, substantial={}, duplicate={}",
+        traditional,
+        substantial,
+        duplicate
     );
     log::debug!("  final_result: text_was_selected={}", text_was_selected);
 
