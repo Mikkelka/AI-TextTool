@@ -264,6 +264,13 @@
   import { useConfirmDialog } from '../composables/useConfirmDialog'
   import { useToast } from '../composables/useToast'
 
+  interface OperationMetadata {
+    badge_class: string
+  }
+
+  // Fallback for unknown / user-renamed operations
+  const DEFAULT_OPERATION_BADGE = 'operation-default'
+
   // Reactive state
   const currentTab = ref<'conversations' | 'entries'>('conversations')
   const entries = ref<ChatEntry[]>([])
@@ -272,6 +279,9 @@
   const error = ref<string | null>(null)
   const searchQuery = ref('')
   const selectedOperation = ref('')
+  // Map of operation name -> display metadata. Loaded once from the backend
+  // so the badge class is the single source of truth on the Rust side.
+  const operationMetadata = ref<Record<string, OperationMetadata>>({})
 
   // Dialog/toast state (via composables)
   const {
@@ -407,12 +417,12 @@
   const reprocessText = async (entry: ChatEntry) => {
     try {
       // Process the original text again with the same operation
-      const result = (await invoke('process_text_with_ai', {
+      await invoke('process_text_with_ai', {
         text: entry.original_text,
         operation: entry.ai_option
-      })) as string
+      })
 
-      logger.debug('Text reprocessed successfully:', result)
+      logger.debug('Text reprocessed successfully')
 
       // Refresh history to show the new entry
       await loadHistory()
@@ -432,16 +442,21 @@
     }
   }
 
+  // Time conversion constants (milliseconds)
+  const MS_PER_MINUTE = 1000 * 60
+  const MS_PER_HOUR = MS_PER_MINUTE * 60
+  const MS_PER_DAY = MS_PER_HOUR * 24
+
   const formatTimestamp = (timestamp: string): string => {
     try {
       const date = new Date(timestamp)
       const now = new Date()
       const diffMs = now.getTime() - date.getTime()
-      const diffHours = diffMs / (1000 * 60 * 60)
-      const diffDays = diffMs / (1000 * 60 * 60 * 24)
+      const diffHours = diffMs / MS_PER_HOUR
+      const diffDays = diffMs / MS_PER_DAY
 
       if (diffHours < 1) {
-        const diffMins = Math.floor(diffMs / (1000 * 60))
+        const diffMins = Math.floor(diffMs / MS_PER_MINUTE)
         return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`
       } else if (diffHours < 24) {
         const hours = Math.floor(diffHours)
@@ -462,19 +477,7 @@
   }
 
   const getOperationClass = (operation: string): string => {
-    const classMap: Record<string, string> = {
-      Proofread: 'operation-proofread',
-      Rewrite: 'operation-rewrite',
-      Dansk: 'operation-translate',
-      Concise: 'operation-concise',
-      Friendly: 'operation-friendly',
-      Professional: 'operation-professional',
-      'Key Points': 'operation-keypoints',
-      Summary: 'operation-summary',
-      Chat: 'operation-chat',
-      Custom: 'operation-custom'
-    }
-    return classMap[operation] || 'operation-default'
+    return operationMetadata.value[operation]?.badge_class ?? DEFAULT_OPERATION_BADGE
   }
 
   // New conversation management methods
@@ -555,6 +558,14 @@
 
   // Lifecycle
   onMounted(async () => {
+    try {
+      operationMetadata.value = (await invoke('get_operation_metadata')) as Record<
+        string,
+        OperationMetadata
+      >
+    } catch (err) {
+      logger.warn('Failed to load operation metadata:', err)
+    }
     await loadHistory()
   })
 </script>
@@ -812,28 +823,28 @@
     background: var(--color-warning);
   }
   .operation-concise {
-    background: #9c27b0;
+    background: var(--color-badge-concise);
   }
   .operation-friendly {
-    background: #e91e63;
+    background: var(--color-badge-friendly);
   }
   .operation-professional {
     background: var(--color-text-muted);
   }
   .operation-keypoints {
-    background: #795548;
+    background: var(--color-badge-keypoints);
   }
   .operation-summary {
-    background: #00bcd4;
+    background: var(--color-badge-summary);
   }
   .operation-chat {
-    background: #3f51b5;
+    background: var(--color-badge-chat);
   }
   .operation-custom {
-    background: #ff5722;
+    background: var(--color-badge-custom);
   }
   .operation-default {
-    background: #757575;
+    background: var(--color-badge-default);
   }
 
   .entry-timestamp {
@@ -1174,8 +1185,8 @@
   }
 
   .export-btn:hover {
-    background: rgba(156, 39, 176, 0.15);
-    border-color: #9c27b0;
+    background: var(--color-badge-concise-soft, rgba(156, 39, 176, 0.15));
+    border-color: var(--color-badge-concise);
     color: #ce93d8;
   }
 

@@ -225,18 +225,26 @@ pub fn create_popup_window<R: Runtime>(
     Ok(())
 }
 
-/// Build a `WindowConfig` for a standard chat window.
-/// `id_prefix` is appended to `chat_<prefix>_<timestamp>` to keep window ids unique.
-/// `maximizable` / `minimizable` vary by entry point (tray allows both; shortcut/popup suppress them).
-fn chat_window_config(id_prefix: &str, maximizable: bool, minimizable: bool) -> WindowConfig {
+/// Build a `WindowConfig` for a chat window. All chat windows (tray, shortcut,
+/// popup, command-driven) go through this single builder so capability flags stay
+/// in sync. Callers that need a custom URL (e.g. carrying text/instruction in
+/// the query string) can pass it via `url`; otherwise the default Chat URL is used.
+pub(crate) fn chat_window_config(
+    id_prefix: &str,
+    url: Option<String>,
+    title: Option<String>,
+    maximizable: bool,
+    minimizable: bool,
+) -> WindowConfig {
     let timestamp = time::get_current_timestamp_millis();
+    let url = url.unwrap_or_else(|| {
+        format!("windows/chat.html?operation=Chat&title=AI Chat&t={}", timestamp)
+    });
+    let title = title.unwrap_or_else(|| "AI TextTool - Chat".to_string());
     WindowConfig {
         window_id: format!("chat_{}_{}", id_prefix, timestamp),
-        url: format!(
-            "windows/chat.html?operation=Chat&title=AI Chat&t={}",
-            timestamp
-        ),
-        title: "AI TextTool - Chat".to_string(),
+        url,
+        title,
         width: 900.0,
         height: 700.0,
         min_width: Some(700.0),
@@ -254,22 +262,31 @@ fn chat_window_config(id_prefix: &str, maximizable: bool, minimizable: bool) -> 
     }
 }
 
+/// Convenience: standard chat window from tray/shortcut/popup (maximizable + minimizable).
+pub(crate) fn chat_window_config_standard(
+    id_prefix: &str,
+    url: Option<String>,
+    title: Option<String>,
+) -> WindowConfig {
+    chat_window_config(id_prefix, url, title, true, true)
+}
+
 /// Create a direct chat window (when no text is selected)
 pub fn create_direct_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     log::info!("No text selected - opening chat window directly");
-    create_window(app, chat_window_config("direct", false, false))
+    create_window(app, chat_window_config("direct", None, None, false, false))
 }
 
 /// Create a fallback chat window (when clipboard fails)
 pub fn create_fallback_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     log::info!("Failed to read clipboard - opening chat window as fallback");
-    create_window(app, chat_window_config("fallback", false, false))
+    create_window(app, chat_window_config("fallback", None, None, false, false))
 }
 
 /// Create a chat window from tray menu
 pub fn create_tray_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     log::info!("Opening chat window from tray...");
-    create_window(app, chat_window_config("tray", true, true))
+    create_window(app, chat_window_config("tray", None, None, true, true))
 }
 
 /// Create a settings window from tray menu

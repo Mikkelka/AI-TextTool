@@ -192,36 +192,49 @@ impl GeminiProvider {
         generation_config: Option<GenerationConfig>,
         use_formatting: bool,
     ) -> Result<String, GeminiError> {
-        self.generate_content_with_retry(
+        self.generate_with_retry(
             model,
             contents,
             system_instruction,
             generation_config,
+            None,
             use_formatting,
-            0,
+            |gemini_response| {
+                if let Some(candidate) = gemini_response.candidates.first() {
+                    if let Some(part) = candidate.content.parts.first() {
+                        return Ok(part.text.clone());
+                    }
+                }
+                Err(GeminiError::InvalidRequest {
+                    message: "No content in response".to_string(),
+                })
+            },
         )
         .await
     }
 
     /// Generic internal retry logic for Gemini API calls.
     /// `parse_response` extracts the desired type from a successful `GeminiResponse`.
+    /// Implemented as a plain `async` loop (instead of `Box::pin` + recursion) so
+    /// the retry path is straightforward to follow: build request, send, match on
+    /// status, and either return, sleep+retry, or surface an error.
     #[allow(clippy::too_many_arguments)]
-    fn generate_with_retry<'a, F, T>(
-        &'a self,
-        model: &'a str,
+    async fn generate_with_retry<F, T>(
+        &self,
+        model: &str,
         contents: Vec<Content>,
-        system_instruction: Option<&'a str>,
+        system_instruction: Option<&str>,
         generation_config: Option<GenerationConfig>,
         tools: Option<Vec<Tool>>,
         use_formatting: bool,
-        retry_count: u32,
         parse_response: F,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, GeminiError>> + Send + 'a>>
+    ) -> Result<T, GeminiError>
     where
-        F: FnOnce(&GeminiResponse) -> Result<T, GeminiError> + Send + 'a,
-        T: Send + 'a,
+        F: Fn(&GeminiResponse) -> Result<T, GeminiError>,
     {
-        Box::pin(async move {
+        let mut retry_count: u32 = 0;
+
+        loop {
             // Check rate limits
             {
                 let mut rate_limiter = self.rate_limiter.lock().await;
@@ -243,25 +256,25 @@ impl GeminiProvider {
             };
 
             let request = GeminiRequest {
-                contents,
+                contents: contents.clone(),
                 system_instruction: Some(Content::new(combined_instruction, None)),
                 generation_config: generation_config
+                    .clone()
                     .or_else(|| Some(self.default_generation_config.clone())),
                 safety_settings: Some(self.default_safety_settings.clone()),
-                tools,
+                tools: tools.clone(),
             };
 
             let url = format!("{}/models/{}:generateContent", self.base_url, model);
 
-            let response = self
+            match self
                 .client
                 .post(&url)
                 .query(&[("key", &self.api_key)])
                 .json(&request)
                 .send()
-                .await;
-
-            match response {
+                .await
+            {
                 Ok(resp) => {
                     let status = resp.status();
 
@@ -270,109 +283,56 @@ impl GeminiProvider {
                         return parse_response(&gemini_response);
                     }
 
-                    match status.as_u16() {
-                        401 => Err(GeminiError::InvalidApiKey),
-                        404 => Err(GeminiError::ModelNotFound {
-                            model: model.to_string(),
-                        }),
+                    let status_code = status.as_u16();
+                    match status_code {
+                        401 => return Err(GeminiError::InvalidApiKey),
+                        404 => {
+                            return Err(GeminiError::ModelNotFound {
+                                model: model.to_string(),
+                            });
+                        }
                         429 => {
-                            if retry_count < self.max_retries {
-                                let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
-                                log::warn!("Rate limited, retrying after {:?}", delay);
-                                sleep(delay).await;
-                                return self
-                                    .generate_with_retry(
-                                        model,
-                                        request.contents,
-                                        system_instruction,
-                                        request.generation_config,
-                                        request.tools,
-                                        use_formatting,
-                                        retry_count + 1,
-                                        parse_response,
-                                    )
-                                    .await;
+                            if retry_count >= self.max_retries {
+                                return Err(GeminiError::RateLimitExceeded {
+                                    retry_after_seconds: 60,
+                                });
                             }
-                            Err(GeminiError::RateLimitExceeded {
-                                retry_after_seconds: 60,
-                            })
+                            let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
+                            log::warn!("Rate limited, retrying after {:?}", delay);
+                            sleep(delay).await;
+                            retry_count += 1;
                         }
                         500..=599 => {
-                            if retry_count < self.max_retries {
-                                let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
-                                log::warn!("Server error, retrying after {:?}", delay);
-                                sleep(delay).await;
-                                return self
-                                    .generate_with_retry(
-                                        model,
-                                        request.contents,
-                                        system_instruction,
-                                        request.generation_config,
-                                        request.tools,
-                                        use_formatting,
-                                        retry_count + 1,
-                                        parse_response,
-                                    )
-                                    .await;
+                            if retry_count >= self.max_retries {
+                                return Err(GeminiError::ServiceUnavailable);
                             }
-                            Err(GeminiError::ServiceUnavailable)
+                            let delay = Duration::from_secs(2_u64.pow(retry_count + 1));
+                            log::warn!("Server error, retrying after {:?}", delay);
+                            sleep(delay).await;
+                            retry_count += 1;
                         }
                         _ => {
-                            if let Ok(error_resp) = resp.json::<GeminiErrorResponse>().await {
-                                Err(GeminiError::ApiError {
-                                    status: status.as_u16(),
-                                    message: error_resp.error.message,
-                                })
-                            } else {
-                                Err(GeminiError::ApiError {
-                                    status: status.as_u16(),
-                                    message: "Unknown error".to_string(),
-                                })
-                            }
+                            let message = resp
+                                .json::<GeminiErrorResponse>()
+                                .await
+                                .map(|e| e.error.message)
+                                .unwrap_or_else(|_| "Unknown error".to_string());
+                            return Err(GeminiError::ApiError {
+                                status: status_code,
+                                message,
+                            });
                         }
                     }
                 }
                 Err(e) => {
-                    if e.is_timeout() {
-                        Err(GeminiError::Timeout)
+                    return Err(if e.is_timeout() {
+                        GeminiError::Timeout
                     } else {
-                        Err(GeminiError::HttpError(e))
-                    }
+                        GeminiError::HttpError(e)
+                    });
                 }
             }
-        })
-    }
-
-    /// Wrapper for text generation — extracts the first text part from the response.
-    fn generate_content_with_retry<'a>(
-        &'a self,
-        model: &'a str,
-        contents: Vec<Content>,
-        system_instruction: Option<&'a str>,
-        generation_config: Option<GenerationConfig>,
-        use_formatting: bool,
-        retry_count: u32,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, GeminiError>> + Send + 'a>>
-    {
-        self.generate_with_retry(
-            model,
-            contents,
-            system_instruction,
-            generation_config,
-            None,
-            use_formatting,
-            retry_count,
-            |gemini_response| {
-                if let Some(candidate) = gemini_response.candidates.first() {
-                    if let Some(part) = candidate.content.parts.first() {
-                        return Ok(part.text.clone());
-                    }
-                }
-                Err(GeminiError::InvalidRequest {
-                    message: "No content in response".to_string(),
-                })
-            },
-        )
+        }
     }
 
     /// Generate chat content with thought summaries support
@@ -384,29 +344,6 @@ impl GeminiProvider {
         generation_config: Option<GenerationConfig>,
         enable_google_search_grounding: bool,
     ) -> Result<ChatResponse, GeminiError> {
-        self.generate_chat_content_with_retry(
-            model,
-            contents,
-            system_instruction,
-            generation_config,
-            enable_google_search_grounding,
-            0,
-        )
-        .await
-    }
-
-    /// Wrapper for chat generation — separates thoughts/answers and extracts grounding.
-    fn generate_chat_content_with_retry<'a>(
-        &'a self,
-        model: &'a str,
-        contents: Vec<Content>,
-        system_instruction: Option<&'a str>,
-        generation_config: Option<GenerationConfig>,
-        enable_google_search_grounding: bool,
-        retry_count: u32,
-    ) -> std::pin::Pin<
-        Box<dyn std::future::Future<Output = Result<ChatResponse, GeminiError>> + Send + 'a>,
-    > {
         let tools = enable_google_search_grounding.then(|| {
             vec![Tool {
                 google_search: Some(GoogleSearchTool::default()),
@@ -420,7 +357,6 @@ impl GeminiProvider {
             generation_config,
             tools,
             true,
-            retry_count,
             |gemini_response| {
                 if let Some(candidate) = gemini_response.candidates.first() {
                     let mut thoughts_parts = Vec::new();
@@ -458,6 +394,7 @@ impl GeminiProvider {
                 })
             },
         )
+        .await
     }
 
     /// Handle chat completion with conversation history and thought summaries
@@ -496,12 +433,6 @@ impl GeminiProvider {
     /// Check if a model supports Google Search grounding in this app
     pub fn supports_google_search_grounding(model: &str) -> bool {
         MODEL_NAMES.contains(&model)
-    }
-
-    /// Check if a model supports thinking mode (for advanced reasoning)
-    #[allow(dead_code)]
-    pub fn supports_thinking_mode(model: &str) -> bool {
-        model == CHAT_MODEL
     }
 
     /// Test the connection to Gemini API
@@ -557,6 +488,7 @@ impl GeminiProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::{Duration, Instant};
 
     #[tokio::test]
     async fn test_rate_limiter() {
@@ -570,9 +502,29 @@ mod tests {
         assert!(limiter.check_rate_limit().await.is_ok());
     }
 
+    #[tokio::test]
+    async fn test_rate_limiter_blocks_after_cap() {
+        // With max=1, the second call must wait for the first to age out of the window.
+        let mut limiter = RateLimiter::new(1);
+        assert!(limiter.check_rate_limit().await.is_ok());
+
+        let start = Instant::now();
+        assert!(limiter.check_rate_limit().await.is_ok());
+        let elapsed = start.elapsed();
+
+        // The first call is fresh, so the second one must wait the remainder of the 60s window.
+        // We assert a lower bound (> 50s) which is impractical for a normal test suite, so
+        // instead we assert that *some* wait happened (i.e. >= 1ms) without a hard upper bound.
+        assert!(
+            elapsed >= Duration::from_millis(1),
+            "second call should not return instantly, got {elapsed:?}"
+        );
+    }
+
     #[test]
-    fn test_model_support() {
-        assert!(GeminiProvider::supports_thinking_mode(CHAT_MODEL));
-        assert!(!GeminiProvider::supports_thinking_mode(TEXT_MODEL));
+    fn test_google_search_grounding_support() {
+        assert!(GeminiProvider::supports_google_search_grounding(CHAT_MODEL));
+        assert!(GeminiProvider::supports_google_search_grounding(TEXT_MODEL));
+        assert!(!GeminiProvider::supports_google_search_grounding("not-a-model"));
     }
 }

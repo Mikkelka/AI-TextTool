@@ -268,6 +268,7 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
+  import { getCurrentWindow } from '@tauri-apps/api/window'
   import { openUrl } from '@tauri-apps/plugin-opener'
   import AppConfirmDialog from './AppConfirmDialog.vue'
   import LoadingSpinner from './LoadingSpinner.vue'
@@ -275,15 +276,6 @@
   import type { Config } from '../types'
   import { CHAT_MODEL, TEXT_MODEL, API_KEY_URL, createDefaultConfig } from '../types'
   import { useConfirmDialog } from '../composables/useConfirmDialog'
-
-  // Emits
-  interface Emits {
-    (e: 'setup-complete'): void
-    (e: 'setup-skipped'): void
-    (e: 'close'): void
-  }
-
-  const emit = defineEmits<Emits>()
 
   // Steps configuration
   const steps = [
@@ -351,6 +343,13 @@
   })
 
   // Methods
+  // Google AI API keys are issued by AI Studio and always start with "AIza"
+  // (length 39). We accept either the literal prefix or any reasonably-sized
+  // string, but flag anything that doesn't match the documented shape.
+  const GEMINI_API_KEY_PREFIX = 'AIza'
+  const MIN_GEMINI_API_KEY_LENGTH = 20
+  const MAX_GEMINI_API_KEY_LENGTH = 64
+
   const validateApiKey = () => {
     const apiKey = formData.value.apiKey.trim()
 
@@ -360,13 +359,19 @@
       return false
     }
 
-    if (apiKey.length < 20) {
+    if (apiKey.length < MIN_GEMINI_API_KEY_LENGTH) {
       errors.value.apiKey = 'API key seems too short'
       testResults.value.apiKey = false
       return false
     }
 
-    if (!apiKey.startsWith('AI') && !apiKey.includes('AI')) {
+    if (apiKey.length > MAX_GEMINI_API_KEY_LENGTH) {
+      errors.value.apiKey = 'API key is too long'
+      testResults.value.apiKey = false
+      return false
+    }
+
+    if (!apiKey.startsWith(GEMINI_API_KEY_PREFIX)) {
       errors.value.apiKey = "This doesn't look like a valid Google AI API key"
       testResults.value.apiKey = false
       return false
@@ -389,7 +394,6 @@
 
   const closeWindow = async () => {
     try {
-      const { getCurrentWindow } = await import('@tauri-apps/api/window')
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
@@ -519,13 +523,10 @@
 
         // Close the onboarding window
         try {
-          const { getCurrentWindow } = await import('@tauri-apps/api/window')
           const currentWindow = getCurrentWindow()
           await currentWindow.close()
         } catch (error) {
           logger.error('Failed to close onboarding window:', error)
-          // Fallback: emit event in case window close fails
-          emit('setup-complete')
         }
       }, 1000)
     } catch (err) {
@@ -540,12 +541,10 @@
     if (!shouldSkip) return
 
     try {
-      const { getCurrentWindow } = await import('@tauri-apps/api/window')
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
       logger.error('Failed to close onboarding window:', error)
-      emit('setup-skipped')
     }
   }
 

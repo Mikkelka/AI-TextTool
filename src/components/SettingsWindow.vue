@@ -78,12 +78,15 @@
   const message = ref('')
   const messageType = ref<'success' | 'error'>('success')
 
+  const MESSAGE_TIMEOUT_MS = 3000
+  const CLOSE_DELAY_MS = 1500
+
   const showMessage = (text: string, type: 'success' | 'error' = 'success') => {
     message.value = text
     messageType.value = type
     setTimeout(() => {
       message.value = ''
-    }, 3000)
+    }, MESSAGE_TIMEOUT_MS)
   }
 
   const loadConfig = async () => {
@@ -167,7 +170,7 @@
         } catch (error) {
           logger.error('Failed to close window:', error)
         }
-      }, 1500)
+      }, CLOSE_DELAY_MS)
     } catch (error) {
       logger.error('Failed to save settings:', error)
       showMessage('Failed to save settings. Please try again.', 'error')

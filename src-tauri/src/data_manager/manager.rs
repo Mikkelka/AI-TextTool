@@ -51,13 +51,12 @@ impl DataManager {
     }
 
     /// Save data to app_data.json
-    pub async fn save_data(&self) -> Result<(), DataError> {
-        // Update metadata
-        let mut data = self.data.clone();
-        data.metadata.last_updated = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    pub async fn save_data(&mut self) -> Result<(), DataError> {
+        // Update metadata in place to avoid cloning the entire AppData
+        self.data.metadata.last_updated = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
         // Serialize to JSON
-        let json_content = serde_json::to_string_pretty(&data)?;
+        let json_content = serde_json::to_string_pretty(&self.data)?;
 
         // Write to temp file, then replace the original (best-effort atomic)
         let temp_path = self.file_path.with_extension("json.tmp");
@@ -94,10 +93,12 @@ impl DataManager {
         let config_path = exe_dir.join("config.json");
         if config_path.exists() {
             log::info!("Migrating config.json");
-            if let Ok(content) = fs::read_to_string(&config_path).await {
-                if let Ok(config) = serde_json::from_str(&content) {
-                    self.data.config = config;
-                }
+            match fs::read_to_string(&config_path).await {
+                Ok(content) => match serde_json::from_str(&content) {
+                    Ok(config) => self.data.config = config,
+                    Err(e) => log::warn!("Failed to parse config.json during migration: {e}"),
+                },
+                Err(e) => log::warn!("Failed to read config.json during migration: {e}"),
             }
         }
 
@@ -105,10 +106,12 @@ impl DataManager {
         let options_path = exe_dir.join("options.json");
         if options_path.exists() {
             log::info!("Migrating options.json");
-            if let Ok(content) = fs::read_to_string(&options_path).await {
-                if let Ok(operations) = serde_json::from_str(&content) {
-                    self.data.operations = operations;
-                }
+            match fs::read_to_string(&options_path).await {
+                Ok(content) => match serde_json::from_str(&content) {
+                    Ok(operations) => self.data.operations = operations,
+                    Err(e) => log::warn!("Failed to parse options.json during migration: {e}"),
+                },
+                Err(e) => log::warn!("Failed to read options.json during migration: {e}"),
             }
         }
 
@@ -116,10 +119,12 @@ impl DataManager {
         let history_path = exe_dir.join("chat_history.json");
         if history_path.exists() {
             log::info!("Migrating chat_history.json");
-            if let Ok(content) = fs::read_to_string(&history_path).await {
-                if let Ok(history) = serde_json::from_str(&content) {
-                    self.data.chat_history = history;
-                }
+            match fs::read_to_string(&history_path).await {
+                Ok(content) => match serde_json::from_str(&content) {
+                    Ok(history) => self.data.chat_history = history,
+                    Err(e) => log::warn!("Failed to parse chat_history.json during migration: {e}"),
+                },
+                Err(e) => log::warn!("Failed to read chat_history.json during migration: {e}"),
             }
         }
 
@@ -127,10 +132,14 @@ impl DataManager {
         let conversations_path = exe_dir.join("saved_conversations.json");
         if conversations_path.exists() {
             log::info!("Migrating saved_conversations.json");
-            if let Ok(content) = fs::read_to_string(&conversations_path).await {
-                if let Ok(conversations) = serde_json::from_str(&content) {
-                    self.data.saved_conversations = conversations;
-                }
+            match fs::read_to_string(&conversations_path).await {
+                Ok(content) => match serde_json::from_str(&content) {
+                    Ok(conversations) => self.data.saved_conversations = conversations,
+                    Err(e) => {
+                        log::warn!("Failed to parse saved_conversations.json during migration: {e}")
+                    }
+                },
+                Err(e) => log::warn!("Failed to read saved_conversations.json during migration: {e}"),
             }
         }
 

@@ -350,6 +350,66 @@
       }))
   }
 
+  // Build the system instruction, appending a model note when a model is selected.
+  const buildInstruction = (): string | null => {
+    let instruction = props.instruction || ''
+    if (state.selectedModel) {
+      instruction += `${instruction ? '\n\n' : ''}Note: You are using ${formatModelName(state.selectedModel)}.`
+    }
+    return instruction || null
+  }
+
+  // Push a placeholder AI message and return it so callers can show it before the response lands.
+  const addProcessingMessage = (): ChatMessage => {
+    const aiMsg: ChatMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      isProcessing: true
+    }
+    state.messages.push(aiMsg)
+    return aiMsg
+  }
+
+  // Drop the in-flight processing message, if any. Used in the error path.
+  const removeProcessingMessage = () => {
+    const index = state.messages.findIndex(m => m.isProcessing)
+    if (index !== -1) {
+      state.messages.splice(index, 1)
+    }
+  }
+
+  // Replace the most recent processing message with the response payload.
+  const finalizeAssistantMessage = (response: AIResponse) => {
+    const aiIndex = state.messages.findIndex(m => m.isProcessing)
+    if (aiIndex !== -1) {
+      state.messages[aiIndex] = {
+        role: 'assistant',
+        content: response.answer,
+        timestamp: new Date().toISOString(),
+        isProcessing: false,
+        thoughts: response.thoughts,
+        sources: response.sources,
+        searchQueries: response.search_queries
+      }
+    }
+  }
+
+  // Shared body of sendMessage / regenerateResponse: build history, call the backend,
+  // and either install the response or surface an error.
+  const runAssistantTurn = async (userContent: string): Promise<AIResponse> => {
+    const chatHistory = prepareChatHistory()
+    const customInstruction = buildInstruction()
+    return (await invoke('chat_with_ai', {
+      message: userContent,
+      history: chatHistory.slice(0, -1),
+      customInstruction,
+      selectedModel: state.selectedModel,
+      enableThinking: state.enableThinking,
+      enableGrounding: state.enableGrounding
+    })) as AIResponse
+  }
+
   const sendMessage = async (userMessage: string) => {
     state.error = null
 
@@ -361,66 +421,23 @@
     }
     state.messages.push(userMsg)
 
-    // Add processing AI message
-    const aiMsg: ChatMessage = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date().toISOString(),
-      isProcessing: true
-    }
-    state.messages.push(aiMsg)
-
+    addProcessingMessage()
     state.isProcessing = true
     await scrollToBottom()
 
+    // Include initial text in first user message if this is the first interaction
+    const messageToSend =
+      state.messages.length === 2 && props.initialText
+        ? `${props.initialText}\n\n${userMessage}`
+        : userMessage
+
     try {
-      // Prepare message history (exclude processing message)
-      const chatHistory = prepareChatHistory()
-
-      // Include initial text in first user message if this is the first interaction
-      let messageToSend = userMessage
-      if (state.messages.length === 2 && props.initialText) {
-        messageToSend = `${props.initialText}\n\n${userMessage}`
-      }
-
-      // Build instruction with model info
-      let instruction = props.instruction || ''
-      if (state.selectedModel) {
-        instruction += `${instruction ? '\n\n' : ''}Note: You are using ${formatModelName(state.selectedModel)}.`
-      }
-
-      // Call backend AI service
-      const response = (await invoke('chat_with_ai', {
-        message: messageToSend,
-        history: chatHistory.slice(0, -1),
-        customInstruction: instruction || null,
-        selectedModel: state.selectedModel,
-        enableThinking: state.enableThinking,
-        enableGrounding: state.enableGrounding
-      })) as AIResponse
-
-      // Update AI message with response
-      const aiIndex = state.messages.findIndex(m => m.isProcessing)
-      if (aiIndex !== -1) {
-        state.messages[aiIndex] = {
-          role: 'assistant',
-          content: response.answer,
-          timestamp: new Date().toISOString(),
-          isProcessing: false,
-          thoughts: response.thoughts,
-          sources: response.sources,
-          searchQueries: response.search_queries
-        }
-      }
+      const response = await runAssistantTurn(messageToSend)
+      finalizeAssistantMessage(response)
     } catch (err) {
       logger.error('Failed to get AI response:', err)
       state.error = err instanceof Error ? err.message : 'Failed to get AI response'
-
-      // Remove processing message on error
-      const processingIndex = state.messages.findIndex(m => m.isProcessing)
-      if (processingIndex !== -1) {
-        state.messages.splice(processingIndex, 1)
-      }
+      removeProcessingMessage()
     } finally {
       state.isProcessing = false
       await scrollToBottom()
@@ -437,58 +454,17 @@
     // Remove the AI response and any subsequent messages
     state.messages = state.messages.slice(0, messageIndex)
 
-    // Add processing indicator
-    const aiMsg: ChatMessage = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date().toISOString(),
-      isProcessing: true
-    }
-    state.messages.push(aiMsg)
-
+    addProcessingMessage()
     state.isProcessing = true
     await scrollToBottom()
 
     try {
-      const chatHistory = prepareChatHistory()
-
-      // Build instruction with model info
-      let instruction = props.instruction || ''
-      if (state.selectedModel) {
-        instruction += `${instruction ? '\n\n' : ''}Note: You are using ${formatModelName(state.selectedModel)}.`
-      }
-
-      const response = (await invoke('chat_with_ai', {
-        message: userMessage.content,
-        history: chatHistory.slice(0, -1),
-        customInstruction: instruction || null,
-        selectedModel: state.selectedModel,
-        enableThinking: state.enableThinking,
-        enableGrounding: state.enableGrounding
-      })) as AIResponse
-
-      // Update AI message
-      const aiIndex = state.messages.findIndex(m => m.isProcessing)
-      if (aiIndex !== -1) {
-        state.messages[aiIndex] = {
-          role: 'assistant',
-          content: response.answer,
-          timestamp: new Date().toISOString(),
-          isProcessing: false,
-          thoughts: response.thoughts,
-          sources: response.sources,
-          searchQueries: response.search_queries
-        }
-      }
+      const response = await runAssistantTurn(userMessage.content)
+      finalizeAssistantMessage(response)
     } catch (err) {
       logger.error('Failed to regenerate response:', err)
       state.error = err instanceof Error ? err.message : 'Failed to regenerate response'
-
-      // Remove processing message
-      const processingIndex = state.messages.findIndex(m => m.isProcessing)
-      if (processingIndex !== -1) {
-        state.messages.splice(processingIndex, 1)
-      }
+      removeProcessingMessage()
     } finally {
       state.isProcessing = false
       await scrollToBottom()
@@ -576,12 +552,9 @@
 
   const handleGlobalKeydown = (event: KeyboardEvent) => {
     if (event.ctrlKey || event.metaKey) {
-      switch (event.key) {
-        case 'l':
-        case 'L':
-          event.preventDefault()
-          void clearConversation()
-          break
+      if (event.key === 'l' || event.key === 'L') {
+        event.preventDefault()
+        void clearConversation()
       }
     } else if (event.key === 'Escape') {
       closeWindow()
@@ -601,21 +574,14 @@
 
       // Convert and load messages
       state.messages = conversation.messages.map(msg => {
-        // Validate role before using it
-        if (!isValidRole(msg.role)) {
-          logger.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
-          return {
-            role: 'assistant' as const,
-            content: msg.content,
-            timestamp: msg.timestamp,
-            isProcessing: false,
-            thoughts: msg.thoughts,
-            sources: msg.sources,
-            searchQueries: msg.search_queries
-          }
-        }
+        const role: 'user' | 'assistant' = isValidRole(msg.role)
+          ? msg.role
+          : (() => {
+              logger.warn(`Invalid role: ${msg.role}, defaulting to assistant`)
+              return 'assistant' as const
+            })()
         return {
-          role: msg.role,
+          role,
           content: msg.content,
           timestamp: msg.timestamp,
           isProcessing: false,

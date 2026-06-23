@@ -80,6 +80,7 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
+  import { getCurrentWindow } from '@tauri-apps/api/window'
   import { Sparkles, TriangleAlert, X } from '@lucide/vue'
   import AppIcon from './AppIcon.vue'
   import LoadingSpinner from './LoadingSpinner.vue'
@@ -91,14 +92,6 @@
   const props = withDefaults(defineProps<PopupWindowProps>(), {
     selectedText: ''
   })
-
-  // Emits
-  interface Emits {
-    (e: 'close'): void
-    (e: 'operation-selected', operation: string, details: Operation): void
-  }
-
-  const emit = defineEmits<Emits>()
 
   // Layout constants
   const GRID_COLUMNS = 2 // Number of columns in the operations grid
@@ -155,7 +148,6 @@
 
     try {
       processingOperation.value = operationKey
-      emit('operation-selected', operationKey, operation)
 
       if (operation.open_in_window) {
         logger.debug(`Opening chat window for operation: ${operationKey}`)
@@ -191,7 +183,6 @@
       })
 
       // Hide window first to let focus return to original app
-      const { getCurrentWindow } = await import('@tauri-apps/api/window')
       const w = getCurrentWindow()
       await w.hide()
 
@@ -309,13 +300,10 @@
   const closeWindow = async () => {
     try {
       logger.debug('Closing popup window...')
-      const { getCurrentWindow } = await import('@tauri-apps/api/window')
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
     } catch (error) {
       logger.error('Failed to close popup window:', error)
-      // Fallback: emit close event
-      emit('close')
     }
   }
 

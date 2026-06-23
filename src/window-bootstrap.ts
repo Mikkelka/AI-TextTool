@@ -1,5 +1,6 @@
 import { createApp, type App, type Component } from 'vue'
 import './styles/tokens.css'
+import './styles/dialogs.css'
 
 interface WindowBootstrapOptions {
   props?: Record<string, unknown>

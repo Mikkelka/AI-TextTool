@@ -1,9 +1,14 @@
 use chrono::Utc;
 use std::collections::HashMap;
+use std::sync::atomic::AtomicU64;
 use tauri::{AppHandle, Manager};
 
 use super::types::*;
 use super::SharedDataManager;
+
+/// Process-wide monotonic counter appended to conversation ids so two
+/// conversations saved in the same millisecond don't collide.
+static CONVERSATION_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[tauri::command]
 pub async fn save_chat_entry(
@@ -67,7 +72,13 @@ pub async fn save_conversation(
     let state = app.state::<SharedDataManager>();
     let mut manager = state.0.lock().await;
 
-    let conversation_id = format!("conv_{}", Utc::now().timestamp_millis());
+    // Combine a millisecond timestamp with a process-wide counter so two
+    // saves in the same millisecond never collide.
+    let conversation_id = format!(
+        "conv_{}_{}",
+        Utc::now().timestamp_millis(),
+        CONVERSATION_ID_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    );
     let now = Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
 
     let conversation = SavedConversation {
@@ -116,6 +127,8 @@ pub async fn load_conversation_messages(
     let state = app.state::<SharedDataManager>();
     let manager = state.0.lock().await;
 
+    // O(n) linear scan. Fine while MAX_HISTORY_ENTRIES (=100) caps the list;
+    // switch to a HashMap index if the cap grows.
     manager
         .get_saved_conversations()
         .iter()
@@ -146,6 +159,13 @@ pub async fn dm_load_operations(app: AppHandle) -> Result<HashMap<String, Operat
     let state = app.state::<SharedDataManager>();
     let manager = state.0.lock().await;
     Ok(manager.get_operations().clone())
+}
+
+/// Return display metadata (badge class, etc.) for the built-in operations so
+/// the frontend doesn't have to hardcode a parallel map.
+#[tauri::command]
+pub fn get_operation_metadata() -> HashMap<String, OperationMetadata> {
+    AppData::default_operation_metadata()
 }
 
 #[tauri::command]

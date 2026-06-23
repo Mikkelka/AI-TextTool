@@ -40,6 +40,15 @@
   --color-success-soft: rgba(34, 197, 94, 0.15);
   --color-warning: #f59e0b;
 
+  /* === Badge backgrounds (operation chips in chat history) === */
+  --color-badge-concise: #9c27b0;
+  --color-badge-friendly: #e91e63;
+  --color-badge-keypoints: #795548;
+  --color-badge-summary: #00bcd4;
+  --color-badge-chat: #3f51b5;
+  --color-badge-custom: #ff5722;
+  --color-badge-default: #757575;
+
   /* === Inputs === */
   --input-bg: var(--color-bg-surface);
   --input-bg-elevated: #1e293b;

@@ -21,8 +21,10 @@ function escapeHtml(text: string): string {
  */
 export function renderMarkdown(markdown: string): string {
   try {
-    // Convert markdown to HTML
-    let html = marked.parse(markdown) as string
+    // Convert markdown to HTML (sync form; no async rendering configured).
+    // Cast is safe: marked.parse returns string in sync mode, but the type
+    // union is `string | Promise<string>` so we narrow it explicitly.
+    let html = marked.parse(markdown, { async: false }) as string
 
     // Add custom CSS classes to elements
     html = addCustomClasses(html)
@@ -77,36 +79,58 @@ export function renderMarkdown(markdown: string): string {
 }
 
 function addCustomClasses(html: string): string {
-  // Add CSS classes to elements for styling
-  html = html.replace(/<h([1-6])>/g, '<h$1 class="markdown-heading markdown-h$1">')
-  html = html.replace(/<table>/g, '<div class="table-wrapper"><table class="markdown-table">')
-  html = html.replace(/<\/table>/g, '</table></div>')
-  html = html.replace(/<blockquote>/g, '<blockquote class="markdown-blockquote">')
-  html = html.replace(/<ul>/g, '<ul class="markdown-list">')
-  html = html.replace(/<ol>/g, '<ol class="markdown-list">')
-  html = html.replace(/<a([^>]*?)>/g, (_match, attrs) => {
-    const hasTargetBlank = /target\s*=\s*["']?_blank["']?/i.test(attrs)
-    if (!hasTargetBlank) return `<a${attrs}>`
+  // Parse the HTML into a transient container and mutate the DOM directly
+  // instead of running chains of regexes (which break on attribute order or
+  // existing class attributes).
+  const container = document.createElement('div')
+  container.innerHTML = html
 
-    const relMatch = attrs.match(/rel\s*=\s*["']([^"']*)["']/i)
-    if (relMatch) {
-      const relParts = new Set(relMatch[1].split(/\s+/).filter(Boolean))
-      relParts.add('noopener')
-      relParts.add('noreferrer')
-      const newRel = Array.from(relParts).join(' ')
-      const updatedAttrs = attrs.replace(/rel\s*=\s*["'][^"']*["']/i, `rel="${newRel}"`)
-      return `<a${updatedAttrs}>`
+  // Headings: add level-specific class
+  for (let level = 1; level <= 6; level++) {
+    container.querySelectorAll(`h${level}`).forEach(el => {
+      el.classList.add('markdown-heading', `markdown-h${level}`)
+    })
+  }
+
+  // Tables: wrap in a scroll container and add a class for styling
+  container.querySelectorAll('table').forEach(table => {
+    table.classList.add('markdown-table')
+    const wrapper = document.createElement('div')
+    wrapper.className = 'table-wrapper'
+    table.parentNode?.insertBefore(wrapper, table)
+    wrapper.appendChild(table)
+  })
+
+  // Blockquotes and lists
+  container.querySelectorAll('blockquote').forEach(el => el.classList.add('markdown-blockquote'))
+  container.querySelectorAll('ul, ol').forEach(el => el.classList.add('markdown-list'))
+
+  // External links: ensure rel includes noopener/noreferrer when target=_blank
+  container.querySelectorAll('a[target="_blank"]').forEach(a => {
+    const existing = a.getAttribute('rel')
+    if (!existing) {
+      a.setAttribute('rel', 'noopener noreferrer')
+    } else {
+      const parts = new Set(existing.split(/\s+/).filter(Boolean))
+      parts.add('noopener')
+      parts.add('noreferrer')
+      a.setAttribute('rel', Array.from(parts).join(' '))
     }
-
-    return `<a${attrs} rel="noopener noreferrer">`
   })
 
-  // Add copy button to code blocks
-  html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_match, attrs, content) => {
-    return `<pre class="code-block"><code${attrs}>${content}</code><button class="copy-code-btn" data-copy-code>Copy</button></pre>`
+  // Code blocks: wrap with a copy button
+  container.querySelectorAll('pre > code').forEach(code => {
+    const pre = code.parentElement
+    if (!pre || pre.classList.contains('code-block')) return
+    pre.classList.add('code-block')
+    const button = document.createElement('button')
+    button.className = 'copy-code-btn'
+    button.setAttribute('data-copy-code', '')
+    button.textContent = 'Copy'
+    pre.appendChild(button)
   })
 
-  return html
+  return container.innerHTML
 }
 
 // Event handler for copy code buttons

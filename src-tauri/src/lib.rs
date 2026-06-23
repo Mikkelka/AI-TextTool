@@ -29,20 +29,17 @@ pub(crate) fn register_global_shortcut<R: tauri::Runtime>(app: &tauri::AppHandle
 /// Read the configured shortcut from app_data.json, falling back to default
 fn get_configured_shortcut() -> String {
     let config_path = file_paths::get_app_data_path();
-    if config_path.exists() {
-        if let Ok(content) = std::fs::read_to_string(&config_path) {
-            if let Ok(data) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(shortcut) = data.get("config").and_then(|c| c.get("shortcut")) {
-                    if let Some(s) = shortcut.as_str() {
-                        if !s.is_empty() {
-                            return s.to_string();
-                        }
-                    }
-                }
-            }
-        }
+    let shortcut = std::fs::read_to_string(&config_path)
+        .ok()
+        .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok())
+        .and_then(|data| data.get("config").and_then(|c| c.get("shortcut"))?.as_str().map(String::from))
+        .unwrap_or_default();
+
+    if shortcut.is_empty() {
+        DEFAULT_SHORTCUT.to_string()
+    } else {
+        shortcut
     }
-    DEFAULT_SHORTCUT.to_string()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -121,6 +118,7 @@ pub fn run() {
             data_manager::dm_load_operations,
             data_manager::dm_load_operations_sorted,
             data_manager::dm_save_operations,
+            data_manager::get_operation_metadata,
             data_manager::dm_get_operation,
             data_manager::dm_update_operation,
             data_manager::dm_remove_operation,

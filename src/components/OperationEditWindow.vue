@@ -180,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import {
     Pencil,
@@ -211,13 +211,21 @@
     open_in_window: boolean
   }
 
-  // Reactive state
+  // Reactive state — `operations` is the single source of truth. The ordered
+  // tuple list is derived via `operationsArray` below so the two cannot drift.
   const operations = ref<Record<string, Operation>>({})
   const isLoading = ref(true)
   const error = ref<string | null>(null)
 
-  // Operations array for ordered display
-  const operationsArray = ref<Array<[string, Operation]>>([])
+  // Sorted tuple view, derived from `operations`. Stable ordering is enforced
+  // by the `order` field; ties are broken by key for determinism.
+  const operationsArray = computed<Array<[string, Operation]>>(() => {
+    return Object.entries(operations.value).sort(([aKey, a], [bKey, b]) => {
+      const orderA = a.order ?? 0
+      const orderB = b.order ?? 0
+      return orderA - orderB || aKey.localeCompare(bKey)
+    })
+  })
 
   // Dialog/toast state (via composables)
   const {
@@ -254,15 +262,12 @@
       isLoading.value = true
       error.value = null
 
-      // Load operations as sorted array
       const sortedResult = (await invoke('dm_load_operations_sorted')) as Array<[string, Operation]>
-      operationsArray.value = sortedResult
-
-      // Also populate operations object for compatibility
-      operations.value = {}
-      sortedResult.forEach(([key, operation]) => {
-        operations.value[key] = operation
-      })
+      const next: Record<string, Operation> = {}
+      for (const [key, operation] of sortedResult) {
+        next[key] = operation
+      }
+      operations.value = next
 
       logger.debug('Loaded operations in order:', sortedResult)
     } catch (err) {
@@ -319,14 +324,12 @@
       const success = (await invoke('dm_remove_operation', { name: operationKey })) as boolean
       logger.debug('Delete result:', success)
 
-      // Remove from operationsArray to maintain order
-      const indexToRemove = operationsArray.value.findIndex(([key]) => key === operationKey)
-      if (indexToRemove !== -1) {
-        operationsArray.value.splice(indexToRemove, 1)
+      // Remove from operations map; the derived operationsArray updates automatically.
+      if (operations.value[operationKey]) {
+        const next = { ...operations.value }
+        delete next[operationKey]
+        operations.value = next
       }
-
-      // Also remove from operations object
-      delete operations.value[operationKey]
 
       if (success) {
         logger.debug('Operation deleted successfully:', operationKey)
@@ -390,25 +393,14 @@
         operation: operation
       })
 
-      // Update local state
-      operations.value[editForm.value.name.trim()] = operation
-
-      // If we were editing and the name changed, remove the old one
+      // Update local state — replace operations map immutably so the derived
+      // `operationsArray` re-sorts on its own.
+      const next: Record<string, Operation> = { ...operations.value }
       if (editingOperation.value && editingOperation.value !== editForm.value.name.trim()) {
-        delete operations.value[editingOperation.value]
+        delete next[editingOperation.value]
       }
-
-      // Update operations array manually
-      const existingIndex = operationsArray.value.findIndex(
-        ([key]) => key === editForm.value.name.trim()
-      )
-      if (existingIndex !== -1) {
-        // Update existing operation
-        operationsArray.value[existingIndex] = [editForm.value.name.trim(), operation]
-      } else {
-        // Add new operation at the end
-        operationsArray.value.push([editForm.value.name.trim(), operation])
-      }
+      next[editForm.value.name.trim()] = operation
+      operations.value = next
 
       logger.debug('Operation saved:', editForm.value.name, operation)
       showEditDialog.value = false
@@ -449,34 +441,26 @@
     }
   }
 
-  // Move operation up or down
+  // Move operation up or down. Reassigns the `order` field on each operation
+  // so the derived `operationsArray` reflects the new ordering, then saves.
   const moveOperation = async (index: number, direction: number) => {
     const newIndex = index + direction
-
-    // Check bounds
     if (newIndex < 0 || newIndex >= operationsArray.value.length) {
       return
     }
 
     try {
-      // Reorder the operations array
-      const newArray = [...operationsArray.value]
-      const temp = newArray[index]
-      newArray[index] = newArray[newIndex]
-      newArray[newIndex] = temp
+      // Build the new sorted list, then rebuild the map with updated order fields.
+      const reordered = [...operationsArray.value]
+      const [moved] = reordered.splice(index, 1)
+      reordered.splice(newIndex, 0, moved)
 
-      // Update order fields to match new positions
       const newOperations: Record<string, Operation> = {}
-      newArray.forEach(([key, operation], idx) => {
-        const updatedOperation = { ...operation, order: idx + 1 }
-        newOperations[key] = updatedOperation
+      reordered.forEach(([key, operation], idx) => {
+        newOperations[key] = { ...operation, order: idx + 1 }
       })
 
-      // Update local state immediately for responsive UI
       operations.value = newOperations
-      operationsArray.value = newArray
-
-      // Save the new order to backend
       await invoke('dm_save_operations', { operations: newOperations })
 
       logger.debug('Operation moved successfully')

@@ -77,7 +77,17 @@ pub struct Operation {
     pub instruction: String,
     pub icon: Option<String>,
     pub open_in_window: bool,
-    pub order: i32,
+    /// Display/sort order. `u32` because negative values are meaningless for sorting.
+    /// Uses `default` so a missing field on legacy data deserializes as 0 rather than failing.
+    #[serde(default)]
+    pub order: u32,
+}
+
+/// Display metadata for an operation. Exposed to the frontend so it doesn't
+/// need to hardcode badge classes per built-in operation name.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OperationMetadata {
+    pub badge_class: String,
 }
 
 /// Chat history entry
@@ -156,6 +166,34 @@ impl Default for AppData {
 }
 
 impl AppData {
+    /// Default styling metadata for the built-in operations. Lets the frontend
+    /// render badges/colors without hardcoding a parallel map.
+    pub fn default_operation_metadata() -> HashMap<String, OperationMetadata> {
+        let entries = [
+            ("Proofread", "operation-proofread"),
+            ("Rewrite", "operation-rewrite"),
+            ("Dansk", "operation-translate"),
+            ("Concise", "operation-concise"),
+            ("Friendly", "operation-friendly"),
+            ("Professional", "operation-professional"),
+            ("Key Points", "operation-keypoints"),
+            ("Summary", "operation-summary"),
+            ("Chat", "operation-chat"),
+            ("Custom", "operation-custom"),
+        ];
+        entries
+            .iter()
+            .map(|(name, badge)| {
+                (
+                    (*name).to_string(),
+                    OperationMetadata {
+                        badge_class: (*badge).to_string(),
+                    },
+                )
+            })
+            .collect()
+    }
+
     /// Create default operations
     pub fn create_default_operations() -> HashMap<String, Operation> {
         let mut operations = HashMap::new();

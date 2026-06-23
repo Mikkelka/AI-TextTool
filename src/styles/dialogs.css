@@ -1,0 +1,105 @@
+/* ============================================================
+ * AI TextTool — Shared Dialog Styles
+ * Styles for AppConfirmDialog and AppPromptDialog.
+ * Use unscoped class names since dialogs are rendered into a
+ * single global overlay layer (the parent uses `scoped` styles
+ * and `:deep` doesn't apply to sibling components).
+ * ============================================================ */
+
+.app-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.app-dialog {
+  background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg-app));
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.app-dialog--confirm {
+  width: min(460px, 100%);
+}
+
+.app-dialog--prompt {
+  width: min(500px, 100%);
+}
+
+.app-dialog-title {
+  margin: 0 0 var(--space-2) 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-dialog-message {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.app-dialog-message--multiline {
+  white-space: pre-line;
+}
+
+.app-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.app-dialog-button {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.app-dialog-button:hover {
+  transform: translateY(-1px);
+}
+
+.app-dialog-button--cancel {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+.app-dialog-button--cancel:hover {
+  background: var(--color-border);
+}
+
+.app-dialog-button--confirm {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-active));
+  color: #fff;
+  box-shadow: 0 8px 16px var(--color-accent-soft);
+}
+
+.app-dialog-button--confirm:hover {
+  box-shadow: 0 10px 20px var(--color-accent-focus-ring);
+}
+
+.app-dialog-button--danger {
+  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+  color: #fff;
+  box-shadow: 0 8px 16px var(--color-danger-soft);
+}
+
+.app-dialog-button--danger:hover {
+  box-shadow: 0 10px 20px var(--color-danger-soft);
+}

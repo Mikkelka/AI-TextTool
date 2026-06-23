@@ -1,36 +1,10 @@
-use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
+use tauri::AppHandle;
 
 use super::super::utils::time;
+use super::super::window_manager::{chat_window_config_standard, create_window};
 
 /// Maximum URL length before switching to initialization_script injection
 const MAX_URL_TEXT_LENGTH: usize = 1000;
-
-/// Shared window builder configuration for chat windows
-fn create_chat_window_builder<'a, R: tauri::Runtime>(
-    app: &'a AppHandle<R>,
-    window_id: &'a str,
-    title: &'a str,
-    url: String,
-    initialization_script: Option<String>,
-) -> WebviewWindowBuilder<'a, R, AppHandle<R>> {
-    let mut builder = WebviewWindowBuilder::new(app, window_id, WebviewUrl::App(url.into()))
-        .title(title)
-        .inner_size(900.0, 700.0)
-        .min_inner_size(700.0, 500.0)
-        .center()
-        .resizable(true)
-        .maximizable(true)
-        .minimizable(true)
-        .closable(true)
-        .always_on_top(false)
-        .skip_taskbar(false);
-
-    if let Some(script) = initialization_script {
-        builder = builder.initialization_script(script);
-    }
-
-    builder
-}
 
 #[tauri::command]
 pub async fn reopen_chat_conversation(
@@ -42,8 +16,6 @@ pub async fn reopen_chat_conversation(
     log::info!("Reopening conversation: {}", title);
 
     let timestamp = time::get_current_timestamp_millis();
-    let window_id = format!("chat_reopen_{}", timestamp);
-
     let chat_url = format!(
         "windows/chat.html?operation={}&title={}&conversationId={}&t={}",
         urlencoding::encode(&operation),
@@ -52,10 +24,12 @@ pub async fn reopen_chat_conversation(
         timestamp
     );
 
-    match create_chat_window_builder(&app, &window_id, &title, chat_url, None).build() {
-        Ok(chat_window) => {
-            log::info!("Chat conversation reopened successfully: {}", title);
-            let _ = chat_window.set_focus();
+    let mut config = chat_window_config_standard("reopen", Some(chat_url), Some(title));
+    config.window_id = format!("chat_reopen_{}", timestamp);
+
+    match create_window(&app, config) {
+        Ok(()) => {
+            log::info!("Chat conversation reopened successfully");
             Ok(())
         }
         Err(e) => {
@@ -79,7 +53,6 @@ pub async fn open_chat_window(
     );
 
     let timestamp = time::get_current_timestamp_millis();
-    let window_id = format!("chat_{}_{}", operation.to_lowercase(), timestamp);
     let window_title = format!("{} - AI TextTool", operation);
 
     // For large text, use initialization_script injection instead of URL params
@@ -115,14 +88,21 @@ pub async fn open_chat_window(
 
     log::debug!("Creating chat window with URL: {}", chat_url);
 
-    match create_chat_window_builder(&app, &window_id, &window_title, chat_url, init_script).build()
-    {
-        Ok(chat_window) => {
+    let mut config = chat_window_config_standard(
+        &operation.to_lowercase(),
+        Some(chat_url),
+        Some(window_title.clone()),
+    );
+    if let Some(script) = init_script {
+        config.initialization_script = Some(script);
+    }
+
+    match create_window(&app, config) {
+        Ok(()) => {
             log::info!(
                 "Chat window opened successfully for operation: {}",
                 operation
             );
-            let _ = chat_window.set_focus();
             Ok(())
         }
         Err(e) => {
