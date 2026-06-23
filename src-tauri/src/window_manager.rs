@@ -165,6 +165,13 @@ pub fn show_onboarding_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::R
     Ok(())
 }
 
+/// Popup window dimensions. Position offsets are derived from these so the
+/// window stays correctly anchored if the size ever changes.
+const POPUP_WIDTH: f64 = 300.0;
+const POPUP_HEIGHT: f64 = 290.0;
+/// Vertical gap between the popup's bottom edge and the mouse cursor.
+const POPUP_VERTICAL_MARGIN: f64 = 10.0;
+
 /// Create a popup window at the specified position with clipboard text injected
 pub fn create_popup_window<R: Runtime>(
     app: &tauri::AppHandle<R>,
@@ -181,18 +188,19 @@ pub fn create_popup_window<R: Runtime>(
         mouse_y
     );
 
+    // Position: center horizontally on the mouse, bottom edge just above it.
+    let pos_x = mouse_x as f64 - POPUP_WIDTH / 2.0;
+    let pos_y = mouse_y as f64 - (POPUP_HEIGHT + POPUP_VERTICAL_MARGIN);
+
     let config = WindowConfig {
         window_id: "popup".to_string(),
         url: format!("windows/popup.html?t={}", timestamp),
         title: "AI TextTool - Operations".to_string(),
-        width: 300.0,
-        height: 290.0,
+        width: POPUP_WIDTH,
+        height: POPUP_HEIGHT,
         min_width: None,
         min_height: None,
-        position: WindowPosition::Coordinates {
-            x: mouse_x as f64 - 150.0, // Center horizontally (width / 2)
-            y: mouse_y as f64 - 300.0, // Position above mouse (height + margin)
-        },
+        position: WindowPosition::Coordinates { x: pos_x, y: pos_y },
         resizable: false,
         maximizable: false,
         minimizable: false,
