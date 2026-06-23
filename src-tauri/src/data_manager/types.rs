@@ -47,34 +47,11 @@ pub struct Config {
 }
 
 impl Config {
-    /// Get the active provider's configuration
-    pub fn active_provider(&self) -> &ProviderConfig {
-        self.providers.get(&self.provider).unwrap_or_else(|| {
-            self.providers
-                .values()
-                .next()
-                .expect("no providers configured")
-        })
-    }
-
-    /// Get the API key for the active provider
-    pub fn api_key(&self) -> &str {
-        &self.active_provider().api_key
-    }
-
-    /// Get the chat model for the active provider
-    pub fn chat_model(&self) -> &str {
-        &self.active_provider().chat_model_name
-    }
-
-    /// Get the text model for the active provider
-    pub fn text_model(&self) -> &str {
-        &self.active_provider().text_model_name
-    }
-
-    /// Get the chat system instruction for the active provider
-    pub fn chat_system_instruction(&self) -> &str {
-        &self.active_provider().chat_system_instruction
+    /// Get the active provider's configuration, or None if no providers are configured
+    pub fn active_provider(&self) -> Option<&ProviderConfig> {
+        self.providers
+            .get(&self.provider)
+            .or_else(|| self.providers.values().next())
     }
 }
 

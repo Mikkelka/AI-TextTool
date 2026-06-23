@@ -83,8 +83,13 @@ pub async fn process_text_with_ai(
     let manager = state.0.lock().await;
     let config = manager.get_config().clone();
 
+    // Get the active provider configuration (fails gracefully if none configured)
+    let provider_config = config.active_provider().ok_or_else(|| {
+        "No AI provider configured. Please complete setup in onboarding or settings.".to_string()
+    })?;
+
     // Check if API key is configured
-    if config.api_key().trim().is_empty() {
+    if provider_config.api_key.trim().is_empty() {
         return Err(
             "API key not configured. Please configure your Gemini API key in settings.".to_string(),
         );
@@ -93,8 +98,9 @@ pub async fn process_text_with_ai(
     // Get shared rate limiter and HTTP client, then create Gemini provider
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider = GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client)
-        .map_err(gemini_error_to_user_message)?;
+    let provider =
+        GeminiProvider::new(provider_config.api_key.to_string(), rate_limiter, &http_client)
+            .map_err(gemini_error_to_user_message)?;
 
     // Get operation details
     let operation_details = manager
@@ -113,7 +119,7 @@ pub async fn process_text_with_ai(
     let contents = vec![Content::user(full_prompt)];
     let result = match provider
         .generate_content_with_formatting(
-            config.text_model(),
+            &provider_config.text_model_name,
             contents,
             Some(&operation_details.instruction),
             Some(GenerationConfig {
@@ -157,27 +163,33 @@ pub async fn chat_with_ai(
     let manager = state.0.lock().await;
     let config = manager.get_config().clone();
 
-    if config.api_key().trim().is_empty() {
+    // Get the active provider configuration (fails gracefully if none configured)
+    let provider_config = config.active_provider().ok_or_else(|| {
+        "No AI provider configured. Please complete setup in onboarding or settings.".to_string()
+    })?;
+
+    if provider_config.api_key.trim().is_empty() {
         return Err("API key not configured".to_string());
     }
 
     // Get shared rate limiter and HTTP client, then create provider
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
-    let provider = GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client)
-        .map_err(gemini_error_to_user_message)?;
+    let provider =
+        GeminiProvider::new(provider_config.api_key.to_string(), rate_limiter, &http_client)
+            .map_err(gemini_error_to_user_message)?;
 
     // Prepare messages
     let mut messages = history;
     messages.push(ChatMessage::user(message));
 
     // Use custom instruction if provided, otherwise use config default
-    let default_instruction = config.chat_system_instruction().to_string();
+    let default_instruction = provider_config.chat_system_instruction.clone();
     let system_instruction = custom_instruction.as_ref().unwrap_or(&default_instruction);
     let selected_model = selected_model
         .map(|model| model.trim().to_string())
         .filter(|model| !model.is_empty())
-        .unwrap_or_else(|| config.chat_model().to_string());
+        .unwrap_or_else(|| provider_config.chat_model_name.clone());
     let enable_grounding = enable_grounding.unwrap_or(false);
 
     if enable_grounding && !GeminiProvider::supports_google_search_grounding(&selected_model) {
@@ -228,14 +240,20 @@ pub async fn test_ai_connection(app: tauri::AppHandle) -> Result<bool, String> {
     let manager = state.0.lock().await;
     let config = manager.get_config().clone();
 
-    if config.api_key().trim().is_empty() {
+    // No provider configured is equivalent to "not connected"
+    let provider_config = match config.active_provider() {
+        Some(p) => p,
+        None => return Ok(false),
+    };
+
+    if provider_config.api_key.trim().is_empty() {
         return Ok(false);
     }
 
     let rate_limiter = get_rate_limiter(&app);
     let http_client = get_http_client(&app);
     let provider =
-        match GeminiProvider::new(config.api_key().to_string(), rate_limiter, &http_client) {
+        match GeminiProvider::new(provider_config.api_key.to_string(), rate_limiter, &http_client) {
             Ok(provider) => provider,
             Err(_) => return Ok(false),
         };

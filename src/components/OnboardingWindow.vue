@@ -492,6 +492,11 @@
         }
       }
 
+      // Ensure providers object exists (defensive: Rust may omit it)
+      if (!config.providers) {
+        config.providers = {}
+      }
+
       // Ensure provider config exists and update with form data
       if (!config.providers.Gemini) {
         config.providers.Gemini = {
