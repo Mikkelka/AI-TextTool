@@ -217,15 +217,16 @@ pub fn create_popup_window<R: Runtime>(
     Ok(())
 }
 
-/// Create a direct chat window (when no text is selected)
-pub fn create_direct_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
-    log::info!("No text selected - opening chat window directly");
-
-    let config = WindowConfig {
-        window_id: format!("chat_direct_{}", time::get_current_timestamp_millis()),
+/// Build a `WindowConfig` for a standard chat window.
+/// `id_prefix` is appended to `chat_<prefix>_<timestamp>` to keep window ids unique.
+/// `maximizable` / `minimizable` vary by entry point (tray allows both; shortcut/popup suppress them).
+fn chat_window_config(id_prefix: &str, maximizable: bool, minimizable: bool) -> WindowConfig {
+    let timestamp = time::get_current_timestamp_millis();
+    WindowConfig {
+        window_id: format!("chat_{}_{}", id_prefix, timestamp),
         url: format!(
             "windows/chat.html?operation=Chat&title=AI Chat&t={}",
-            time::get_current_timestamp_millis()
+            timestamp
         ),
         title: "AI TextTool - Chat".to_string(),
         width: 900.0,
@@ -234,77 +235,33 @@ pub fn create_direct_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri
         min_height: Some(500.0),
         position: WindowPosition::Center,
         resizable: true,
-        maximizable: false,
-        minimizable: false,
+        maximizable,
+        minimizable,
         closable: true,
         always_on_top: false,
         skip_taskbar: false,
         decorations: false,
         close_existing: vec!["chat".to_string(), "chat_direct".to_string()],
         initialization_script: None,
-    };
+    }
+}
 
-    create_window(app, config)
+/// Create a direct chat window (when no text is selected)
+pub fn create_direct_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
+    log::info!("No text selected - opening chat window directly");
+    create_window(app, chat_window_config("direct", false, false))
 }
 
 /// Create a fallback chat window (when clipboard fails)
 pub fn create_fallback_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     log::info!("Failed to read clipboard - opening chat window as fallback");
-
-    let config = WindowConfig {
-        window_id: format!("chat_fallback_{}", time::get_current_timestamp_millis()),
-        url: format!(
-            "windows/chat.html?operation=Chat&title=AI Chat&t={}",
-            time::get_current_timestamp_millis()
-        ),
-        title: "AI TextTool - Chat".to_string(),
-        width: 900.0,
-        height: 700.0,
-        min_width: Some(700.0),
-        min_height: Some(500.0),
-        position: WindowPosition::Center,
-        resizable: true,
-        maximizable: false,
-        minimizable: false,
-        closable: true,
-        always_on_top: false,
-        skip_taskbar: false,
-        decorations: false,
-        close_existing: vec!["chat".to_string(), "chat_direct".to_string()],
-        initialization_script: None,
-    };
-
-    create_window(app, config)
+    create_window(app, chat_window_config("fallback", false, false))
 }
 
 /// Create a chat window from tray menu
 pub fn create_tray_chat_window<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     log::info!("Opening chat window from tray...");
-
-    let config = WindowConfig {
-        window_id: format!("chat_tray_{}", time::get_current_timestamp_millis()),
-        url: format!(
-            "windows/chat.html?operation=Chat&title=AI Chat&t={}",
-            time::get_current_timestamp_millis()
-        ),
-        title: "AI TextTool - Chat".to_string(),
-        width: 900.0,
-        height: 700.0,
-        min_width: Some(700.0),
-        min_height: Some(500.0),
-        position: WindowPosition::Center,
-        resizable: true,
-        maximizable: true,
-        minimizable: true,
-        closable: true,
-        always_on_top: false,
-        skip_taskbar: false,
-        decorations: false,
-        close_existing: vec!["chat".to_string(), "chat_direct".to_string()],
-        initialization_script: None,
-    };
-
-    create_window(app, config)
+    create_window(app, chat_window_config("tray", true, true))
 }
 
 /// Create a settings window from tray menu
