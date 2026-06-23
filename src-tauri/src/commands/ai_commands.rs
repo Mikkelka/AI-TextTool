@@ -183,7 +183,7 @@ pub async fn process_text_with_ai(
         .await
     {
         Ok(result) => result,
-        Err(e) => return Err(format!("AI processing failed: {}", e)),
+        Err(e) => return Err(gemini_error_to_user_message(e)),
     };
 
     // Copy result to clipboard for auto-paste
@@ -262,7 +262,7 @@ pub async fn chat_with_ai(
             log::info!("Chat response generated successfully");
             Ok(response)
         }
-        Err(e) => Err(format!("Chat failed: {}", e)),
+        Err(e) => Err(gemini_error_to_user_message(e)),
     }
 }
 
