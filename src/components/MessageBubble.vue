@@ -95,20 +95,10 @@
   import AppIcon from './AppIcon.vue'
   import SanitizedMarkdown from './SanitizedMarkdown.vue'
   import { logger } from '../utils/logger'
+  import type { ChatMessage } from '../types'
 
   interface Props {
-    message: {
-      role: 'user' | 'assistant'
-      content: string
-      timestamp: string
-      isProcessing?: boolean
-      thoughts?: string
-      sources?: Array<{
-        title: string
-        uri: string
-      }>
-      searchQueries?: string[]
-    }
+    message: ChatMessage
   }
 
   defineProps<Props>()

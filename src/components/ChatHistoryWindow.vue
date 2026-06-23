@@ -260,19 +260,9 @@
   import SanitizedMarkdown from './SanitizedMarkdown.vue'
   import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
-  import type { SavedConversation } from '../types'
+  import type { ChatEntry, SavedConversation } from '../types'
   import { useConfirmDialog } from '../composables/useConfirmDialog'
   import { useToast } from '../composables/useToast'
-
-  // Chat Entry Interface
-  interface ChatEntry {
-    timestamp: string
-    original_text: string
-    ai_option: string
-    processed_text: string
-  }
-
-  // Local interfaces (ChatEntry is specific to this component)
 
   // Reactive state
   const currentTab = ref<'conversations' | 'entries'>('conversations')

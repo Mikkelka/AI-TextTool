@@ -91,6 +91,14 @@ export interface AIResponse {
   search_queries?: string[]
 }
 
+// Chat history entry — mirrors Rust `data_manager::types::ChatEntry`
+export interface ChatEntry {
+  timestamp: string
+  original_text: string
+  ai_option: string
+  processed_text: string
+}
+
 // Default provider name (kept in sync with Rust `Config::default`)
 export const DEFAULT_PROVIDER = 'Gemini'
 export const DEFAULT_SHORTCUT = 'CmdOrCtrl+Space'
