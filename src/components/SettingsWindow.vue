@@ -64,7 +64,7 @@
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { logger } from '../utils/logger'
   import type { Config, ModelName } from '../types'
-  import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL, createDefaultConfig } from '../types'
+  import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL, API_KEY_URL, createDefaultConfig } from '../types'
   import { formatModelName } from '../utils/formatters'
 
   const formData = ref({
@@ -110,14 +110,11 @@
 
   const openApiKeyPage = async () => {
     try {
-      await openUrl('https://aistudio.google.com/app/apikey')
+      await openUrl(API_KEY_URL)
       logger.debug('Opened API key page')
     } catch (error) {
       logger.error('Failed to open API key page:', error)
-      showMessage(
-        'Failed to open browser. Please visit https://aistudio.google.com/app/apikey manually.',
-        'error'
-      )
+      showMessage(`Failed to open browser. Please visit ${API_KEY_URL} manually.`, 'error')
     }
   }
 

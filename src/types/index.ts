@@ -114,6 +114,9 @@ export const DEFAULT_PROVIDER = 'Gemini'
 export const DEFAULT_SHORTCUT = 'CmdOrCtrl+Space'
 export const DEFAULT_LOCALE = 'en'
 
+/// URL for obtaining a Google AI Studio API key
+export const API_KEY_URL = 'https://aistudio.google.com/app/apikey'
+
 // Default Gemini provider settings used when no config exists yet
 export function createDefaultProviderSettings(): ProviderSettings {
   return {

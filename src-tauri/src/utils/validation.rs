@@ -6,9 +6,6 @@
 /// Maximum allowed length for text input (100KB)
 pub const MAX_TEXT_LENGTH: usize = 100_000;
 
-/// Minimum required length for text input
-pub const MIN_TEXT_LENGTH: usize = 1;
-
 /// Maximum allowed length for chat messages (10KB)
 /// Keep in sync with frontend: src/components/ChatWindow.vue `MAX_MESSAGE_LENGTH`
 pub const MAX_MESSAGE_LENGTH: usize = 10_000;
@@ -29,13 +26,6 @@ pub fn validate_text_input(text: &str) -> Result<(), String> {
 
     if trimmed.is_empty() {
         return Err("Text cannot be empty".to_string());
-    }
-
-    if trimmed.len() < MIN_TEXT_LENGTH {
-        return Err(format!(
-            "Text must be at least {} character(s)",
-            MIN_TEXT_LENGTH
-        ));
     }
 
     if trimmed.len() > MAX_TEXT_LENGTH {

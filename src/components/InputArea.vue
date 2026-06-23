@@ -84,7 +84,8 @@
         emit('send')
       }
     } else if (event.key === 'Enter' && event.ctrlKey) {
-      // Allow new line
+      // Allow new line, but still resize for the newly-inserted content
+      void resizeTextarea()
       return
     }
 

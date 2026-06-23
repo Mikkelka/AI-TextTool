@@ -110,9 +110,10 @@
   const formatTime = (timestamp: string): string => {
     try {
       const date = new Date(timestamp)
+      if (isNaN(date.getTime())) return '--:--'
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     } catch {
-      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      return '--:--'
     }
   }
 

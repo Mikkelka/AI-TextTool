@@ -202,20 +202,12 @@
   import { useConfirmDialog } from '../composables/useConfirmDialog'
   import { useToast } from '../composables/useToast'
 
-  // Props
-  interface Props {
-    // No props needed for now
-  }
-
-  withDefaults(defineProps<Props>(), {})
-
   // Types
 
   interface EditForm {
     name: string
     prefix: string
     instruction: string
-    icon: string
     open_in_window: boolean
   }
 
@@ -251,7 +243,6 @@
     name: '',
     prefix: '',
     instruction: '',
-    icon: '',
     open_in_window: false
   })
   const editingOperation = ref<string | null>(null)
@@ -290,7 +281,6 @@
       name: operationKey,
       prefix: operation.prefix || '',
       instruction: operation.instruction || '',
-      icon: operation.icon || '',
       open_in_window: operation.open_in_window || false
     }
 
@@ -304,7 +294,6 @@
       name: '',
       prefix: '',
       instruction: '',
-      icon: '',
       open_in_window: false
     }
 
@@ -374,9 +363,9 @@
       await loadOperations()
 
       logger.debug('Operations reset to defaults successfully')
-      showMessage(
-        'Reset Complete',
-        'All operations have been reset to their default configuration!'
+      showToast(
+        'Reset Complete: All operations have been reset to their default configuration!',
+        'success'
       )
     } catch (err) {
       logger.error('Failed to reset operations:', err)
@@ -393,7 +382,6 @@
         instruction:
           editForm.value.instruction ||
           "You are a helpful writing assistant. Follow the user's instructions precisely and provide clear, accurate assistance with their text.",
-        icon: undefined,
         open_in_window: editForm.value.open_in_window
       }
 
@@ -459,10 +447,6 @@
         void closeWindow()
       }
     }
-  }
-
-  const showMessage = (title: string, message: string) => {
-    showToast(`${title}: ${message}`, 'success')
   }
 
   // Move operation up or down

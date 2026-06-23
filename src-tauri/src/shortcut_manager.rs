@@ -219,14 +219,9 @@ async fn show_popup_with_text<R: Runtime>(app_handle: &AppHandle<R>, clipboard_t
     }
 }
 
-/// Simulate Ctrl+C to copy selected text
-/// Note: Uses thread::sleep instead of tokio::sleep for hardware timing
-/// These are very short delays (10ms) for keyboard input registration
-fn simulate_copy() -> Result<(), String> {
-    log::debug!("Starting Ctrl+C simulation...");
-
-    let mut enigo = get_enigo()?;
-
+/// Press Ctrl, click `key`, then release Ctrl.
+/// Uses `thread::sleep` (not tokio) because these are very short (10ms) hardware-timing delays.
+fn simulate_ctrl_key(enigo: &mut Enigo, key: Key) -> Result<(), String> {
     // Press and hold Ctrl
     if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
         return Err(format!("Failed to press Ctrl: {:?}", e));
@@ -235,10 +230,10 @@ fn simulate_copy() -> Result<(), String> {
     // Small delay to ensure key is registered (hardware timing)
     std::thread::sleep(std::time::Duration::from_millis(10));
 
-    // Click C key
-    if let Err(e) = enigo.key(Key::Unicode('c'), enigo::Direction::Click) {
+    // Click the target key
+    if let Err(e) = enigo.key(key, enigo::Direction::Click) {
         let _ = enigo.key(Key::Control, enigo::Direction::Release);
-        return Err(format!("Failed to click C: {:?}", e));
+        return Err(format!("Failed to click key: {:?}", e));
     }
 
     // Small delay before releasing
@@ -249,6 +244,16 @@ fn simulate_copy() -> Result<(), String> {
         return Err(format!("Failed to release Ctrl: {:?}", e));
     }
 
+    Ok(())
+}
+
+/// Simulate Ctrl+C to copy selected text
+/// Note: Uses thread::sleep instead of tokio::sleep for hardware timing
+/// These are very short delays (10ms) for keyboard input registration
+fn simulate_copy() -> Result<(), String> {
+    log::debug!("Starting Ctrl+C simulation...");
+    let mut enigo = get_enigo()?;
+    simulate_ctrl_key(&mut enigo, Key::Unicode('c'))?;
     log::debug!("Ctrl+C simulation completed successfully");
     Ok(())
 }
@@ -262,16 +267,7 @@ pub fn simulate_paste() -> Result<String, String> {
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     let mut enigo = get_enigo()?;
-
-    if let Err(e) = enigo.key(Key::Control, enigo::Direction::Press) {
-        return Err(format!("Failed to press Ctrl: {:?}", e));
-    }
-    if let Err(e) = enigo.key(Key::Unicode('v'), enigo::Direction::Click) {
-        return Err(format!("Failed to click V: {:?}", e));
-    }
-    if let Err(e) = enigo.key(Key::Control, enigo::Direction::Release) {
-        return Err(format!("Failed to release Ctrl: {:?}", e));
-    }
+    simulate_ctrl_key(&mut enigo, Key::Unicode('v'))?;
     log::debug!("Ctrl+V simulation completed");
     Ok("Paste completed".to_string())
 }

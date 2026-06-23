@@ -186,14 +186,14 @@
               <button
                 class="copy-btn"
                 title="Copy original text"
-                @click="copyOriginalText(entry.original_text)"
+                @click="copyText(entry.original_text, 'Original text')"
               >
                 📋 Original
               </button>
               <button
                 class="copy-btn"
                 title="Copy processed text"
-                @click="copyProcessedText(entry.processed_text)"
+                @click="copyText(entry.processed_text, 'Processed text')"
               >
                 📋 Result
               </button>
@@ -395,19 +395,10 @@
     }
   }
 
-  const copyOriginalText = async (text: string) => {
+  const copyText = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      logger.debug('Original text copied to clipboard')
-    } catch (err) {
-      logger.error('Failed to copy text:', err)
-    }
-  }
-
-  const copyProcessedText = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      logger.debug('Processed text copied to clipboard')
+      logger.debug(`${label} copied to clipboard`)
     } catch (err) {
       logger.error('Failed to copy text:', err)
     }

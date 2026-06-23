@@ -273,7 +273,7 @@
   import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { Config } from '../types'
-  import { CHAT_MODEL, TEXT_MODEL, createDefaultConfig } from '../types'
+  import { CHAT_MODEL, TEXT_MODEL, API_KEY_URL, createDefaultConfig } from '../types'
   import { useConfirmDialog } from '../composables/useConfirmDialog'
 
   // Emits
@@ -399,11 +399,10 @@
 
   const openApiKeyUrl = async () => {
     try {
-      await openUrl('https://aistudio.google.com/app/apikey')
+      await openUrl(API_KEY_URL)
     } catch (err) {
       logger.error('Failed to open API key URL:', err)
-      error.value =
-        'Failed to open browser. Please visit https://aistudio.google.com/app/apikey manually.'
+      error.value = `Failed to open browser. Please visit ${API_KEY_URL} manually.`
     }
   }
 

@@ -178,6 +178,7 @@
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { setupMarkdownCopyFunction, cleanupMarkdownCopyFunction } from '../utils/markdown'
   import { logger } from '../utils/logger'
+  import { formatModelName } from '../utils/formatters'
   import AppIcon from './AppIcon.vue'
   import AppConfirmDialog from './AppConfirmDialog.vue'
   import AppPromptDialog from './AppPromptDialog.vue'
@@ -320,8 +321,6 @@
       logger.warn('Failed to load current chat model:', err)
     }
   }
-
-  import { formatModelName } from '../utils/formatters'
 
   // Handle send from InputArea component
   const handleSendMessage = async () => {
