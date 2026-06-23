@@ -84,6 +84,16 @@ export const MODEL_CAPABILITIES: Record<ModelName, { thinking: boolean; groundin
   'gemini-3.1-flash-lite': { thinking: true, grounding: true }
 }
 
+/// Type guard: returns `true` if `value` is one of the supported `ModelName`s.
+export function isModelName(value: string): value is ModelName {
+  return (MODEL_NAMES as readonly string[]).includes(value)
+}
+
+/// Coerce a string to a `ModelName`, falling back to `fallback` if unknown.
+export function asModelName(value: string, fallback: ModelName): ModelName {
+  return isModelName(value) ? value : fallback
+}
+
 export interface AIResponse {
   answer: string
   thoughts?: string

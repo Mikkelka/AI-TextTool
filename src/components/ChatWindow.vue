@@ -191,7 +191,14 @@
     Config,
     SavedConversation
   } from '../types'
-  import { CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES, type ModelName } from '../types'
+  import {
+    CHAT_MODEL,
+    MODEL_CAPABILITIES,
+    MODEL_NAMES,
+    asModelName,
+    isModelName,
+    type ModelName
+  } from '../types'
   import { useConfirmDialog } from '../composables/useConfirmDialog'
   import { usePromptDialog } from '../composables/usePromptDialog'
   import { useToast } from '../composables/useToast'
@@ -210,10 +217,10 @@
     messages: [] as ChatMessage[],
     isProcessing: false,
     error: null as string | null,
-    selectedModel: CHAT_MODEL,
+    selectedModel: CHAT_MODEL as ModelName,
     enableThinking: false,
     enableGrounding: false,
-    availableModels: [] as string[]
+    availableModels: [] as ModelName[]
   })
 
   // Refs
@@ -261,11 +268,11 @@
   })
 
   const supportsThinking = computed(() => {
-    return MODEL_CAPABILITIES[state.selectedModel as ModelName]?.thinking ?? false
+    return MODEL_CAPABILITIES[state.selectedModel]?.thinking ?? false
   })
 
   const supportsGrounding = computed(() => {
-    return MODEL_CAPABILITIES[state.selectedModel as ModelName]?.grounding ?? false
+    return MODEL_CAPABILITIES[state.selectedModel]?.grounding ?? false
   })
 
   // Validation constants
@@ -295,7 +302,7 @@
   const loadAvailableModels = async () => {
     try {
       const models = (await invoke('get_ai_models')) as string[]
-      state.availableModels = models
+      state.availableModels = models.filter(isModelName)
     } catch (err) {
       logger.error('Failed to load models:', err)
       state.availableModels = [...MODEL_NAMES]
@@ -307,7 +314,7 @@
       const config = await invoke<Config>('dm_load_config')
       const active = config.providers?.[config.provider]
       if (active?.chat_model_name) {
-        state.selectedModel = active.chat_model_name as ModelName
+        state.selectedModel = asModelName(active.chat_model_name, CHAT_MODEL)
       }
     } catch (err) {
       logger.warn('Failed to load current chat model:', err)
