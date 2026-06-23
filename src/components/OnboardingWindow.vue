@@ -273,7 +273,7 @@
   import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { Config } from '../types'
-  import { CHAT_MODEL, TEXT_MODEL } from '../types'
+  import { CHAT_MODEL, TEXT_MODEL, createDefaultConfig } from '../types'
   import { useConfirmDialog } from '../composables/useConfirmDialog'
 
   // Emits
@@ -488,13 +488,7 @@
         config = (await invoke('dm_load_config')) as Config
       } catch {
         // If no config exists, create a default one
-        config = {
-          provider: 'Gemini',
-          shortcut: 'CmdOrCtrl+Space',
-          locale: 'en',
-          streaming: false,
-          providers: {}
-        }
+        config = createDefaultConfig()
       }
 
       // Ensure providers object exists (defensive: Rust may omit it)

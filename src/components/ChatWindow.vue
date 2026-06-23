@@ -269,6 +269,7 @@
   })
 
   // Validation constants
+  // Keep in sync with Rust: src-tauri/src/utils/validation.rs `MAX_MESSAGE_LENGTH`
   const MAX_MESSAGE_LENGTH = 10000 // 10KB limit, matching backend
   const MIN_MESSAGE_LENGTH = 1
 

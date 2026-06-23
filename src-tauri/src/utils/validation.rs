@@ -10,6 +10,7 @@ pub const MAX_TEXT_LENGTH: usize = 100_000;
 pub const MIN_TEXT_LENGTH: usize = 1;
 
 /// Maximum allowed length for chat messages (10KB)
+/// Keep in sync with frontend: src/components/ChatWindow.vue `MAX_MESSAGE_LENGTH`
 pub const MAX_MESSAGE_LENGTH: usize = 10_000;
 
 /// Maximum allowed length for operation names

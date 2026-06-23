@@ -90,3 +90,30 @@ export interface AIResponse {
   sources?: GroundingSource[]
   search_queries?: string[]
 }
+
+// Default provider name (kept in sync with Rust `Config::default`)
+export const DEFAULT_PROVIDER = 'Gemini'
+export const DEFAULT_SHORTCUT = 'CmdOrCtrl+Space'
+export const DEFAULT_LOCALE = 'en'
+
+// Default Gemini provider settings used when no config exists yet
+export function createDefaultProviderSettings(): ProviderSettings {
+  return {
+    api_key: '',
+    chat_model_name: CHAT_MODEL,
+    text_model_name: TEXT_MODEL,
+    chat_system_instruction: 'You are a helpful AI assistant.'
+  }
+}
+
+// Default top-level config used when no config exists yet.
+// Mirrors Rust `Config::default()` in src-tauri/src/data_manager/types.rs.
+export function createDefaultConfig(): Config {
+  return {
+    provider: DEFAULT_PROVIDER,
+    shortcut: DEFAULT_SHORTCUT,
+    locale: DEFAULT_LOCALE,
+    streaming: false,
+    providers: {}
+  }
+}

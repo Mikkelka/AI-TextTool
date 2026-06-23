@@ -63,8 +63,8 @@
   import { openUrl } from '@tauri-apps/plugin-opener'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import { logger } from '../utils/logger'
-  import type { Config, ModelName, ProviderSettings } from '../types'
-  import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL } from '../types'
+  import type { Config, ModelName } from '../types'
+  import { CHAT_MODEL, MODEL_NAMES, TEXT_MODEL, createDefaultConfig } from '../types'
   import { formatModelName } from '../utils/formatters'
 
   const formData = ref({
@@ -134,13 +134,7 @@
         config = await invoke<Config>('dm_load_config')
       } catch {
         // Create default config if none exists
-        config = {
-          provider: 'Gemini',
-          shortcut: 'CmdOrCtrl+Space',
-          locale: 'en',
-          streaming: false,
-          providers: {}
-        }
+        config = createDefaultConfig()
       }
 
       // Ensure providers object exists (defensive: Rust may omit it)
@@ -150,7 +144,12 @@
 
       // Ensure provider config exists and is updated
       if (!config.providers.Gemini) {
-        config.providers.Gemini = {} as ProviderSettings
+        config.providers.Gemini = {
+          api_key: '',
+          chat_model_name: CHAT_MODEL,
+          text_model_name: TEXT_MODEL,
+          chat_system_instruction: 'You are a helpful AI assistant.'
+        }
       }
       config.providers.Gemini.api_key = formData.value.apiKey
       config.providers.Gemini.chat_model_name = formData.value.chatModel as ModelName
