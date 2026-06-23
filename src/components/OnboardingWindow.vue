@@ -266,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+  import { ref, computed, onMounted, watch } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { openUrl } from '@tauri-apps/plugin-opener'
   import AppConfirmDialog from './AppConfirmDialog.vue'
@@ -274,6 +274,7 @@
   import { logger } from '../utils/logger'
   import type { Config } from '../types'
   import { CHAT_MODEL, TEXT_MODEL } from '../types'
+  import { useConfirmDialog } from '../composables/useConfirmDialog'
 
   // Emits
   interface Emits {
@@ -298,8 +299,12 @@
   const error = ref<string | null>(null)
   const showApiKey = ref(false)
   const isTesting = ref(false)
-  const skipDialogVisible = ref(false)
-  let skipDialogResolver: ((confirmed: boolean) => void) | null = null
+  const {
+    visible: skipDialogVisible,
+    open: openSkipDialog,
+    confirm: handleSkipDialogConfirm,
+    cancel: handleSkipDialogCancel
+  } = useConfirmDialog()
 
   // Form data
   const formData = ref({
@@ -537,27 +542,8 @@
     }
   }
 
-  const requestSkipConfirmation = (): Promise<boolean> => {
-    skipDialogVisible.value = true
-    return new Promise(resolve => {
-      skipDialogResolver = resolve
-    })
-  }
-
-  const handleSkipDialogConfirm = () => {
-    skipDialogVisible.value = false
-    skipDialogResolver?.(true)
-    skipDialogResolver = null
-  }
-
-  const handleSkipDialogCancel = () => {
-    skipDialogVisible.value = false
-    skipDialogResolver?.(false)
-    skipDialogResolver = null
-  }
-
   const skipSetup = async () => {
-    const shouldSkip = await requestSkipConfirmation()
+    const shouldSkip = await openSkipDialog()
     if (!shouldSkip) return
 
     try {
@@ -621,13 +607,6 @@
   onMounted(() => {
     // Focus the component for keyboard navigation
     ;(document.querySelector('.onboarding-window') as HTMLElement)?.focus()
-  })
-
-  onUnmounted(() => {
-    if (skipDialogResolver) {
-      skipDialogResolver(false)
-      skipDialogResolver = null
-    }
   })
 </script>
 

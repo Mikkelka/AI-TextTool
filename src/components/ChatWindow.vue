@@ -192,6 +192,9 @@
     SavedConversation
   } from '../types'
   import { CHAT_MODEL, MODEL_CAPABILITIES, MODEL_NAMES, type ModelName } from '../types'
+  import { useConfirmDialog } from '../composables/useConfirmDialog'
+  import { usePromptDialog } from '../composables/usePromptDialog'
+  import { useToast } from '../composables/useToast'
 
   // Props
   const props = withDefaults(defineProps<ChatWindowProps>(), {
@@ -217,18 +220,26 @@
   const messagesContainer = ref<HTMLElement>()
   const inputArea = ref<InstanceType<typeof InputArea>>()
 
-  // Dialog/toast state
-  const saveDialogVisible = ref(false)
-  const saveDialogTitle = ref('')
-  const clearDialogVisible = ref(false)
-
-  const toastVisible = ref(false)
-  const toastMessage = ref('')
-  const toastType = ref<'success' | 'error' | 'info'>('info')
-  let toastTimer: ReturnType<typeof setTimeout> | null = null
-
-  let saveDialogResolver: ((value: string | null) => void) | null = null
-  let clearDialogResolver: ((confirmed: boolean) => void) | null = null
+  // Dialog/toast state (via composables)
+  const {
+    visible: saveDialogVisible,
+    initialValue: saveDialogTitle,
+    open: openSaveDialog,
+    confirm: handleSaveDialogConfirm,
+    cancel: handleSaveDialogCancel
+  } = usePromptDialog()
+  const {
+    visible: clearDialogVisible,
+    open: openClearDialog,
+    confirm: handleClearDialogConfirm,
+    cancel: handleClearDialogCancel
+  } = useConfirmDialog()
+  const {
+    visible: toastVisible,
+    message: toastMessage,
+    type: toastType,
+    show: showToast
+  } = useToast()
 
   // Computed Properties
   const windowTitle = computed(() => {
@@ -303,61 +314,6 @@
   }
 
   import { formatModelName } from '../utils/formatters'
-
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    toastMessage.value = message
-    toastType.value = type
-    toastVisible.value = true
-
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-    }
-
-    toastTimer = setTimeout(() => {
-      toastVisible.value = false
-    }, 3200)
-  }
-
-  const requestConversationTitle = (defaultTitle: string): Promise<string | null> => {
-    saveDialogTitle.value = defaultTitle
-    saveDialogVisible.value = true
-
-    return new Promise(resolve => {
-      saveDialogResolver = resolve
-    })
-  }
-
-  const handleSaveDialogConfirm = (value: string) => {
-    saveDialogVisible.value = false
-    const trimmed = value.trim()
-    saveDialogResolver?.(trimmed.length > 0 ? trimmed : null)
-    saveDialogResolver = null
-  }
-
-  const handleSaveDialogCancel = () => {
-    saveDialogVisible.value = false
-    saveDialogResolver?.(null)
-    saveDialogResolver = null
-  }
-
-  const requestClearConfirmation = (): Promise<boolean> => {
-    clearDialogVisible.value = true
-    return new Promise(resolve => {
-      clearDialogResolver = resolve
-    })
-  }
-
-  const handleClearDialogConfirm = () => {
-    clearDialogVisible.value = false
-    clearDialogResolver?.(true)
-    clearDialogResolver = null
-  }
-
-  const handleClearDialogCancel = () => {
-    clearDialogVisible.value = false
-    clearDialogResolver?.(false)
-    clearDialogResolver = null
-  }
 
   // Handle send from InputArea component
   const handleSendMessage = async () => {
@@ -545,7 +501,7 @@
         : 'Untitled Conversation'
 
       // Prompt user for conversation title
-      const title = await requestConversationTitle(defaultTitle)
+      const title = await openSaveDialog({ initialValue: defaultTitle })
       if (!title) return // User cancelled
 
       // Convert messages to ConversationMessage format
@@ -582,7 +538,7 @@
   const clearConversation = async () => {
     if (state.messages.length === 0) return
 
-    const confirmed = await requestClearConfirmation()
+    const confirmed = await openClearDialog()
     if (!confirmed) return
 
     state.messages = []
@@ -745,19 +701,6 @@
   })
 
   onUnmounted(() => {
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-      toastTimer = null
-    }
-    toastVisible.value = false
-    if (saveDialogResolver) {
-      saveDialogResolver(null)
-      saveDialogResolver = null
-    }
-    if (clearDialogResolver) {
-      clearDialogResolver(false)
-      clearDialogResolver = null
-    }
     cleanupMarkdownCopyFunction()
   })
 </script>

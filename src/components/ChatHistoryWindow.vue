@@ -252,7 +252,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import { ref, computed, onMounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import { getCurrentWindow } from '@tauri-apps/api/window'
   import AppConfirmDialog from './AppConfirmDialog.vue'
@@ -261,6 +261,8 @@
   import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { SavedConversation } from '../types'
+  import { useConfirmDialog } from '../composables/useConfirmDialog'
+  import { useToast } from '../composables/useToast'
 
   // Chat Entry Interface
   interface ChatEntry {
@@ -281,16 +283,22 @@
   const searchQuery = ref('')
   const selectedOperation = ref('')
 
-  const confirmDialogVisible = ref(false)
-  const confirmDialogTitle = ref('Confirm Action')
-  const confirmDialogMessage = ref('')
-  const confirmDialogConfirmText = ref('Confirm')
-  let confirmDialogResolver: ((confirmed: boolean) => void) | null = null
-
-  const toastVisible = ref(false)
-  const toastMessage = ref('')
-  const toastType = ref<'success' | 'error' | 'info'>('info')
-  let toastTimer: ReturnType<typeof setTimeout> | null = null
+  // Dialog/toast state (via composables)
+  const {
+    visible: confirmDialogVisible,
+    title: confirmDialogTitle,
+    message: confirmDialogMessage,
+    confirmText: confirmDialogConfirmText,
+    open: openConfirmDialog,
+    confirm: handleConfirmDialogConfirm,
+    cancel: handleConfirmDialogCancel
+  } = useConfirmDialog()
+  const {
+    visible: toastVisible,
+    message: toastMessage,
+    type: toastType,
+    show: showToast
+  } = useToast()
 
   // Computed properties
   const uniqueOperations = computed(() => {
@@ -348,47 +356,6 @@
     )
   })
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    toastMessage.value = message
-    toastType.value = type
-    toastVisible.value = true
-
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-    }
-
-    toastTimer = setTimeout(() => {
-      toastVisible.value = false
-    }, 3200)
-  }
-
-  const requestConfirmation = (
-    title: string,
-    message: string,
-    confirmText = 'Confirm'
-  ): Promise<boolean> => {
-    confirmDialogTitle.value = title
-    confirmDialogMessage.value = message
-    confirmDialogConfirmText.value = confirmText
-    confirmDialogVisible.value = true
-
-    return new Promise(resolve => {
-      confirmDialogResolver = resolve
-    })
-  }
-
-  const handleConfirmDialogConfirm = () => {
-    confirmDialogVisible.value = false
-    confirmDialogResolver?.(true)
-    confirmDialogResolver = null
-  }
-
-  const handleConfirmDialogCancel = () => {
-    confirmDialogVisible.value = false
-    confirmDialogResolver?.(false)
-    confirmDialogResolver = null
-  }
-
   // Methods
   const loadHistory = async () => {
     try {
@@ -416,11 +383,11 @@
   }
 
   const clearAllHistory = async () => {
-    const shouldClear = await requestConfirmation(
-      'Clear All History',
-      'Are you sure you want to clear all chat history? This action cannot be undone.',
-      'Clear All'
-    )
+    const shouldClear = await openConfirmDialog({
+      title: 'Clear All History',
+      message: 'Are you sure you want to clear all chat history? This action cannot be undone.',
+      confirmText: 'Clear All'
+    })
     if (!shouldClear) {
       return
     }
@@ -583,11 +550,11 @@
     const conversation = conversations.value.find(c => c.id === conversationId)
     if (!conversation) return
 
-    const confirmDelete = await requestConfirmation(
-      'Delete Conversation',
-      `Are you sure you want to delete the conversation "${conversation.title}"?\n\nThis action cannot be undone.`,
-      'Delete'
-    )
+    const confirmDelete = await openConfirmDialog({
+      title: 'Delete Conversation',
+      message: `Are you sure you want to delete the conversation "${conversation.title}"?\n\nThis action cannot be undone.`,
+      confirmText: 'Delete'
+    })
     if (!confirmDelete) return
 
     try {
@@ -608,17 +575,6 @@
   // Lifecycle
   onMounted(async () => {
     await loadHistory()
-  })
-
-  onUnmounted(() => {
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-      toastTimer = null
-    }
-    if (confirmDialogResolver) {
-      confirmDialogResolver(false)
-      confirmDialogResolver = null
-    }
   })
 </script>
 

@@ -113,8 +113,8 @@
       :message="confirmMessage"
       :confirm-text="confirmButtonText"
       :danger="confirmDanger"
-      @confirm="confirmAction"
-      @cancel="cancelConfirm"
+      @confirm="handleConfirmConfirm"
+      @cancel="handleConfirmCancel"
     />
 
     <!-- Edit Dialog -->
@@ -180,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, onUnmounted } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { invoke } from '@tauri-apps/api/core'
   import {
     Pencil,
@@ -199,6 +199,8 @@
   import LoadingSpinner from './LoadingSpinner.vue'
   import { logger } from '../utils/logger'
   import type { Operation } from '../types'
+  import { useConfirmDialog } from '../composables/useConfirmDialog'
+  import { useToast } from '../composables/useToast'
 
   // Props
   interface Props {
@@ -225,18 +227,23 @@
   // Operations array for ordered display
   const operationsArray = ref<Array<[string, Operation]>>([])
 
-  // Dialog states
-  const showConfirmDialog = ref(false)
-  const confirmTitle = ref('')
-  const confirmMessage = ref('')
-  const confirmButtonText = ref('Confirm')
-  const confirmDanger = ref(false)
-  let pendingConfirmAction: (() => void | Promise<void>) | null = null
-
-  const toastVisible = ref(false)
-  const toastMessage = ref('')
-  const toastType = ref<'success' | 'error' | 'info'>('info')
-  let toastTimer: ReturnType<typeof setTimeout> | null = null
+  // Dialog/toast state (via composables)
+  const {
+    visible: showConfirmDialog,
+    title: confirmTitle,
+    message: confirmMessage,
+    confirmText: confirmButtonText,
+    danger: confirmDanger,
+    open: openConfirmDialog,
+    confirm: handleConfirmConfirm,
+    cancel: handleConfirmCancel
+  } = useConfirmDialog()
+  const {
+    visible: toastVisible,
+    message: toastMessage,
+    type: toastType,
+    show: showToast
+  } = useToast()
 
   // Edit form state
   const showEditDialog = ref(false)
@@ -306,42 +313,15 @@
     showEditDialog.value = true
   }
 
-  const requestConfirm = (
-    title: string,
-    message: string,
-    buttonText: string,
-    danger: boolean,
-    action: () => void | Promise<void>
-  ) => {
-    confirmTitle.value = title
-    confirmMessage.value = message
-    confirmButtonText.value = buttonText
-    confirmDanger.value = danger
-    pendingConfirmAction = action
-    showConfirmDialog.value = true
-  }
-
-  const confirmAction = async () => {
-    const action = pendingConfirmAction
-    cancelConfirm()
-    if (action) {
-      await action()
-    }
-  }
-
-  const cancelConfirm = () => {
-    showConfirmDialog.value = false
-    pendingConfirmAction = null
-  }
-
-  const deleteOperation = (operationKey: string) => {
-    requestConfirm(
-      'Confirm Delete',
-      `Are you sure you want to delete the '${operationKey}' operation?`,
-      'Delete',
-      true,
-      () => performDelete(operationKey)
-    )
+  const deleteOperation = async (operationKey: string) => {
+    const confirmed = await openConfirmDialog({
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete the '${operationKey}' operation?`,
+      confirmText: 'Delete',
+      danger: true
+    })
+    if (!confirmed) return
+    await performDelete(operationKey)
   }
 
   const performDelete = async (operationKey: string) => {
@@ -374,14 +354,16 @@
     }
   }
 
-  const resetToDefaults = () => {
-    requestConfirm(
-      'Reset to Defaults',
-      'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.',
-      'Reset',
-      false,
-      () => performReset()
-    )
+  const resetToDefaults = async () => {
+    const confirmed = await openConfirmDialog({
+      title: 'Reset to Defaults',
+      message:
+        'Are you sure you want to reset all operations to their default configuration? This will remove any custom operations you have added.',
+      confirmText: 'Reset',
+      danger: false
+    })
+    if (!confirmed) return
+    await performReset()
   }
 
   const performReset = async () => {
@@ -472,25 +454,11 @@
       if (showEditDialog.value) {
         cancelEdit()
       } else if (showConfirmDialog.value) {
-        cancelConfirm()
+        handleConfirmCancel()
       } else {
         void closeWindow()
       }
     }
-  }
-
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    toastMessage.value = message
-    toastType.value = type
-    toastVisible.value = true
-
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-    }
-
-    toastTimer = setTimeout(() => {
-      toastVisible.value = false
-    }, 3200)
   }
 
   const showMessage = (title: string, message: string) => {
@@ -540,13 +508,6 @@
   // Lifecycle
   onMounted(() => {
     void loadOperations()
-  })
-
-  onUnmounted(() => {
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-      toastTimer = null
-    }
   })
 </script>
 
