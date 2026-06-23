@@ -60,6 +60,12 @@ pub fn run() {
         .manage(rate_limiter)
         .manage(http_client)
         .setup(|app| {
+            // Check if app_data.json exists BEFORE initializing the data manager.
+            // initialize() creates the file via save_data() when it's missing, so
+            // checking afterwards would always return true and skip onboarding.
+            let config_path = utils::file_paths::get_app_data_path();
+            let is_first_run = !config_path.exists();
+
             // Initialize shared data manager (blocking on async init)
             let dm = tauri::async_runtime::block_on(SharedDataManager::new())
                 .expect("Failed to initialize data manager");
@@ -73,10 +79,7 @@ pub fn run() {
                 }
             }
 
-            // Check if app_data.json exists - if not, show onboarding
-            let config_path = utils::file_paths::get_app_data_path();
-
-            if !config_path.exists() {
+            if is_first_run {
                 log::info!("No app_data.json found - showing onboarding window");
                 window_manager::show_onboarding_window(app.handle())?;
             } else {
