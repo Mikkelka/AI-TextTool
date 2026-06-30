@@ -21,15 +21,15 @@
     "security-check": "npm audit --audit-level=moderate"
   },
   "dependencies": {
-    "@lucide/vue": "^1.7.0",
-    "@tauri-apps/api": "^2.10.1",
+    "@lucide/vue": "^1.22.0",
+    "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
-    "@tauri-apps/plugin-opener": "^2.5.3",
-    "@types/dompurify": "^3.0.5",
+    "@tauri-apps/plugin-opener": "^2.5.4",
+    "@types/dompurify": "^3.2.0",
     "@types/marked": "^5.0.2",
-    "dompurify": "^3.3.3",
-    "marked": "^17.0.5",
-    "vue": "^3.5.31"
+    "dompurify": "^3.4.11",
+    "marked": "^18.0.5",
+    "vue": "^3.5.39"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
