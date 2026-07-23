@@ -22,13 +22,13 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.7.0",
-    "@tauri-apps/api": "~2.10.1",
+    "@tauri-apps/api": "~2.11.1",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
     "@tauri-apps/plugin-opener": "^2.5.3",
     "@types/dompurify": "^3.0.5",
     "@types/marked": "^5.0.2",
     "dompurify": "^3.3.3",
-    "marked": "^17.0.5",
+    "marked": "^18.0.7",
     "vue": "^3.5.31"
   },
   "devDependencies": {
