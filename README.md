@@ -122,7 +122,7 @@ AI-TextTool/
 ## 🔧 Development
 
 ### Prerequisites
-- Node.js 18+ and npm
+- [Bun](https://bun.sh) (package manager and runtime)
 - Rust 1.70+
 - Git
 
@@ -130,22 +130,22 @@ AI-TextTool/
 ```bash
 git clone https://github.com/yourusername/AI-TextTool.git
 cd AI-TextTool
-npm install
+bun install
 ```
 
 ### Development Commands
 ```bash
 # Main development (most used)
-npm run dev          # Start Tauri development mode
-npm run build        # Build desktop application
+bun run dev          # Start Tauri development mode
+bun run build        # Build desktop application
 
 # Frontend only
-npm run dev:web      # Start Vite dev server only
-npm run build:web    # Build frontend only
+bun run dev:web      # Start Vite dev server only
+bun run build:web    # Build frontend only
 
 # Quality
-npm run check        # Run linting + Prettier checks
-npm run fix          # Auto-fix Vue linting and format Rust
+bun run check        # Run linting + Prettier checks
+bun run fix          # Auto-fix Vue linting and format Rust
 ```
 
 ### Data Storage
@@ -162,23 +162,23 @@ All application data is stored in a **single JSON file** next to the executable:
 ### Code Quality
 ```bash
 # Quick fixes (use this most!)
-npm run fix              # Auto-fix all issues (Vue + Rust)
-npm run check            # Check all linting (Vue + Rust)
+bun run fix              # Auto-fix all issues (Vue + Rust)
+bun run check            # Check all linting (Vue + Rust)
 
 # Specific linting
-npm run lint             # Check all linting
-npm run lint:vue         # Check Vue/TypeScript linting
-npm run lint:rust        # Check Rust linting (Clippy)
+bun run lint             # Check all linting
+bun run lint:vue         # Check Vue/TypeScript linting
+bun run lint:rust        # Check Rust linting (Clippy)
 
 # Specific fixes
-npm run fix:vue          # Fix Vue + format with Prettier
-npm run fix:rust         # Format Rust code
+bun run fix:vue          # Fix Vue + format with Prettier
+bun run fix:rust         # Format Rust code
 
 # Security
-npm run security-check   # Run npm audit with moderate threshold
+bun run security-check   # Run bun audit with moderate threshold
 ```
 
-**Important**: Always run `npm run check` before committing to ensure code quality!
+**Important**: Always run `bun run check` before committing to ensure code quality!
 
 ## 📚 Documentation
 
