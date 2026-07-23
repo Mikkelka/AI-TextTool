@@ -4,9 +4,9 @@
   "version": "1.1.1",
   "identifier": "com.mikke.ai-tool",
   "build": {
-    "beforeDevCommand": "npm run dev:web",
+    "beforeDevCommand": "bun run dev:web",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build:web",
+    "beforeBuildCommand": "bun run build:web",
     "frontendDist": "../dist"
   },
   "app": {

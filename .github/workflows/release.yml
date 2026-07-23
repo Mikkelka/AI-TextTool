@@ -36,11 +36,8 @@ jobs:
           fi
           echo "Resolved tag: ${{ steps.tag.outputs.name }}"
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -50,11 +47,11 @@ jobs:
         with:
           workspaces: src-tauri -> target
 
-      - name: Install npm dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Build Tauri app
-        run: npm run build
+        run: bun run build
         env:
           CI: 'true'
 

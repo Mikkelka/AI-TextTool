@@ -9,24 +9,24 @@
 ## Build, Test, and Development Commands
 
 ### Daily use
-- `npm run dev`: Run the full Tauri app in development mode.
-- `npm run build`: Build the desktop application.
+- `bun run dev`: Run the full Tauri app in development mode.
+- `bun run build`: Build the desktop application.
 
 ### Frontend-only
-- `npm run dev:web`: Run the Vite dev server for frontend-only work.
-- `npm run build:web`: Type-check and build the frontend bundle.
+- `bun run dev:web`: Run the Vite dev server for frontend-only work.
+- `bun run build:web`: Type-check and build the frontend bundle.
 
 ### Quality checks (run before commits)
-- `npm run check`: Lint Vue/TS and Rust (Clippy), plus Prettier format check.
-- `npm run lint`: Lint Vue/TS (ESLint) and Rust (Clippy).
-- `npm run fix`: Auto-fix Vue/TS lint issues + Prettier format + Rust `cargo fmt`.
+- `bun run check`: Lint Vue/TS and Rust (Clippy), plus Prettier format check.
+- `bun run lint`: Lint Vue/TS (ESLint) and Rust (Clippy).
+- `bun run fix`: Auto-fix Vue/TS lint issues + Prettier format + Rust `cargo fmt`.
 
 ### Granular (rarely needed)
-- `npm run lint:vue` / `npm run lint:rust`: Lint only Vue/TS or Rust.
-- `npm run fix:vue` / `npm run fix:rust`: Fix only Vue/TS or Rust.
-- `npm run audit`: Check for npm vulnerabilities.
-- `npm run audit:fix`: Auto-fix npm vulnerabilities.
-- `npm run security-check`: Run `npm audit` with a moderate threshold.
+- `bun run lint:vue` / `bun run lint:rust`: Lint only Vue/TS or Rust.
+- `bun run fix:vue` / `bun run fix:rust`: Fix only Vue/TS or Rust.
+- `bun run audit`: Check for vulnerabilities (`bun audit`).
+- `bun run audit:fix`: Update dependencies (`bun update`).
+- `bun run security-check`: Run `bun audit` with a moderate threshold.
 
 ## Critical Tauri Patterns (easy to get wrong)
 - **Window creation MUST happen in Rust commands**, never from the frontend via `new WebviewWindow()`. Frontend calls `invoke('open_chat_window')` etc.
@@ -48,12 +48,12 @@
 
 ## Coding Style & Naming Conventions
 - Formatting is enforced by Prettier: 2-space indentation, single quotes, no semicolons, 100-char line width.
-- Linting uses ESLint for Vue/TS and Clippy for Rust; run `npm run check` before commits.
+- Linting uses ESLint for Vue/TS and Clippy for Rust; run `bun run check` before commits.
 - Vue components use PascalCase filenames (e.g., `MessageBubble.vue`); keep new components consistent.
-- Rust follows `rustfmt` defaults via `npm run fix:rust`.
+- Rust follows `rustfmt` defaults via `bun run fix:rust`.
 
 ## Testing Guidelines
-- There is no dedicated test runner yet. Treat `npm run check` as the minimum quality gate.
+- There is no dedicated test runner yet. Treat `bun run check` as the minimum quality gate.
 - If you add tests, place them alongside the relevant module (e.g., `src/...`) and document how to run them.
 
 ## Commit & Pull Request Guidelines
